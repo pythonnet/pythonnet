@@ -47,6 +47,14 @@ namespace Python.Runtime
             get { return initialized; }
         }
 
+        private static void EnsureInitialized()
+        {
+            if (!IsInitialized)
+                throw new InvalidOperationException(
+                    "Python must be initialized for this operation"
+                );
+        }
+
         /// <summary>Set to <c>true</c> to enable GIL debugging assistance.</summary>
         public static bool DebugGIL { get; set; } = false;
 
@@ -96,6 +104,7 @@ namespace Python.Runtime
         {
             get
             {
+                EnsureInitialized();
                 IntPtr p = Runtime.TryUsingDll(() => Runtime.Py_GetPythonHome());
                 return UcsMarshaler.PtrToPy3UnicodePy2String(p) ?? "";
             }
@@ -103,10 +112,8 @@ namespace Python.Runtime
             {
                 // this value is null in the beginning
                 Marshal.FreeHGlobal(_pythonHome);
-                _pythonHome = Runtime.TryUsingDll(
-                    () => UcsMarshaler.Py3UnicodePy2StringtoPtr(value)
-                );
-                Runtime.Py_SetPythonHome(_pythonHome);
+                _pythonHome = UcsMarshaler.Py3UnicodePy2StringtoPtr(value);
+                Runtime.TryUsingDll(() => Runtime.Py_SetPythonHome(_pythonHome));
             }
         }
 
@@ -128,7 +135,7 @@ namespace Python.Runtime
         }
 
         public static Version MinSupportedVersion => new(3, 7);
-        public static Version MaxSupportedVersion => new(3, 10, int.MaxValue, int.MaxValue);
+        public static Version MaxSupportedVersion => new(3, 11, int.MaxValue, int.MaxValue);
         public static bool IsSupportedVersion(Version version) => version >= MinSupportedVersion && version <= MaxSupportedVersion;
 
         public static string Version

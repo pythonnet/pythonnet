@@ -16,7 +16,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows, ubuntu, macos]
-        python: ["3.7", "3.8", "3.9", "3.10"]
+        python: ["3.7", "3.8", "3.9", "3.10", "3.11"]
         platform: [x64, x86]
         exclude:
           - os: ubuntu
@@ -54,15 +54,17 @@ jobs:
         run: |
           pip install -v .
 
-      - name: Set Python DLL path (non Windows)
+      - name: Set Python DLL path and PYTHONHOME (non Windows)
         if: ${{ matrix.os != 'windows' }}
         run: |
           echo PYTHONNET_PYDLL=$(python -m find_libpython) >> $GITHUB_ENV
+          echo PYTHONHOME=$(python -c 'import sys; print(sys.prefix)') >> $GITHUB_ENV
 
-      - name: Set Python DLL path (Windows)
+      - name: Set Python DLL path and PYTHONHOME (Windows)
         if: ${{ matrix.os == 'windows' }}
         run: |
           Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append -InputObject "PYTHONNET_PYDLL=$(python -m find_libpython)"
+          Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append -InputObject "PYTHONHOME=$(python -c 'import sys; print(sys.prefix)')"
 
       - name: Embedding tests
         run: dotnet test --runtime any-${{ matrix.platform }} --logger "console;verbosity=detailed" src/embed_tests/

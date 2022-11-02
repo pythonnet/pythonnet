@@ -155,6 +155,7 @@ namespace Python.Runtime
             using var nativeSpec = new NativeTypeSpec(spec);
             var basesRef = bases is null ? default : bases.Reference;
             var result = Runtime.PyType_FromSpecWithBases(in nativeSpec, basesRef);
+            // Runtime.PyErr_Print();
             return result.StealOrThrow();
         }
     }

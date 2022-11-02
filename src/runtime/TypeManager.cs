@@ -475,17 +475,20 @@ namespace Python.Runtime
             int size = Util.ReadInt32(Runtime.PyTypeType, TypeOffset.tp_basicsize)
                        + IntPtr.Size // tp_clr_inst_offset
             ;
-            var result = new PyType(new TypeSpec("clr._internal.GCOffsetBase", basicSize: size,
-                new TypeSpec.Slot[]
-                {
 
-                },
-                TypeFlags.Default | TypeFlags.HeapType | TypeFlags.HaveGC),
-                bases: new PyTuple(new[] { py_type }));
-
-            SetRequiredSlots(result, seen: new HashSet<string>());
-
-            Runtime.PyType_Modified(result);
+            var slots = new[] {
+                new TypeSpec.Slot(TypeSlotID.tp_traverse, subtype_traverse),
+                new TypeSpec.Slot(TypeSlotID.tp_clear, subtype_clear)
+            };
+            var result = new PyType(
+                new TypeSpec(
+                    "clr._internal.GCOffsetBase",
+                    basicSize: size,
+                    slots: slots,
+                    TypeFlags.Default | TypeFlags.HeapType | TypeFlags.HaveGC
+                ),
+                bases: new PyTuple(new[] { py_type })
+            );
 
             return result;
         }
@@ -616,6 +619,11 @@ namespace Python.Runtime
             Util.WriteIntPtr(type, TypeOffset.tp_name, raw);
             Util.WriteRef(type, TypeOffset.name, new NewReference(temp).Steal());
             Util.WriteRef(type, TypeOffset.qualname, temp.Steal());
+
+            // Ensure that tp_traverse and tp_clear are always set, since their
+            // existence is enforced in newer Python versions in PyType_Ready
+            Util.WriteIntPtr(type, TypeOffset.tp_traverse, subtype_traverse);
+            Util.WriteIntPtr(type, TypeOffset.tp_clear, subtype_clear);
 
             InheritSubstructs(type.Reference.DangerousGetAddress());
 
