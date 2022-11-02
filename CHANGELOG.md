@@ -9,6 +9,8 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ### Added
 
+-   Support for Python 3.11
+
 ### Changed
 
 ### Fixed
