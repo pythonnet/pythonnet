@@ -82,12 +82,7 @@ namespace Python.Runtime
             BorrowedReference bases = Runtime.PyTuple_GetItem(args, 1);
             BorrowedReference dict = Runtime.PyTuple_GetItem(args, 2);
 
-            // We do not support multiple inheritance, so the bases argument
-            // should be a 1-item tuple containing the type we are subtyping.
-            // That type must itself have a managed implementation. We check
-            // that by making sure its metatype is the CLR metatype.
-
-
+            // Extract interface types and base class types.
             List<Type> interfaces = new List<Type>();
             List<ClassBase> baseType = new List<ClassBase>();
 
@@ -105,24 +100,17 @@ namespace Python.Runtime
                 }
             }
 
+            // if the base type count is 0, there might still be interfaces to implement.
             if (baseType.Count == 0)
             {
                 baseType.Add(new ClassBase(typeof(object)));
             }
 
-
+            // Multiple inheritance is not supported, unless the other types are interfaces
             if (baseType.Count > 1)
             {
                 return Exceptions.RaiseTypeError("cannot use multiple inheritance with managed classes");
             }
-
-            /*
-            BorrowedReference mt = Runtime.PyObject_TYPE(baseType);
-
-            if (!(mt == PyCLRMetaType || mt == Runtime.PyTypeType))
-            {
-                return Exceptions.RaiseTypeError("invalid metatype");
-            }*/
 
             // Ensure that the reflected type is appropriate for subclassing,
             // disallowing subclassing of delegates, enums and array types.
@@ -146,7 +134,8 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("subclasses of managed classes do not support __slots__");
             }
 
-            // If __assembly__ or __namespace__ are in the class dictionary then create
+            // If the base class has a parameterless constructor, or
+            // if __assembly__ or __namespace__ are in the class dictionary then create
             // a managed sub type.
             // This creates a new managed type that can be used from .net to call back
             // into python.
@@ -156,7 +145,7 @@ namespace Python.Runtime
                 var ctor = btt?.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
                     .FirstOrDefault(x => x.GetParameters().Any() == false);
                 using var clsDict = new PyDict(dict);
-                
+
                 if (clsDict.HasKey("__assembly__") || clsDict.HasKey("__namespace__")
                                                    || (ctor != null))
                 {
@@ -167,7 +156,6 @@ namespace Python.Runtime
                     }
                     return TypeManager.CreateSubType(name, baseType, interfaces, clsDict);
                 }
-                
             }
 
             var base_type = Runtime.PyTuple_GetItem(bases, 0);

@@ -276,7 +276,10 @@ namespace Python.Runtime
 
             Type baseClass = baseType;
             var interfaces = new HashSet<Type> { typeof(IPythonDerivedType) };
-            foreach(var t in interfaces2) interfaces.Add(t);
+
+            foreach(var interfaceType in interfaces2)
+                interfaces.Add(interfaceType);
+
             // if the base type is an interface then use System.Object as the base class
             // and add the base type to the list of interfaces this new class will implement.
             if (baseType.IsInterface)
@@ -285,6 +288,7 @@ namespace Python.Runtime
                 baseClass = typeof(object);
             }
 
+            // __clr_abstract__ is used to create an abstract class.
             bool isAbstract = false;
             if (py_dict != null && Runtime.PyDict_Check(py_dict))
             {
@@ -298,10 +302,11 @@ namespace Python.Runtime
                 baseClass,
                 interfaces.ToArray());
 
-            // add a field for storing the python object pointer
-            // FIXME: fb not used
+            // add a field for storing the python object pointer,
+            // but only if the baseclass does not already have it.
             if (baseClass.GetField(PyObjName, PyObjFlags) == null)
             {
+                // FIXME: fb not used
                 FieldBuilder fb = typeBuilder.DefineField(PyObjName,
 #pragma warning disable CS0618 // Type or member is obsolete. OK for internal use.
                     typeof(UnsafeReferenceWithRun),
@@ -373,9 +378,10 @@ namespace Python.Runtime
             {
                 using var dict = new PyDict(py_dict);
 
+                // if there are any attributes, add them.
                 if (dict.HasKey("__clr_attributes__"))
                 {
-                    var attributes = new PyList(dict["__clr_attributes__"]);
+                    using var attributes = new PyList(dict["__clr_attributes__"]);
                     foreach (var attr in attributes)
                     {
                         var builder = AddAttribute(attr);
@@ -442,12 +448,10 @@ namespace Python.Runtime
             return type;
         }
 
-        private static Dictionary<Type, PyType> pyTypeLookup = new Dictionary<Type, PyType>();
-
         /// <summary>
         /// Add a constructor override that calls the python ctor after calling the base type constructor.
         /// </summary>
-        /// <param name="ctor">constructor to be called before calling the python ctor</param>
+        /// <param name="ctor">constructor to be called before calling the python ctor. This can be null if there is no constructor. </param>
         /// <param name="baseType">Python callable object</param>
         /// <param name="typeBuilder">TypeBuilder for the new type the ctor is to be added to</param>
         private static void AddConstructor(ConstructorInfo ctor, Type baseType, TypeBuilder typeBuilder)
@@ -665,7 +669,7 @@ namespace Python.Runtime
                     methodBuilder.SetCustomAttribute(builder);
                 }
 
-                if (methodAssoc.TryGetValue(func, out var lst))
+                if (MethodAttributeAssociations.TryGetValue(func, out var lst))
                 {
                     foreach(var attr in lst)
                     {
@@ -674,7 +678,7 @@ namespace Python.Runtime
                         methodBuilder.SetCustomAttribute(builder);
                     }
 
-                    methodAssoc.Remove(func);
+                    MethodAttributeAssociations.Remove(func);
 
                 }
 
@@ -770,11 +774,12 @@ namespace Python.Runtime
             var propertyType = result as Type;
             string pyTypeName = null;
             string pyTypeModule = null;
+            // if the property type is null, we assume that it is a python type
+            // and not a C# type, in this case the property is just a PyObject type instead.
             if (propertyType == null)
             {
                 propertyType = typeof(PyObject);
                 pyTypeModule = pyNativeType.GetAttr("__module__").ToString();
-                //throw new ArgumentException("_clr_property_type must be a CLR type");
                 pyTypeName = pyNativeType.Name;
             }
 
@@ -807,7 +812,7 @@ namespace Python.Runtime
                 foreach (var fname in new[]{ "fget", "fset" })
                 {
                     using var pyfget = func.GetAttr(fname);
-                    if (methodAssoc.TryGetValue(pyfget, out var lst))
+                    if (MethodAttributeAssociations.TryGetValue(pyfget, out var lst))
                     {
                         foreach (var attr in lst)
                         {
@@ -816,7 +821,7 @@ namespace Python.Runtime
                             propertyBuilder.SetCustomAttribute(builder);
                         }
 
-                        methodAssoc.Remove(func);
+                        MethodAttributeAssociations.Remove(func);
                     }
                 }
             }
@@ -915,28 +920,45 @@ namespace Python.Runtime
     [Obsolete(Util.InternalUseOnly)]
     public class PythonDerivedType
     {
-        private static List<PyTuple> attributesStack = new List<PyTuple>();
-        internal static Dictionary<PyObject, List<PyTuple>> methodAssoc = new Dictionary<PyObject, List<PyTuple>>();
-        public static void PushAttribute(PyObject obj)
+        /// <summary> Tracks the attributes pushed with PushAttributes. </summary>
+        static List<PyTuple> attributesStack = new ();
+        /// <summary>
+        /// This field track associations between python functions and associated attributes.
+        /// </summary>
+        internal static Dictionary<PyObject, List<PyTuple>> MethodAttributeAssociations = new ();
+
+        /// <summary>
+        /// This pushes an attribute on the current attribute stack.
+        /// This happens when invoking e.g `@(attribute(Browsable(False))`.
+        /// </summary>
+        /// <param name="attribute">The pushed attribute.
+        /// This is should not be an attribute instance, but a tuple from which it can be created.</param>
+        public static void PushAttribute(PyObject attribute)
         {
             using var _ = Py.GIL();
-            var tp = new PyTuple(obj);
+            var tp = new PyTuple(attribute);
             attributesStack.Add(tp);
         }
 
-        public static bool AssocAttribute(PyObject obj, PyObject func)
+        /// <summary>
+        /// Associates an attribute with a function.
+        /// </summary>
+        /// <param name="attribute"></param>
+        /// <param name="func"></param>
+        /// <returns></returns>
+
+        public static bool AssocAttribute(PyObject attribute, PyObject func)
         {
             using var _ = Py.GIL();
-            var tp = new PyTuple(obj);
+            var tp = new PyTuple(attribute);
             for (int i = 0; i < attributesStack.Count; i++)
             {
-
-                if (tp.BorrowNullable()== attributesStack[i].BorrowNullable())
+                if (tp.BorrowNullable() == attributesStack[i].BorrowNullable())
                 {
                     attributesStack.RemoveAt(i);
-                    if (!methodAssoc.TryGetValue(func, out var lst))
+                    if (!MethodAttributeAssociations.TryGetValue(func, out var lst))
                     {
-                        lst = methodAssoc[func] = new List<PyTuple>();
+                        lst = MethodAttributeAssociations[func] = new List<PyTuple>();
                     }
                     lst.Add(tp);
                     return true;
@@ -947,6 +969,10 @@ namespace Python.Runtime
         }
 
 
+        /// <summary>
+        /// Pops the current attribute stack and returns it. Any future pushed attributes will be in a new list.
+        /// </summary>
+        /// <returns></returns>
         public static IEnumerable<PyObject> PopAttributes()
         {
             if (attributesStack.Count == 0) return Array.Empty<PyObject>();
@@ -954,6 +980,7 @@ namespace Python.Runtime
             attributesStack = new List<PyTuple>();
             return attrs;
         }
+
         internal const string PyObjName = "__pyobj__";
         internal const BindingFlags PyObjFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy;
 

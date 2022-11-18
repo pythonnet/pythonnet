@@ -49,7 +49,12 @@ class clrproperty(object):
         if not self.fset:
             raise AttributeError("%s is read-only" % self.__name__)
         return self.fset.__get__(instance, None)(value)
+
+    # TODO: I am not sure this add_attribute is actually necessary.
     def add_attribute(self, *args, **kwargs):
+        """Adds an attribute to this class.
+        If the first argument is a tuple we assume it is a tuple containing everything to initialize the attribute.
+        Otherwise, the first arg should be a .net type implementing Attribute."""
         lst = []
         if len(args) > 0:
             if isinstance(args[0], tuple):
@@ -60,7 +65,17 @@ class clrproperty(object):
         return self
 
 class property(object):
+    """
+    property constructor for creating properties with implicit get/set.
 
+    It can be used as such:
+    e.g.::
+
+        class X(object):
+            A = clr.property(Double, 3.14)\
+               .add_attribute(Browsable(False))
+
+    """
     def __init__(self, type, default = None):
         import weakref
         self._clr_property_type_ = type
@@ -79,7 +94,11 @@ class property(object):
             self.fset(instance,value)
             return
         self.values[instance] = value
+
     def add_attribute(self, *args, **kwargs):
+        """Adds an attribute to this class.
+        If the first argument is a tuple we assume it is a tuple containing everything to initialize the attribute.
+        Otherwise, the first arg should be a .net type implementing Attribute."""
         lst = []
         if len(args) > 0:
             if isinstance(args[0], tuple):
@@ -138,6 +157,9 @@ class clrmethod(object):
         return self.__func.__get__(instance, owner)
 
     def add_attribute(self, *args, **kwargs):
+        """Adds an attribute to this class.
+        If the first argument is a tuple we assume it is a tuple containing everything to initialize the attribute.
+        Otherwise, the first arg should be a .net type implementing Attribute."""
         lst = []
         if len(args) > 0:
             if isinstance(args[0], tuple):
@@ -148,7 +170,14 @@ class clrmethod(object):
         return self
 
 class attribute(object):
+    """
+    Class decorator for adding attributes to .net python classes.
 
+    e.g.::
+        @attribute(DisplayName("X Class"))
+        class X(object):
+            pass
+    """
     def __init__(self, *args, **kwargs):
         lst = []
         if len(args) > 0:

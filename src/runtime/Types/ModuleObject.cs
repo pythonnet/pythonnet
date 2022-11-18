@@ -132,8 +132,10 @@ namespace Python.Runtime
                 return new NewReference(c);
             }
 
-            // attribute names
+            // Simplified imported attribute names
             // for attributes without the Attribute suffix, create an attribute builder.
+            // This means that imported attributes can be invoked using just e.g 'Browsable(False)'
+            // and not BrowsableAttribute(False) although its still an option.
             var qname2 = qname + "Attribute";
             var type2 = AssemblyManager.LookupTypes(qname2).FirstOrDefault(t => t.IsPublic);
             if (type2 != null)
