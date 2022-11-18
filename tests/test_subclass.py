@@ -13,7 +13,7 @@ from System.ComponentModel import (Browsable, BrowsableAttribute)
 from System.Threading import (CancellationToken)
 import pytest
 from Python.Test import (IInterfaceTest, SubClassTest, EventArgsTest,
-                         FunctionsTest, GenericVirtualMethodTest, ISimpleInterface, SimpleClass, TestAttribute, TestAttributeAttribute, ISimpleInterface2)
+                         FunctionsTest, GenericVirtualMethodTest, ISimpleInterface, SimpleClass, TestAttribute, TestAttributeAttribute, ISimpleInterface2, IGenericInterface)
 import Python.Test
 from System.Collections.Generic import List
 
@@ -32,6 +32,17 @@ def interface_test_class_fixture(subnamespace):
             return "/".join([x] * i)
 
     return InterfaceTestClass
+
+
+def interface_generic_class_fixture(subnamespace):
+
+    class GenericInterfaceImpl(IGenericInterface[int]):
+        __namespace__ = "Python.Test." + subnamespace
+
+        def Get(self, x):
+            return x
+
+    return GenericInterfaceImpl
 
 
 def derived_class_fixture(subnamespace):
@@ -489,3 +500,13 @@ def test_more_subclasses2():
     print(x.CallIncrementThing())
 
 
+
+def test_generic_interface():
+    from System import Int32
+    from Python.Test import GenericInterfaceUser, SpecificInterfaceUser
+
+    GenericInterfaceImpl = interface_generic_class_fixture(test_generic_interface.__name__)
+
+    obj = GenericInterfaceImpl()
+    SpecificInterfaceUser(obj, Int32(0))
+    GenericInterfaceUser[Int32](obj, Int32(0))
