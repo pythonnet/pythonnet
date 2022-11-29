@@ -15,7 +15,7 @@ namespace Python.Runtime
         const string SerializationName = "n";
         readonly string name;
         readonly Type type;
-        
+
         public string DeletedMessage
         {
             get
