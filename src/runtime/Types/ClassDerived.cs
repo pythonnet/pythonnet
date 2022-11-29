@@ -220,7 +220,10 @@ namespace Python.Runtime
             foreach (MethodInfo method in methods)
             {
                 if (!method.Attributes.HasFlag(MethodAttributes.Virtual) |
-                    method.Attributes.HasFlag(MethodAttributes.Final))
+                    method.Attributes.HasFlag(MethodAttributes.Final)
+                    // overriding generic virtual methods is not supported
+                    // so a call to that should be deferred to the base class method.
+                    || method.IsGenericMethod)
                 {
                     continue;
                 }
