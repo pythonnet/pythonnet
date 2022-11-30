@@ -84,34 +84,37 @@ namespace Python.Runtime
 
             // Extract interface types and base class types.
             var interfaces = new List<Type>();
-            var baseType = new List<ClassBase>();
 
-            var cnt = Runtime.PyTuple_GetSize(bases);
+            // More than one base type case be declared, but an exception will be thrown
+            // if more than one is a class/not an interface.
+            var baseTypes = new List<ClassBase>();
 
-            for (uint i = 0; i < cnt; i++)
+            var baseClassCount = Runtime.PyTuple_Size(bases);
+
+            for (nint i = 0; i < baseClassCount; i++)
             {
-                var base_type2 = Runtime.PyTuple_GetItem(bases, (int)i);
-                var cb2 = (ClassBase) GetManagedObject(base_type2);
-                if (cb2 != null)
+                var baseTypeIt = Runtime.PyTuple_GetItem(bases, (int)i);
+
+                if (GetManagedObject(baseTypeIt) is ClassBase classBaseIt)
                 {
-                    if (cb2.type.Valid && cb2.type.Value.IsInterface)
-                        interfaces.Add(cb2.type.Value);
-                    else baseType.Add(cb2);
+                    if (classBaseIt.type.Valid && classBaseIt.type.Value.IsInterface)
+                        interfaces.Add(classBaseIt.type.Value);
+                    else baseTypes.Add(classBaseIt);
                 }
             }
             // if the base type count is 0, there might still be interfaces to implement.
-            if (baseType.Count == 0)
+            if (baseTypes.Count == 0)
             {
-                baseType.Add(new ClassBase(typeof(object)));
+                baseTypes.Add(new ClassBase(typeof(object)));
             }
 
             // Multiple inheritance is not supported, unless the other types are interfaces
-            if (baseType.Count > 1)
+            if (baseTypes.Count > 1)
             {
                 return Exceptions.RaiseTypeError("cannot use multiple inheritance with managed classes");
             }
 
-            var cb = baseType[0];
+            var cb = baseTypes[0];
             try
             {
                 if (!cb.CanSubclass())
@@ -140,7 +143,7 @@ namespace Python.Runtime
                 using var clsDict = new PyDict(dict);
                 if (clsDict.HasKey("__assembly__") || clsDict.HasKey("__namespace__"))
                 {
-                    return TypeManager.CreateSubType(name, baseType, interfaces, clsDict);
+                    return TypeManager.CreateSubType(name, baseTypes[0], interfaces, clsDict);
                 }
             }
 
