@@ -132,6 +132,25 @@ namespace Python.Runtime
                 return new NewReference(c);
             }
 
+            // Simplified imported attribute names
+            // for attributes without the Attribute suffix, create an attribute builder.
+            // This means that imported attributes can be invoked using just e.g 'Browsable(False)'
+            // and not BrowsableAttribute(False) although its still an option.
+            var qname2 = qname + "Attribute";
+            var type2 = AssemblyManager.LookupTypes(qname2).FirstOrDefault(t => t.IsPublic);
+            if (type2 != null)
+            {
+                var str = "def {2}__AttributeBuilder(*args, **kwargs):\n"
+                          + "   import {1}\n"
+                          + "   return ({0}, args, kwargs)\n";
+                str = string.Format(str, qname2, _namespace, name);
+                PythonEngine.Exec(str);
+                using var attributeData = PythonEngine.Eval(name + "__AttributeBuilder");
+                var pinnedAttributeData = attributeData.NewReferenceOrNull();
+                StoreAttribute(name, pinnedAttributeData.Borrow());
+                return new NewReference(pinnedAttributeData);
+            }
+
             // We didn't find the name, so we may need to see if there is a
             // generic type with this base name. If so, we'll go ahead and
             // return it. Note that we store the mapping of the unmangled

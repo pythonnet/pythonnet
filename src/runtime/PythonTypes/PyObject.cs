@@ -25,7 +25,7 @@ namespace Python.Runtime
         /// Trace stack for PyObject's construction
         /// </summary>
         public StackTrace Traceback { get; } = new StackTrace(1);
-#endif  
+#endif
 
         protected IntPtr rawPtr = IntPtr.Zero;
         internal readonly int run = Runtime.GetRun();
@@ -165,7 +165,7 @@ namespace Python.Runtime
         {
             if (!Converter.ToManaged(obj, t, out var result, true))
             {
-                throw new InvalidCastException("cannot convert object to target type",
+                throw new InvalidCastException($"Cannot convert object to target type '{t}'.",
                     PythonException.FetchCurrentOrNull(out _));
             }
             return result;
@@ -235,7 +235,7 @@ namespace Python.Runtime
         {
             GC.SuppressFinalize(this);
             Dispose(true);
-            
+
         }
 
         internal StolenReference Steal()
@@ -1325,7 +1325,7 @@ namespace Python.Runtime
             }
             return true;
         }
-        
+
         public override bool TryBinaryOperation(BinaryOperationBinder binder, object arg, out object? result)
         {
             using var _ = Py.GIL();

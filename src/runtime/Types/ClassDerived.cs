@@ -243,6 +243,18 @@ namespace Python.Runtime
             if (py_dict != null && Runtime.PyDict_Check(py_dict))
             {
                 using var dict = new PyDict(py_dict);
+
+                // if there are any attributes, add them to the type.
+                if (dict.HasKey("__clr_attributes__"))
+                {
+                    using var attributes = new PyList(dict["__clr_attributes__"]);
+                    foreach (var attr in attributes)
+                    {
+                        var builder = GetAttributeBuilder(attr);
+                        typeBuilder.SetCustomAttribute(builder);
+                    }
+                }
+
                 using var keys = dict.Keys();
                 foreach (PyObject pyKey in keys)
                 {
@@ -502,6 +514,16 @@ namespace Python.Runtime
                 returnType,
                 argTypes.ToArray());
 
+            if (func.HasAttr("__clr_attributes__"))
+            {
+                using var attributes = new PyList(func.GetAttr("__clr_attributes__"));
+                foreach (var attr in attributes)
+                {
+                    var builder = GetAttributeBuilder(attr);
+                    methodBuilder.SetCustomAttribute(builder);
+                }
+            }
+
             ILGenerator il = methodBuilder.GetILGenerator();
 
             il.DeclareLocal(typeof(object[]));
@@ -600,6 +622,16 @@ namespace Python.Runtime
                 propertyType,
                 null);
 
+            if (func.HasAttr("__clr_attributes__"))
+            {
+                using var attributes = new PyList(func.GetAttr("__clr_attributes__"));
+                foreach (var attr in attributes)
+                {
+                    var builder = GetAttributeBuilder(attr);
+                    propertyBuilder.SetCustomAttribute(builder);
+                }
+            }
+
             if (func.HasAttr("fget"))
             {
                 using var pyfget = func.GetAttr("fget");
@@ -677,6 +709,127 @@ namespace Python.Runtime
             }
 
             return moduleBuilder;
+        }
+
+        /// <summary>
+        /// Builds a C# attribute based on a python tuple definition (Attibute Type, *attributeArgs, ** attributeKwArgs)
+        /// </summary>
+        static CustomAttributeBuilder GetAttributeBuilder(PyObject attr)
+        {
+            // this is a bit complicated because we want to support both unnamed and named arguments
+            // in C# there is a discrepancy between property setters and named argument wrt attributes
+            // in python there is no difference. But luckily there is rarely a conflict, so we can treat
+            // named arguments and named properties or fields the same way.
+            var tp = new PyTuple(attr);
+            Type attribute = tp[0].As<Type>();
+            if (typeof(Attribute).IsAssignableFrom(attribute) == false)
+            {
+                throw new Exception($"This type cannot be used as an attribute type: {attribute}");
+            }
+
+            var args = tp[1].As<PyObject[]>();
+            var dict = new PyDict(tp[2]);
+            var dict2 = new Dictionary<string, PyObject>();
+            foreach (var key in dict.Keys())
+            {
+                var k = key.As<string>();
+                dict2[k] = dict[key];
+            }
+
+            var allConstructors = attribute.GetConstructors();
+            foreach (var constructor in allConstructors)
+            {
+                var parameters = constructor.GetParameters();
+
+                // if the parameters args count are less that the specified, then this is not the right constructor.
+                if (parameters.Length < args.Length)
+                    continue;
+                List<object?> paramValues = new List<object?>();
+                HashSet<string> accountedFor = new HashSet<string>();
+                for (int i = 0; i < parameters.Length; i++)
+                {
+                    var parameter = parameters[i];
+                    if (parameter.ParameterType.IsArray &&
+                        null != parameter.GetCustomAttribute(typeof(ParamArrayAttribute)))
+                    {
+                        int cnt = args.Length - i;
+                        var elemType = parameter.ParameterType.GetElementType();
+                        var values = Array.CreateInstance(elemType, cnt);
+                        for (int j = 0; j < cnt; j++)
+                            values.SetValue(args[i + j].AsManagedObject(typeof(object)), j);
+                        paramValues.Add(values);
+                        break;
+                    }
+
+                    PyObject? argvalue = null;
+                    if (args.Length <= i && dict2.TryGetValue(parameter.Name, out argvalue))
+                    {
+                        accountedFor.Add(parameter.Name);
+                    }
+                    else if (args.Length <= i && parameter.IsOptional)
+                    {
+                        paramValues.Add(parameter.DefaultValue);
+                        continue;
+                    }
+                    else if (args.Length <= i)
+                    {
+                        goto next;
+                    }
+                    else
+                    {
+                        argvalue = args[i];
+                    }
+
+
+                    object? argumentValue = argvalue.AsManagedObject(parameter.ParameterType);
+
+                    if (parameter.ParameterType.IsAssignableFrom(argumentValue?.GetType() ?? typeof(object)))
+                        paramValues.Add(argumentValue ?? null);
+                    else if (parameter.IsOptional)
+                    {
+                        paramValues.Add(parameter.DefaultValue);
+                    }
+                }
+
+                List<PropertyInfo> namedProperties = new List<PropertyInfo>();
+                List<object?> namedPropertyValues = new List<object?>();
+                List<FieldInfo> namedFields = new List<FieldInfo>();
+                List<object?> namedFieldValues = new List<object?>();
+
+                foreach (var key in dict2.Keys.Where(x => accountedFor.Contains(x) == false))
+                {
+                    var member = attribute.GetMember(key).FirstOrDefault();
+                    if (member == null)
+                        goto next;
+                    if (member is PropertyInfo prop)
+                    {
+                        namedProperties.Add(prop);
+                        var argval = dict2[key].AsManagedObject(prop.PropertyType);
+                        if (prop.PropertyType.IsAssignableFrom(argval?.GetType() ?? typeof(object)))
+                            namedPropertyValues.Add(argval);
+                        else
+                            goto next;
+                    }
+
+                    if (member is FieldInfo field)
+                    {
+                        namedFields.Add(field);
+                        var argval = dict2[key].AsManagedObject(field.FieldType);
+                        if (field.FieldType.IsAssignableFrom(argval?.GetType() ?? typeof(object)))
+                            namedFieldValues.Add(argval);
+                        else
+                            goto next;
+                    }
+                }
+
+                var attrBuilder = new CustomAttributeBuilder(constructor, paramValues.ToArray(),
+                    namedProperties.ToArray(), namedPropertyValues.ToArray(),
+                    namedFields.ToArray(), namedFieldValues.ToArray());
+                return attrBuilder;
+                next: ;
+            }
+
+            throw new Exception($"Unable to build an attribute from the supplied arguments: {attribute}");
         }
     }
 

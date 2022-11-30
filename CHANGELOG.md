@@ -8,6 +8,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 ## [Unreleased][]
 
 ### Added
+-   Support for using .NET attributes for python defined classes, properties and methods.
 
 ### Changed
 

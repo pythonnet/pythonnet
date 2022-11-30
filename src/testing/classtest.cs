@@ -1,4 +1,6 @@
+using System;
 using System.Collections;
+using Python.Runtime;
 
 namespace Python.Test
 {
@@ -58,5 +60,41 @@ namespace Python.Test
 
     internal class InternalClass
     {
+    }
+
+    public class TestAttributeAttribute : Attribute
+    {
+        public int Arg1 { get; }
+        public string Arg2 { get;}
+        public int Arg3 { get; set; }
+        public IntEnum Arg4 { get; set; }
+        public TestAttributeAttribute()
+        {
+
+        }
+        public TestAttributeAttribute(int arg1)
+        {
+            Arg1 = arg1;
+        }
+        public TestAttributeAttribute(int arg1, string arg2)
+        {
+            Arg1 = arg1;
+            Arg2 = arg2;
+        }
+
+        public TestAttributeAttribute(int arg1, int arg2)
+        {
+            Arg1 = arg1;
+            Arg2 = arg2.ToString();
+        }
+
+        public static void Verify(object x, int arg1 = 1, string arg2 = "2")
+        {
+            var attr = x.GetType().GetCustomAttribute<TestAttributeAttribute>();
+            if (attr.Arg1 != arg1) throw new Exception("Verification failed");
+            if (attr.Arg2 != arg2) throw new Exception("Verification failed");
+            if (attr.Arg3 != 3) throw new Exception("Verification failed");
+            if (attr.Arg4 != IntEnum.Four) throw new Exception("Verification failed");
+        }
     }
 }
