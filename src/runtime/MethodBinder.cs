@@ -888,6 +888,30 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError(value.ToString());
             }
 
+            // NOTE: requiring event handlers to be instances of System.Delegate
+            // Currently if event handlers accept any callable object, the dynamically generated
+            // Delegate for the callable is not going to have the same hash when being passed
+            // to both add_ and remove_ event property methods. Therefore once event handler is
+            // added, it can not be removed since the generated delegate on the remove_ method
+            // is not identical to the first.
+            // Here, we ensure given argument to add/remove special method is a Delegate
+            if (binding.info.IsSpecialName &&
+                    (binding.info.Name.StartsWith("add_") || binding.info.Name.StartsWith("remove_")))
+            {
+                if (Runtime.PyTuple_Size(args) != 1)
+                {
+                    throw new Exception("Event handler methods only accept one Delegate argument");
+                }
+
+                // if argument type is not a CLR Delegate, throw an exception
+                BorrowedReference darg = Runtime.PyTuple_GetItem(args, 0);
+                if (ManagedType.GetManagedObject(darg) is not CLRObject clrObj
+                        || !typeof(System.Delegate).IsAssignableFrom(clrObj.inst.GetType()))
+                {
+                    return Exceptions.RaiseTypeError("event handler must be a System.Delegate");
+                }
+            }
+
             if (allow_threads)
             {
                 ts = PythonEngine.BeginAllowThreads();
