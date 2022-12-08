@@ -178,8 +178,11 @@ namespace Python.EmbeddingTest
         {
             using (Py.GIL())
             {
-                PyModule.FromString("scope",
-                    "class Class1():\n" +
+                //parent module
+                PyModule.FromString("test", "");
+                //sub-module
+                PyModule.FromString("test.scope",
+                "class Class1():\n" +
                     "    def __init__(self, value):\n" +
                     "        self.value = value\n" +
                     "    def call(self, arg):\n" +
