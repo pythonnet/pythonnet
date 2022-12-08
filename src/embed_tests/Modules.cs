@@ -170,6 +170,41 @@ namespace Python.EmbeddingTest
         }
 
         /// <summary>
+        /// Create a class in the scope, the class can read variables in the scope.
+        /// Its methods can write the variables with the help of 'global' keyword.
+        /// </summary>
+        [Test]
+        public void TestCreateVirtualPackageStructure()
+        {
+            using (Py.GIL())
+            {
+                PyModule.FromString("scope",
+                    "class Class1():\n" +
+                    "    def __init__(self, value):\n" +
+                    "        self.value = value\n" +
+                    "    def call(self, arg):\n" +
+                    "        return self.value + bb + arg\n" + //use scope variables
+                    "    def update(self, arg):\n" +
+                    "        global bb\n" +
+                    "        bb = self.value + arg\n"  //update scope variable
+                    , "test"
+                );
+                
+
+                dynamic _ps = Py.Import("test.scope");
+                _ps.bb = 100;
+
+                dynamic obj1 = _ps.Class1(20);
+                var result = obj1.call(10).As<int>();
+                Assert.AreEqual(130, result);
+
+                obj1.update(10);
+                result = ps.Get<int>("bb");
+                Assert.AreEqual(30, result);
+            }
+        }
+
+        /// <summary>
         /// Import a python module into the session.
         /// Equivalent to the Python "import" statement.
         /// </summary>
