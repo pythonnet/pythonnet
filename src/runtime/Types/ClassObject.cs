@@ -264,11 +264,6 @@ namespace Python.Runtime
             return CLRObject.GetReference(result!, tp);
         }
 
-        protected virtual void SetTypeNewSlot(BorrowedReference pyType, SlotsHolder slotsHolder)
-        {
-            TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.tp_new, new Interop.BBB_N(tp_new_impl), slotsHolder);
-        }
-
         public override bool HasCustomNew()
         {
             if (base.HasCustomNew()) return true;
@@ -288,7 +283,7 @@ namespace Python.Runtime
         {
             base.InitializeSlots(pyType, slotsHolder);
 
-            this.SetTypeNewSlot(pyType, slotsHolder);
+            TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.tp_new, new Interop.BBB_N(tp_new_impl), slotsHolder);
         }
 
         protected virtual NewReference NewObjectToPython(object obj, BorrowedReference tp)

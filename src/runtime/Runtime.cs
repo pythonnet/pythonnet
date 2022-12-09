@@ -200,8 +200,11 @@ namespace Python.Runtime
         private static void InitPyMembers()
         {
             using (var builtinsOwned = PyImport_ImportModule("builtins"))
+            using (var typesOwned = PyImport_ImportModule("types"))
             {
                 var builtins = builtinsOwned.Borrow();
+                var types = typesOwned.Borrow();
+
                 SetPyMember(out PyNotImplemented, PyObject_GetAttrString(builtins, "NotImplemented").StealNullable());
 
                 SetPyMember(out PyBaseObjectType, PyObject_GetAttrString(builtins, "object").StealNullable());
@@ -213,6 +216,8 @@ namespace Python.Runtime
                 SetPyMemberTypeOf(out PyBoolType, _PyTrue!);
                 SetPyMemberTypeOf(out PyNoneType, _PyNone!);
 
+                SetPyMember(out PyBoundMethodType, PyObject_GetAttrString(types, "MethodType").StealNullable());
+                SetPyMember(out PyMethodWrapperType, PyObject_GetAttrString(types, "MethodWrapperType").StealNullable());
                 SetPyMemberTypeOf(out PyMethodType, PyObject_GetAttrString(builtins, "len").StealNullable());
 
                 // For some arcane reason, builtins.__dict__.__setitem__ is *not*
@@ -467,6 +472,8 @@ namespace Python.Runtime
         internal static PyObject PyModuleType;
         internal static PyObject PySuper_Type;
         internal static PyType PyCLRMetaType;
+        internal static PyObject PyBoundMethodType;
+        internal static PyObject PyMethodWrapperType;
         internal static PyObject PyMethodType;
         internal static PyObject PyWrapperDescriptorType;
 
@@ -1835,6 +1842,12 @@ namespace Python.Runtime
                 *Delegates.Py_NoSiteFlag = 1;
                 return *Delegates.Py_NoSiteFlag;
             });
+        }
+
+        internal static uint PyTuple_GetSize(BorrowedReference tuple)
+        {
+            IntPtr r = Delegates.PyTuple_Size(tuple);
+            return (uint)r.ToInt32();
         }
     }
 

@@ -5,10 +5,12 @@ using System.Text;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.IO;
 
 namespace Python.Runtime
 {
     using MaybeMethodBase = MaybeMethodBase<MethodBase>;
+
     /// <summary>
     /// A MethodBinder encapsulates information about a (possibly overloaded)
     /// managed method, and is responsible for selecting the right method given
@@ -18,6 +20,33 @@ namespace Python.Runtime
     [Serializable]
     internal class MethodBinder
     {
+        /// <summary>
+        /// Context handler to provide invoke options to MethodBinder
+        /// </summary>
+        public class InvokeContext : IDisposable
+        {
+            MethodBinder _binder;
+
+            bool _original_allow_redirected;
+
+            public InvokeContext(MethodBinder binder)
+            {
+                _binder = binder;
+                _original_allow_redirected = _binder.allow_redirected;
+            }
+
+            public bool AllowRedirected
+            {
+                get => _binder.allow_redirected;
+                set => _binder.allow_redirected = value;
+            }
+
+            public void Dispose()
+            {
+                _binder.allow_redirected = _original_allow_redirected;
+            }
+        }
+
         /// <summary>
         /// The overloads of this method
         /// </summary>
@@ -30,6 +59,7 @@ namespace Python.Runtime
         public bool init = false;
         public const bool DefaultAllowThreads = true;
         public bool allow_threads = DefaultAllowThreads;
+        public bool allow_redirected = true;
 
         internal MethodBinder()
         {
@@ -49,6 +79,7 @@ namespace Python.Runtime
         internal void AddMethod(MethodBase m)
         {
             list.Add(m);
+            init = false;
         }
 
         /// <summary>
@@ -216,6 +247,15 @@ namespace Python.Runtime
                 val += ArgPrecedence(pi[i].ParameterType);
             }
 
+            // NOTE:
+            // Ensure Original methods (e.g. _BASEVIRTUAL_get_Item()) are
+            // sorted after their Redirected counterpart. This makes sure when
+            // allowRedirected is false and the Redirected method is skipped
+            // in the Bind() loop, the Original method is right after and can
+            // match the method specs and create a bind
+            if (ClassDerivedObject.IsMethod<OriginalMethod>(mi))
+                val += 1;
+
             return val;
         }
 
@@ -363,10 +403,10 @@ namespace Python.Runtime
                 _methods = GetMethods();
             }
 
-            return Bind(inst, args, kwargDict, _methods, matchGenerics: true);
+            return Bind(inst, args, kwargDict, _methods, matchGenerics: true, allowRedirected: allow_redirected);
         }
 
-        static Binding? Bind(BorrowedReference inst, BorrowedReference args, Dictionary<string, PyObject> kwargDict, MethodBase[] methods, bool matchGenerics)
+        static Binding? Bind(BorrowedReference inst, BorrowedReference args, Dictionary<string, PyObject> kwargDict, MethodBase[] methods, bool matchGenerics, bool allowRedirected)
         {
             var pynargs = (int)Runtime.PyTuple_Size(args);
             var isGeneric = false;
@@ -377,6 +417,11 @@ namespace Python.Runtime
             // TODO: Clean up
             foreach (MethodBase mi in methods)
             {
+                if (ClassDerivedObject.IsMethod<RedirectedMethod>(mi) && !allowRedirected)
+                {
+                    continue;
+                }
+
                 if (mi.IsGenericMethod)
                 {
                     isGeneric = true;
@@ -394,12 +439,14 @@ namespace Python.Runtime
                     continue;
                 }
                 // Preprocessing pi to remove either the first or second argument.
-                if (isOperator && !isReverse) {
+                if (isOperator && !isReverse)
+                {
                     // The first Python arg is the right operand, while the bound instance is the left.
                     // We need to skip the first (left operand) CLR argument.
                     pi = pi.Skip(1).ToArray();
                 }
-                else if (isOperator && isReverse) {
+                else if (isOperator && isReverse)
+                {
                     // The first Python arg is the left operand.
                     // We need to take the first CLR argument.
                     pi = pi.Take(1).ToArray();
@@ -518,7 +565,7 @@ namespace Python.Runtime
                 MethodInfo[] overloads = MatchParameters(methods, types);
                 if (overloads.Length != 0)
                 {
-                    return Bind(inst, args, kwargDict, overloads, matchGenerics: false);
+                    return Bind(inst, args, kwargDict, overloads, matchGenerics: false, allowRedirected: allowRedirected);
                 }
             }
             if (mismatchedMethods.Count > 0)
@@ -616,7 +663,7 @@ namespace Python.Runtime
                 }
                 else
                 {
-                    if(arrayStart == paramIndex)
+                    if (arrayStart == paramIndex)
                     {
                         op = HandleParamsArray(args, arrayStart, pyArgCount, out tempObject);
                     }
@@ -772,7 +819,7 @@ namespace Python.Runtime
                 defaultArgList = new ArrayList();
                 for (var v = positionalArgumentCount; v < parameters.Length; v++)
                 {
-                    if (kwargDict.ContainsKey(parameters[v].Name))
+                    if (parameters[v].Name is string pname && kwargDict.ContainsKey(pname))
                     {
                         // we have a keyword argument for this parameter,
                         // no need to check for a default parameter, but put a null
@@ -789,7 +836,8 @@ namespace Python.Runtime
                         defaultArgList.Add(parameters[v].GetDefaultValue());
                         defaultsNeeded++;
                     }
-                    else if (parameters[v].IsOut) {
+                    else if (parameters[v].IsOut)
+                    {
                         defaultArgList.Add(null);
                     }
                     else if (!paramsArray)

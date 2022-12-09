@@ -213,7 +213,6 @@ namespace Python.Runtime
                 // if the class is a IPythonDerivedClass and target is not the same as self.targetType
                 // (eg if calling the base class method) then call the original base class method instead
                 // of the target method.
-                IntPtr superType = IntPtr.Zero;
                 if (target is not null && Runtime.PyObject_TYPE(target) != self.targetType!)
                 {
                     var inst = GetManagedObject(target) as CLRObject;
@@ -221,19 +220,26 @@ namespace Python.Runtime
                     {
                         if (GetManagedObject(self.targetType!) is ClassBase baseType && baseType.type.Valid)
                         {
-                            var baseMethodName = $"_{baseType.type.Value.Name}__{self.m.name}";
-                            using var baseMethod = Runtime.PyObject_GetAttrString(target, baseMethodName);
-                            if (!baseMethod.IsNull())
+                            foreach (string possibleMethodName in new string[] {
+                                 ClassDerivedObject.CreateDerivedVirtualName(baseType.type.Value, self.m.name),
+                                 ClassDerivedObject.CreateDerivedVirtualName(self.m.name),
+                            })
                             {
-                                if (GetManagedObject(baseMethod.Borrow()) is MethodBinding baseSelf)
+                                using var baseMethod = Runtime.PyObject_GetAttrString(target, possibleMethodName);
+                                if (!baseMethod.IsNull())
                                 {
-                                    self = baseSelf;
+                                    if (GetManagedObject(baseMethod.Borrow()) is MethodBinding baseSelf)
+                                    {
+                                        self = baseSelf;
+                                        break;
+                                    }
+                                }
+                                else
+                                {
+                                    Runtime.PyErr_Clear();
                                 }
                             }
-                            else
-                            {
-                                Runtime.PyErr_Clear();
-                            }
+
                         }
                     }
                 }

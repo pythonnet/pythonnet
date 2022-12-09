@@ -1,5 +1,8 @@
 using System;
+using System.Linq;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 
@@ -79,39 +82,54 @@ namespace Python.Runtime
             BorrowedReference bases = Runtime.PyTuple_GetItem(args, 1);
             BorrowedReference dict = Runtime.PyTuple_GetItem(args, 2);
 
-            // We do not support multiple inheritance, so the bases argument
-            // should be a 1-item tuple containing the type we are subtyping.
-            // That type must itself have a managed implementation. We check
-            // that by making sure its metatype is the CLR metatype.
+            // Extract interface types and base class types --------------------
+            // from `bases` provided to this method
 
-            if (Runtime.PyTuple_Size(bases) != 1)
+            // If there are no baseTypes, choose Object as base type
+            // Also there might still be interfaces to implement
+            BorrowedReference pyBase;
+            ClassBase baseType = ClassBase.ObjectClassBase;
+            List<Type> interfaces = new List<Type>();
+
+            for (uint i = 0; i < Runtime.PyTuple_GetSize(bases); i++)
             {
-                return Exceptions.RaiseTypeError("cannot use multiple inheritance with managed classes");
-            }
-
-            BorrowedReference base_type = Runtime.PyTuple_GetItem(bases, 0);
-            BorrowedReference mt = Runtime.PyObject_TYPE(base_type);
-
-            if (!(mt == PyCLRMetaType || mt == Runtime.PyTypeType))
-            {
-                return Exceptions.RaiseTypeError("invalid metatype");
-            }
-
-            // Ensure that the reflected type is appropriate for subclassing,
-            // disallowing subclassing of delegates, enums and array types.
-
-            if (GetManagedObject(base_type) is ClassBase cb)
-            {
-                try
+                pyBase = Runtime.PyTuple_GetItem(bases, (int)i);
+                var cb = (ClassBase?)GetManagedObject(pyBase);
+                if (cb != null)
                 {
-                    if (!cb.CanSubclass())
+                    // If type is interface, add it to list of interfaces, and move on
+                    if (cb.type.Valid
+                            && cb.type.Value.IsInterface)
                     {
-                        return Exceptions.RaiseTypeError("delegates, enums and array types cannot be subclassed");
+                        interfaces.Add(cb.type.Value);
+                        continue;
                     }
-                }
-                catch (SerializationException)
-                {
-                    return Exceptions.RaiseTypeError($"Underlying C# Base class {cb.type} has been deleted");
+
+                    // Otherwise lets use that as base type but
+                    // multiple inheritance is not supported (unless the others are interfaces)
+                    // so lets check if we have already assigned a custom base type
+                    else if (baseType != ClassBase.ObjectClassBase)
+                    {
+                        return Exceptions.RaiseTypeError("cannot use multiple inheritance with managed classes");
+                    }
+
+                    // This is the first base class so lets verify and use.
+                    // Ensure that the reflected type is appropriate for subclassing,
+                    // e.g. disallowing subclassing of enums. See ClassBase.CanSubclass()
+                    else
+                    {
+                        try
+                        {
+                            if (!cb.CanSubclass())
+                                return Exceptions.RaiseTypeError("delegates, enums and array types cannot be subclassed");
+                        }
+                        catch (SerializationException)
+                        {
+                            return Exceptions.RaiseTypeError($"Underlying C# Base class {cb.type} has been deleted");
+                        }
+                    }
+
+                    baseType = cb;
                 }
             }
 
@@ -121,20 +139,26 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("subclasses of managed classes do not support __slots__");
             }
 
-            // If __assembly__ or __namespace__ are in the class dictionary then create
-            // a managed sub type.
-            // This creates a new managed type that can be used from .net to call back
-            // into python.
-            if (null != dict)
+            // If `dict` is provided (contains '__module__' and '__qualname__') and
+            // baseType is valid for subtyping, then lets create a custom dotnet type, implementing baseType, that
+            // can be used from .net to call back into python (e.g. virtual overrides on python side)
+            if (dict != null)
             {
-                using var clsDict = new PyDict(dict);
-                if (clsDict.HasKey("__assembly__") || clsDict.HasKey("__namespace__"))
+                using (var clsDict = new PyDict(dict))
                 {
-                    return TypeManager.CreateSubType(name, base_type, clsDict);
+                    // let's make sure `__namespace__` exists if `__assembly__` is provided
+                    if (!clsDict.HasKey("__namespace__"))
+                    {
+                        clsDict["__namespace__"] =
+                            (clsDict["__module__"].ToString()).ToPython();
+                    }
+                    return TypeManager.CreateSubType(name, baseType, interfaces, clsDict);
                 }
             }
 
-            // otherwise just create a basic type without reflecting back into the managed side.
+            // otherwise just create a basic type without reflecting back into the managed side
+            // since the baseType does not have any need to call into python (e.g. no virtual methods)
+            pyBase = Runtime.PyTuple_GetItem(bases, 0);
             IntPtr func = Util.ReadIntPtr(Runtime.PyTypeType, TypeOffset.tp_new);
             NewReference type = NativeCall.Call_3(func, tp, args, kw);
             if (type.IsNull())
@@ -152,23 +176,23 @@ namespace Python.Runtime
             flags |= TypeFlags.HaveGC;
             PyType.SetFlags(type.Borrow(), flags);
 
-            TypeManager.CopySlot(base_type, type.Borrow(), TypeOffset.tp_dealloc);
+            TypeManager.CopySlot(pyBase, type.Borrow(), TypeOffset.tp_dealloc);
 
             // Hmm - the standard subtype_traverse, clear look at ob_size to
             // do things, so to allow gc to work correctly we need to move
             // our hidden handle out of ob_size. Then, in theory we can
             // comment this out and still not crash.
-            TypeManager.CopySlot(base_type, type.Borrow(), TypeOffset.tp_traverse);
-            TypeManager.CopySlot(base_type, type.Borrow(), TypeOffset.tp_clear);
+            TypeManager.CopySlot(pyBase, type.Borrow(), TypeOffset.tp_traverse);
+            TypeManager.CopySlot(pyBase, type.Borrow(), TypeOffset.tp_clear);
 
             // derived types must have their GCHandle at the same offset as the base types
-            int clrInstOffset = Util.ReadInt32(base_type, Offsets.tp_clr_inst_offset);
+            int clrInstOffset = Util.ReadInt32(pyBase, Offsets.tp_clr_inst_offset);
             Debug.Assert(clrInstOffset > 0
                       && clrInstOffset < Util.ReadInt32(type.Borrow(), TypeOffset.tp_basicsize));
             Util.WriteInt32(type.Borrow(), Offsets.tp_clr_inst_offset, clrInstOffset);
 
             // for now, move up hidden handle...
-            var gc = (GCHandle)Util.ReadIntPtr(base_type, Offsets.tp_clr_inst);
+            var gc = (GCHandle)Util.ReadIntPtr(pyBase, Offsets.tp_clr_inst);
             Util.WriteIntPtr(type.Borrow(), Offsets.tp_clr_inst, (IntPtr)GCHandle.Alloc(gc.Target));
 
             Runtime.PyType_Modified(type.Borrow());

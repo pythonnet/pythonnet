@@ -185,11 +185,14 @@ namespace Python.Runtime
             else if (type == typeof(Exception) ||
                      type.IsSubclassOf(typeof(Exception)))
             {
-                impl = new ExceptionClassObject(type);
+                if (PythonDerivedType.IsPythonDerivedType(type))
+                    impl = new ExceptionClassDerivedObject(type);
+                else
+                    impl = new ExceptionClassObject(type);
             }
 
 #pragma warning disable CS0618 // Type or member is obsolete. OK for internal use.
-            else if (null != PythonDerivedType.GetPyObjField(type))
+            else if (PythonDerivedType.IsPythonDerivedType(type))
 #pragma warning restore CS0618 // Type or member is obsolete
             {
                 impl = new ClassDerivedObject(type);
@@ -300,28 +303,28 @@ namespace Python.Runtime
 
         internal static bool ShouldBindProperty(PropertyInfo pi)
         {
-                MethodInfo? mm;
-                try
-                {
-                    mm = pi.GetGetMethod(true);
-                    if (mm == null)
-                    {
-                        mm = pi.GetSetMethod(true);
-                    }
-                }
-                catch (SecurityException)
-                {
-                    // GetGetMethod may try to get a method protected by
-                    // StrongNameIdentityPermission - effectively private.
-                    return false;
-                }
-
+            MethodInfo? mm;
+            try
+            {
+                mm = pi.GetGetMethod(true);
                 if (mm == null)
                 {
-                    return false;
+                    mm = pi.GetSetMethod(true);
                 }
+            }
+            catch (SecurityException)
+            {
+                // GetGetMethod may try to get a method protected by
+                // StrongNameIdentityPermission - effectively private.
+                return false;
+            }
 
-                return ShouldBindMethod(mm);
+            if (mm == null)
+            {
+                return false;
+            }
+
+            return ShouldBindMethod(mm);
         }
 
         internal static bool ShouldBindEvent(EventInfo ei)
@@ -469,7 +472,7 @@ namespace Python.Runtime
                     case MemberTypes.Property:
                         var pi = (PropertyInfo)mi;
 
-                        if(!ShouldBindProperty(pi))
+                        if (!ShouldBindProperty(pi))
                         {
                             continue;
                         }
@@ -484,7 +487,7 @@ namespace Python.Runtime
                                 ci.indexer = new Indexer();
                                 idx = ci.indexer;
                             }
-                            idx.AddProperty(pi);
+                            idx.AddProperty(type, pi);
                             continue;
                         }
 
@@ -556,12 +559,13 @@ namespace Python.Runtime
                 var parent = type.BaseType;
                 while (parent != null && ci.indexer == null)
                 {
-                    foreach (var prop in parent.GetProperties()) {
+                    foreach (var prop in parent.GetProperties())
+                    {
                         var args = prop.GetIndexParameters();
                         if (args.GetLength(0) > 0)
                         {
                             ci.indexer = new Indexer();
-                            ci.indexer.AddProperty(prop);
+                            ci.indexer.AddProperty(type, prop);
                             break;
                         }
                     }

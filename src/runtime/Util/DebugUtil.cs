@@ -52,9 +52,8 @@ namespace Python.Runtime
             objMember = Util.ReadRef(type, TypeOffset.tp_bases);
             Print("  bases: ", objMember);
 
-            //op = Util.ReadIntPtr(type, TypeOffset.tp_mro);
-            //DebugUtil.Print("  mro: ", op);
-
+            objMember = Util.ReadRef(type, TypeOffset.tp_mro);
+            DebugUtil.Print("  mro: ", objMember);
 
             var slots = TypeOffset.GetOffsets();
 

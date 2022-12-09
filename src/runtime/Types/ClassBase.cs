@@ -28,6 +28,11 @@ namespace Python.Runtime
         internal readonly Dictionary<int, MethodObject> richcompare = new();
         internal MaybeType type;
 
+        /// <summary>
+        /// Return class representing clr 'object' type
+        /// </summary>
+        public static ClassBase ObjectClassBase = new ClassBase(typeof(object));
+
         internal ClassBase(Type tp)
         {
             if (tp is null) throw new ArgumentNullException(nameof(type));
@@ -420,6 +425,21 @@ namespace Python.Runtime
         /// Implements __getitem__ for reflected classes and value types.
         /// </summary>
         static NewReference mp_subscript_impl(BorrowedReference ob, BorrowedReference idx)
+            => Substrict(ob, idx, allowRedirected: false);
+
+        /// <summary>
+        /// Implements __getitem__ for reflected classes and value types with option to
+        /// call redirected getter methods in derived classes.
+        /// e.g. get_Item() is redirected method, when _BASEVIRTUAL_get_Item() is original method
+        /// When derived class is accessed as the derived
+        /// class, __getitem__ needs to call into redirected get_Item() method and
+        /// jump into any __getitem__ override provided on the python type.
+        /// When derived class is accessed as the base class, __getitem__ needs to
+        /// call into original _BASEVIRTUAL_get_Item() to avoid calling jump into
+        /// any __getitem__ override provided on the python type. Otherwise the __getitem__
+        /// override might possibly call super().__getitem__() and create an infinite loop
+        /// </summary>
+        protected static NewReference Substrict(BorrowedReference ob, BorrowedReference idx, bool allowRedirected)
         {
             BorrowedReference tp = Runtime.PyObject_TYPE(ob);
             var cls = (ClassBase)GetManagedObject(tp)!;
@@ -433,23 +453,40 @@ namespace Python.Runtime
             // Arg may be a tuple in the case of an indexer with multiple
             // parameters. If so, use it directly, else make a new tuple
             // with the index arg (method binders expect arg tuples).
-            if (!Runtime.PyTuple_Check(idx))
+            using (new MethodBinder.InvokeContext(cls.indexer.GetterBinder) { AllowRedirected = allowRedirected })
             {
-                using var argTuple = Runtime.PyTuple_New(1);
-                Runtime.PyTuple_SetItem(argTuple.Borrow(), 0, idx);
-                return cls.indexer.GetItem(ob, argTuple.Borrow());
-            }
-            else
-            {
-                return cls.indexer.GetItem(ob, idx);
+                if (!Runtime.PyTuple_Check(idx))
+                {
+                    using var argTuple = Runtime.PyTuple_New(1);
+                    Runtime.PyTuple_SetItem(argTuple.Borrow(), 0, idx);
+                    return cls.indexer.GetItem(ob, argTuple.Borrow());
+                }
+                else
+                {
+                    return cls.indexer.GetItem(ob, idx);
+                }
             }
         }
-
 
         /// <summary>
         /// Implements __setitem__ for reflected classes and value types.
         /// </summary>
         static int mp_ass_subscript_impl(BorrowedReference ob, BorrowedReference idx, BorrowedReference v)
+            => Ass_Substrict(ob, idx, v, allowRedirected: false);
+
+        /// <summary>
+        /// Implements __setitem__ for reflected classes and value types with option to
+        /// call redirected getter methods in derived classes.
+        /// e.g. set_Item() is redirected method, when _BASEVIRTUAL_set_Item() is original method
+        /// When derived class is accessed as the derived
+        /// class, __setitem__ needs to call into redirected set_Item() method and
+        /// jump into any __setitem__ override provided on the python type.
+        /// When derived class is accessed as the base class, __setitem__ needs to
+        /// call into original _BASEVIRTUAL_set_Item() to avoid calling jump into
+        /// any __setitem__ override provided on the python type. Otherwise the __getitem__
+        /// override might possibly call super().__setitem__(v) and create an infinite loop
+        /// </summary>
+        protected static int Ass_Substrict(BorrowedReference ob, BorrowedReference idx, BorrowedReference v, bool allowRedirected)
         {
             BorrowedReference tp = Runtime.PyObject_TYPE(ob);
             var cls = (ClassBase)GetManagedObject(tp)!;
@@ -497,7 +534,8 @@ namespace Python.Runtime
             // Add value to argument list
             Runtime.PyTuple_SetItem(real.Borrow(), i, v);
 
-            cls.indexer.SetItem(ob, real.Borrow());
+            using (new MethodBinder.InvokeContext(cls.indexer.SetterBinder) { AllowRedirected = allowRedirected })
+                cls.indexer.SetItem(ob, real.Borrow());
 
             if (Exceptions.ErrorOccurred())
             {

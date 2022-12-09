@@ -24,6 +24,9 @@ namespace Python.Runtime
             }
         }
 
+        /// <summary>
+        /// Return wrapped type or throw SerializationException if null
+        /// </summary>
         public Type Value
         {
             get
@@ -37,7 +40,13 @@ namespace Python.Runtime
         }
 
         public string Name => name;
+        
         public bool Valid => type != null;
+        
+        /// <summary>
+        /// Return wrapped type or null
+        /// </summary>
+        public Type ValueOrNull => type;
 
         public override string ToString()
         {

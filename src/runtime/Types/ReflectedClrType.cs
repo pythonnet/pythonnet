@@ -25,23 +25,18 @@ internal sealed class ReflectedClrType : PyType
     /// </remarks>
     public static ReflectedClrType GetOrCreate(Type type)
     {
-        if (ClassManager.cache.TryGetValue(type, out var pyType))
+        if (ClassManager.cache.TryGetValue(type, out ReflectedClrType pyType))
         {
             return pyType;
         }
 
-        // Ensure, that matching Python type exists first.
-        // It is required for self-referential classes
-        // (e.g. with members, that refer to the same class)
         pyType = AllocateClass(type);
         ClassManager.cache.Add(type, pyType);
 
-        var impl = ClassManager.CreateClass(type);
+        ClassBase impl = ClassManager.CreateClass(type);
 
         TypeManager.InitializeClassCore(type, pyType, impl);
-
         ClassManager.InitClassBase(type, impl, pyType);
-
         // Now we force initialize the Python type object to reflect the given
         // managed type, filling the Python type slots with thunks that
         // point to the managed methods providing the implementation.
@@ -68,33 +63,37 @@ internal sealed class ReflectedClrType : PyType
         TypeManager.InitializeClass(this, cb, cb.type.Value);
     }
 
-    internal static NewReference CreateSubclass(ClassBase baseClass,
+    internal static NewReference CreateSubclass(ClassBase baseType, IEnumerable<Type> interfaces,
                                                 string name, string? assembly, string? ns,
                                                 BorrowedReference dict)
     {
         try
         {
-            Type subType = ClassDerivedObject.CreateDerivedType(name,
-                baseClass.type.Value,
+            Type subType;
+
+            subType = ClassDerivedObject.CreateDerivedType(name,
+                baseType.type.Value,
+                interfaces,
                 dict,
                 ns,
                 assembly);
 
-            var py_type = GetOrCreate(subType);
+            ClassManager.cache.Remove(subType);
+            ReflectedClrType pyTypeObj = GetOrCreate(subType);
 
             // by default the class dict will have all the C# methods in it, but as this is a
             // derived class we want the python overrides in there instead if they exist.
-            var cls_dict = Util.ReadRef(py_type, TypeOffset.tp_dict);
+            var cls_dict = Util.ReadRef(pyTypeObj, TypeOffset.tp_dict);
             ThrowIfIsNotZero(Runtime.PyDict_Update(cls_dict, dict));
             // Update the __classcell__ if it exists
             BorrowedReference cell = Runtime.PyDict_GetItemString(cls_dict, "__classcell__");
             if (!cell.IsNull)
             {
-                ThrowIfIsNotZero(Runtime.PyCell_Set(cell, py_type));
+                ThrowIfIsNotZero(Runtime.PyCell_Set(cell, pyTypeObj));
                 ThrowIfIsNotZero(Runtime.PyDict_DelItemString(cls_dict, "__classcell__"));
             }
 
-            return new NewReference(py_type);
+            return new NewReference(pyTypeObj);
         }
         catch (Exception e)
         {

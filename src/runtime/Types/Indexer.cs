@@ -1,5 +1,7 @@
 using System;
+using System.Linq;
 using System.Reflection;
+using System.Collections.Generic;
 
 namespace Python.Runtime
 {
@@ -9,6 +11,34 @@ namespace Python.Runtime
     [Serializable]
     internal class Indexer
     {
+        /// <summary>
+        /// Dictionary that maps dotnet getter setter method names to python counterparts
+        /// </summary>
+        static Dictionary<string, string> IndexerMethodMap = new Dictionary<string, string>
+        {
+            ["get_Item"] = "__getitem__",
+            ["set_Item"] = "__setitem__",
+        };
+
+        /// <summary>
+        /// Get property getter or setter method name in python
+        /// e.g. Returns Value for get_Value
+        /// </summary>
+        public static bool TryGetPropertyMethodName(string methodName, out string pyMethodName)
+        {
+            if (Indexer.IndexerMethodMap.TryGetValue(methodName, out pyMethodName))
+                return true;
+
+            // FIXME: enabling this breaks getting Message property in Exception classes
+            // if (methodName.StartsWith("get_") || methodName.StartsWith("set_"))
+            // {
+            //     pyMethodName = methodName.Substring(4);
+            //     return true;
+            // }
+
+            return false;
+        }
+
         public MethodBinder GetterBinder;
         public MethodBinder SetterBinder;
 
@@ -30,17 +60,36 @@ namespace Python.Runtime
         }
 
 
-        public void AddProperty(PropertyInfo pi)
+        public void AddProperty(Type type, PropertyInfo pi)
         {
+            // NOTE:
+            // Ensure to adopt the dynamically generated getter-setter methods
+            // if they are available. They are always in a pair of Original-Redirected
+            // e.g. _BASEVIRTUAL_get_Item() - get_Item()
             MethodInfo getter = pi.GetGetMethod(true);
-            MethodInfo setter = pi.GetSetMethod(true);
             if (getter != null)
             {
-                GetterBinder.AddMethod(getter);
+                if (ClassDerivedObject.GetOriginalMethod(getter, type) is MethodInfo originalGetter
+                        && ClassDerivedObject.GetRedirectedMethod(getter, type) is MethodInfo redirectedGetter)
+                {
+                    GetterBinder.AddMethod(originalGetter);
+                    GetterBinder.AddMethod(redirectedGetter);
+                }
+                else
+                    GetterBinder.AddMethod(getter);
             }
+
+            MethodInfo setter = pi.GetSetMethod(true);
             if (setter != null)
             {
-                SetterBinder.AddMethod(setter);
+                if (ClassDerivedObject.GetOriginalMethod(setter, type) is MethodInfo originalSetter
+                        && ClassDerivedObject.GetRedirectedMethod(setter, type) is MethodInfo redirectedSetter)
+                {
+                    SetterBinder.AddMethod(originalSetter);
+                    SetterBinder.AddMethod(redirectedSetter);
+                }
+                else
+                    SetterBinder.AddMethod(setter);
             }
         }
 
@@ -48,7 +97,6 @@ namespace Python.Runtime
         {
             return GetterBinder.Invoke(inst, args, null);
         }
-
 
         internal void SetItem(BorrowedReference inst, BorrowedReference args)
         {
