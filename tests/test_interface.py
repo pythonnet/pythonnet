@@ -72,12 +72,12 @@ def test_explicit_cast_to_interface():
 
 
 def test_interface_object_returned_through_method():
-    """Test interface type is used if method return type is interface"""
+    """Test concrete type is used if method return type is interface"""
     from Python.Test import InterfaceTest
 
     ob = InterfaceTest()
     hello1 = ob.GetISayHello1()
-    assert type(hello1).__name__ == 'ISayHello1'
+    assert type(hello1).__name__ == 'InterfaceTest'
     assert hello1.__implementation__.__class__.__name__ == "InterfaceTest"
 
     assert hello1.SayHello() == 'hello 1'
@@ -89,7 +89,7 @@ def test_interface_object_returned_through_out_param():
 
     ob = InterfaceTest()
     hello2 = ob.GetISayHello2(None)
-    assert type(hello2).__name__ == 'ISayHello2'
+    assert type(hello2).__name__ == 'InterfaceTest'
 
     assert hello2.SayHello() == 'hello 2'
 
@@ -118,12 +118,12 @@ def test_null_interface_object_returned():
     assert hello2 is None
 
 def test_interface_array_returned():
-    """Test interface type used for methods returning interface arrays"""
+    """Test concrete type used for methods returning interface arrays"""
     from Python.Test import InterfaceTest
 
     ob = InterfaceTest()
     hellos = ob.GetISayHello1Array()
-    assert type(hellos[0]).__name__ == 'ISayHello1'
+    assert type(hellos[0]).__name__ == 'InterfaceTest'
     assert hellos[0].__implementation__.__class__.__name__ == "InterfaceTest"
 
 def test_implementation_access():
@@ -161,3 +161,5 @@ def test_methods_of_Object_are_available():
     assert clrVal.GetHashCode() == i.GetHashCode()
     assert clrVal.GetType() == i.GetType()
     assert clrVal.ToString() == i.ToString()
+=======
+>>>>>>> parent of 1dd36ae (Wrap returned objects in interface if method return type is interface):src/tests/test_interface.py
