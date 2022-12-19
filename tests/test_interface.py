@@ -161,5 +161,3 @@ def test_methods_of_Object_are_available():
     assert clrVal.GetHashCode() == i.GetHashCode()
     assert clrVal.GetType() == i.GetType()
     assert clrVal.ToString() == i.ToString()
-=======
->>>>>>> parent of 1dd36ae (Wrap returned objects in interface if method return type is interface):src/tests/test_interface.py
