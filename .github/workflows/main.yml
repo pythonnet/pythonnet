@@ -109,3 +109,17 @@ jobs:
           name: ${{ env.LIBRARY_NAME }}-py${{ matrix.python}}-${{ matrix.os }}-artifacts
           path: dist/
           retention-days: 7
+
+  release:
+    name: "Release to private PyPI"
+    runs-on: ubuntu-latest
+    needs: [build-test]
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
+    steps:
+      - name: "Release to the private PyPI repository"
+        uses: pyansys/actions/release-pypi-private@v2
+        with:
+          library-name: ${{ env.LIBRARY_NAME }}
+          twine-username: "__token__"
+          twine-token: ${{ secrets.PYANSYS_PYPI_PRIVATE_PAT }}
+
