@@ -131,7 +131,7 @@ jobs:
       - name: "Upload distribution artifact"
         uses: actions/upload-artifact@v3.1.0
         with:
-          name: ${{ env.LIBRARY_NAME }}-py${{ matrix.python}}-${{ matrix.os }}-artifacts
+          name: ${{ env.LIBRARY_NAME }}-py${{ matrix.python}}-${{ matrix.os }}-${{ matrix.platform }}-artifacts
           path: dist/
           retention-days: 7
 
