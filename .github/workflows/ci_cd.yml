@@ -12,6 +12,26 @@ env:
 
 jobs:
 
+  doc-build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Doxygen Action
+      uses: mattnotmitt/doxygen-action@1.9.4
+      with:
+        working-directory: "doc/"
+
+    - name: Build Sphinx documentation
+      run: |
+        pip install -r doc/requirements.txt
+        sphinx-build doc/source/ ./doc/build/html/
+
+    - name: Upload artifact
+      # Automatically uploads an artifact from the './_site' directory by default
+      uses: actions/upload-pages-artifact@v1
+      with:
+        path: doc/build/html/
+
   build-test:
     name: Build and Test
     runs-on: ${{ matrix.os }}-latest
@@ -113,7 +133,7 @@ jobs:
   release:
     name: "Release to private PyPI"
     runs-on: ubuntu-latest
-    needs: [build-test]
+    needs: [doc-build, build-test]
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
     steps:
       - name: "Release to the private PyPI repository"
