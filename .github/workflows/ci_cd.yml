@@ -1,4 +1,4 @@
-name: Main
+name: CI
 
 on:
   push:
@@ -136,7 +136,7 @@ jobs:
           retention-days: 7
 
   release:
-    name: "Release to private PyPI"
+    name: "Release"
     runs-on: ubuntu-latest
     needs: [doc-build, build-test]
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
