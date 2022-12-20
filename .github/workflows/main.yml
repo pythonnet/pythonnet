@@ -6,7 +6,12 @@ on:
       - master
   pull_request:
 
+
+env:
+  LIBRARY_NAME: 'ansys-pythonnet'
+
 jobs:
+
   build-test:
     name: Build and Test
     runs-on: ${{ matrix.os }}-latest
@@ -93,4 +98,14 @@ jobs:
           pip install --force --no-deps --target src/perf_tests/baseline/ pythonnet==2.5.2
           dotnet test --configuration Release --runtime any-${{ matrix.platform }} --logger "console;verbosity=detailed" src/perf_tests/
 
-      # TODO: Run mono tests on Windows?
+      - name: "Build library source and wheel artifacts"
+        run: |
+          python -m pip install build twine wheel
+          python -m build && python -m twine check dist/*
+
+      - name: "Upload distribution artifact"
+        uses: actions/upload-artifact@v3.1.0
+        with:
+          name: ${{ env.LIBRARY_NAME }}-py${{ matrix.python}}-${{ matrix.os }}-artifacts
+          path: dist/
+          retention-days: 7
