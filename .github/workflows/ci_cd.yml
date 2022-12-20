@@ -10,6 +10,11 @@ on:
 env:
   LIBRARY_NAME: 'ansys-pythonnet'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+
 jobs:
 
   doc-build:
