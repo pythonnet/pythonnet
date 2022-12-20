@@ -89,24 +89,13 @@ namespace Python.Test
         }
 
         // test instances can be constructed in managed code
-        public static SubClassTest create_instance(Type t)
-        {
-            return (SubClassTest)t.GetConstructor(new Type[] { }).Invoke(new object[] { });
-        }
-
-        public static IInterfaceTest create_instance_interface(Type t)
+        public static IInterfaceTest create_instance(Type t)
         {
             return (IInterfaceTest)t.GetConstructor(new Type[] { }).Invoke(new object[] { });
         }
 
-        // test instances pass through managed code unchanged ...
-        public static SubClassTest pass_through(SubClassTest s)
-        {
-            return s;
-        }
-
-        // ... but the return type is an interface type, objects get wrapped
-        public static IInterfaceTest pass_through_interface(IInterfaceTest s)
+        // test instances pass through managed code unchanged
+        public static IInterfaceTest pass_through(IInterfaceTest s)
         {
             return s;
         }

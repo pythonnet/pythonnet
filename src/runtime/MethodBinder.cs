@@ -945,7 +945,7 @@ namespace Python.Runtime
                     Type pt = pi[i].ParameterType;
                     if (pt.IsByRef)
                     {
-                        using var v = Converter.ToPython(binding.args[i], pt.GetElementType());
+                        using var v = Converter.ToPython(binding.args[i], pt);
                         Runtime.PyTuple_SetItem(t.Borrow(), n, v.Steal());
                         n++;
                     }
