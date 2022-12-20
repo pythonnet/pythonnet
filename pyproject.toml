@@ -3,8 +3,8 @@ requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pythonnet"
-description = ".NET and Mono integration for Python"
+name = "ansys-pythonnet"
+description = ".NET and Mono integration for Python (Ansys, Inc. fork)"
 license = {text = "MIT"}
 
 readme = "README.rst"
@@ -34,12 +34,12 @@ classifiers = [
 dynamic = ["version"]
 
 [[project.authors]]
-name = "The Contributors of the Python.NET Project"
-email = "pythonnet@python.org"
+name = "ANSYS, Inc."
+email = "pyansys.maintainers@ansys.com"
 
 [project.urls]
-Homepage = "https://pythonnet.github.io/"
-Sources = "https://github.com/pythonnet/pythonnet"
+Homepage = "pythonnet.docs.pyansys.com"
+Sources = "https://github.com/pyansys/ansys-pythonnet"
 
 [tool.setuptools]
 zip-safe = false
