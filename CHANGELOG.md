@@ -13,7 +13,8 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ### Fixed
 
-- Fixed error occuring when inheriting a class containing a virtual generic method.
+-   Fixed error occuring when inheriting a class containing a virtual generic method.
+-   Make a second call to `pythonnet.load` a no-op, as it was intended.
 
 ## [3.0.1](https://github.com/pythonnet/pythonnet/releases/tag/v3.0.1) - 2022-11-03
 
