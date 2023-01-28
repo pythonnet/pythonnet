@@ -44,15 +44,31 @@ Before interacting with any of the objects or APIs provided by the
 ``Python.Runtime`` namespace, calling code must have acquired the Python
 global interpreter lock by ``using'' ``Py.GIL()``. The only exception to
 this rule is the ``PythonEngine.Initialize`` method, which may be called
-at startup without having acquired the GIL.
-
-A ``using`` statement may be used to acquire and release the GIL:
+at startup without having acquired the GIL. The GIL is released again
+by disposing the return value of `Py.GIL()`:
 
 .. code:: csharp
 
    using (Py.GIL())
    {
        PythonEngine.Exec("doStuff()");
+   }
+   
+   // or
+   {
+       using var _ = Py.GIL()
+       PythonEngine.Exec("doStuff()");
+   }
+   
+   // or
+   var gil = Py.GIL();
+   try
+   {
+       PythonEngine.Exec("doStuff()");
+   }
+   finally
+   {
+       gil.Dispose();
    }
 
 The ``Py.GIL()'' object is a thin wrapper over the unmanaged
