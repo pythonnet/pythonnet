@@ -90,6 +90,10 @@ namespace Python.Runtime
             var baseTypes = new List<ClassBase>();
 
             var baseClassCount = Runtime.PyTuple_Size(bases);
+            if (baseClassCount == 0)
+            {
+                return Exceptions.RaiseTypeError("zero base classes ");
+            }
 
             for (nint i = 0; i < baseClassCount; i++)
             {
@@ -97,9 +101,22 @@ namespace Python.Runtime
 
                 if (GetManagedObject(baseTypeIt) is ClassBase classBaseIt)
                 {
-                    if (classBaseIt.type.Valid && classBaseIt.type.Value.IsInterface)
+                    if (!classBaseIt.type.Valid)
+                    {
+                        return Exceptions.RaiseTypeError("Invalid type used as a super type.");
+                    }
+                    if (classBaseIt.type.Value.IsInterface)
+                    {
                         interfaces.Add(classBaseIt.type.Value);
-                    else baseTypes.Add(classBaseIt);
+                    }
+                    else
+                    {
+                        baseTypes.Add(classBaseIt);
+                    }
+                }
+                else
+                {
+                    return Exceptions.RaiseTypeError("Non .NET type used as super class for meta type. This is not supported.");
                 }
             }
             // if the base type count is 0, there might still be interfaces to implement.
@@ -111,7 +128,20 @@ namespace Python.Runtime
             // Multiple inheritance is not supported, unless the other types are interfaces
             if (baseTypes.Count > 1)
             {
-                return Exceptions.RaiseTypeError("cannot use multiple inheritance with managed classes");
+                var types = string.Join(", ", baseTypes.Select(baseType => baseType.type.Value));
+                return Exceptions.RaiseTypeError($"Multiple inheritance with managed classes cannot be used. Types: {types} ");
+            }
+
+            // check if the list of interfaces contains no duplicates.
+            if (interfaces.Distinct().Count() != interfaces.Count)
+            {
+                // generate a string containing the problematic types.
+                var duplicateTypes = interfaces.GroupBy(type => type)
+                    .Where(typeGroup => typeGroup.Count() > 1)
+                    .Select(typeGroup => typeGroup.Key);
+                var duplicateTypesString = string.Join(", ", duplicateTypes);
+
+                return Exceptions.RaiseTypeError($"An interface can only be implemented once. Duplicate types: {duplicateTypesString}");
             }
 
             var cb = baseTypes[0];
@@ -133,8 +163,7 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("subclasses of managed classes do not support __slots__");
             }
 
-            // If the base class has a parameterless constructor, or
-            // if __assembly__ or __namespace__ are in the class dictionary then create
+            // If __assembly__ or __namespace__ are in the class dictionary then create
             // a managed sub type.
             // This creates a new managed type that can be used from .net to call back
             // into python.
