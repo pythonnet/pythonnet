@@ -35,6 +35,7 @@ namespace Python.PythonTestsRunner
             // Add the test that you want to debug here.
             yield return new[] { "test_indexer", "test_boolean_indexer" };
             yield return new[] { "test_delegate", "test_bool_delegate" };
+            yield return new[] { "test_subclass", "test_implement_interface_and_class" };
         }
 
         /// <summary>
