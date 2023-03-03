@@ -352,12 +352,7 @@ namespace Python.Runtime
                 Runtime.PyObject_ClearWeakRefs(ob);
             }
 
-            if (TryFreeGCHandle(ob))
-            {
-                IntPtr addr = ob.DangerousGetAddress();
-                bool deleted = CLRObject.reflectedObjects.Remove(addr);
-                Debug.Assert(deleted);
-            }
+            TryFreeGCHandle(ob);
 
             int baseClearResult = BaseUnmanagedClear(ob);
             if (baseClearResult != 0)

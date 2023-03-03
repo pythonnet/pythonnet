@@ -280,7 +280,6 @@ namespace Python.Runtime
             ClearClrModules();
             RemoveClrRootModule();
 
-            NullGCHandles(ExtensionType.loadedExtensions);
             ClassManager.RemoveClasses();
             TypeManager.RemoveTypes();
             _typesInitialized = false;
@@ -319,8 +318,6 @@ namespace Python.Runtime
                     PyEval_SaveThread();
                 }
 
-                ExtensionType.loadedExtensions.Clear();
-                CLRObject.reflectedObjects.Clear();
             }
             else
             {
@@ -348,11 +345,6 @@ namespace Python.Runtime
                 if (Volatile.Read(ref _collected) == 0 && pyCollected == 0)
                 {
                     if (attempt + 1 == runs) return true;
-                }
-                else if (forceBreakLoops)
-                {
-                    NullGCHandles(CLRObject.reflectedObjects);
-                    CLRObject.reflectedObjects.Clear();
                 }
             }
             return false;

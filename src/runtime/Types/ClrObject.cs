@@ -11,8 +11,6 @@ namespace Python.Runtime
     {
         internal readonly object inst;
 
-        // "borrowed" references
-        internal static readonly HashSet<IntPtr> reflectedObjects = new();
         static NewReference Create(object ob, BorrowedReference tp)
         {
             Debug.Assert(tp != null);
@@ -23,8 +21,6 @@ namespace Python.Runtime
             GCHandle gc = GCHandle.Alloc(self);
             InitGCHandle(py.Borrow(), type: tp, gc);
 
-            bool isNew = reflectedObjects.Add(py.DangerousGetAddress());
-            Debug.Assert(isNew);
 
             // Fix the BaseException args (and __cause__ in case of Python 3)
             // slot if wrapping a CLR exception
@@ -64,9 +60,6 @@ namespace Python.Runtime
             base.OnLoad(ob, context);
             GCHandle gc = GCHandle.Alloc(this);
             SetGCHandle(ob, gc);
-
-            bool isNew = reflectedObjects.Add(ob.DangerousGetAddress());
-            Debug.Assert(isNew);
         }
     }
 }

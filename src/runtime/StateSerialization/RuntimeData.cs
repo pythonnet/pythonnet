@@ -140,57 +140,9 @@ namespace Python.Runtime
         private static SharedObjectsState SaveRuntimeDataObjects()
         {
             var contexts = new Dictionary<PyObject, Dictionary<string, object?>>(PythonReferenceComparer.Instance);
-            var extensionObjs = new Dictionary<PyObject, ExtensionType>(PythonReferenceComparer.Instance);
-            // make a copy with strongly typed references to avoid concurrent modification
-            var extensions = ExtensionType.loadedExtensions
-                                .Select(addr => new PyObject(
-                                    new BorrowedReference(addr),
-                                    // if we don't skip collect, finalizer might modify loadedExtensions
-                                    skipCollect: true))
-                                .ToArray();
-            foreach (var pyObj in extensions)
-            {
-                var extension = (ExtensionType)ManagedType.GetManagedObject(pyObj)!;
-                Debug.Assert(CheckSerializable(extension));
-                var context = extension.Save(pyObj);
-                if (context is not null)
-                {
-                    contexts[pyObj] = context;
-                }
-                extensionObjs.Add(pyObj, extension);
-            }
 
             var wrappers = new Dictionary<object, List<CLRObject>>();
             var userObjects = new CLRWrapperCollection();
-            // make a copy with strongly typed references to avoid concurrent modification
-            var reflectedObjects = CLRObject.reflectedObjects
-                                    .Select(addr => new PyObject(
-                                        new BorrowedReference(addr),
-                                        // if we don't skip collect, finalizer might modify reflectedObjects
-                                        skipCollect: true))
-                                    .ToList();
-            foreach (var pyObj in reflectedObjects)
-            {
-                // Wrapper must be the CLRObject
-                var clrObj = (CLRObject)ManagedType.GetManagedObject(pyObj)!;
-                object inst = clrObj.inst;
-                List<CLRObject> mappedObjs;
-                if (!userObjects.TryGetValue(inst, out var item))
-                {
-                    item = new CLRMappedItem(inst);
-                    userObjects.Add(item);
-
-                    Debug.Assert(!wrappers.ContainsKey(inst));
-                    mappedObjs = new List<CLRObject>();
-                    wrappers.Add(inst, mappedObjs);
-                }
-                else
-                {
-                    mappedObjs = wrappers[inst];
-                }
-                item.AddRef(pyObj);
-                mappedObjs.Add(clrObj);
-            }
 
             var wrapperStorage = new Dictionary<string, object?>();
             WrappersStorer?.Store(userObjects, wrapperStorage);
@@ -215,7 +167,6 @@ namespace Python.Runtime
             return new()
             {
                 InternalStores = internalStores,
-                Extensions = extensionObjs,
                 Wrappers = wrapperStorage,
                 Contexts = contexts,
             };
