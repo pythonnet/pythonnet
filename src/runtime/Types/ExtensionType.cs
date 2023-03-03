@@ -42,15 +42,10 @@ namespace Python.Runtime
 
         public PyObject AllocObject() => new PyObject(Alloc().Steal());
 
-        // "borrowed" references
-        internal static readonly HashSet<IntPtr> loadedExtensions = new();
         void SetupGc (BorrowedReference ob, BorrowedReference tp)
         {
             GCHandle gc = GCHandle.Alloc(this);
             InitGCHandle(ob, tp, gc);
-
-            bool isNew = loadedExtensions.Add(ob.DangerousGetAddress());
-            Debug.Assert(isNew);
 
             // We have to support gc because the type machinery makes it very
             // hard not to - but we really don't have a need for it in most
@@ -92,11 +87,7 @@ namespace Python.Runtime
                 Runtime.PyObject_ClearWeakRefs(ob);
             }
 
-            if (TryFreeGCHandle(ob))
-            {
-                bool deleted = loadedExtensions.Remove(ob.DangerousGetAddress());
-                Debug.Assert(deleted);
-            }
+            TryFreeGCHandle(ob);
 
             int res = ClassBase.BaseUnmanagedClear(ob);
             return res;
