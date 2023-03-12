@@ -11,7 +11,7 @@ namespace Python.Runtime
         private PyObject _exporter;
         private Py_buffer _view;
 
-        unsafe internal PyBuffer(PyObject exporter, PyBUF flags)
+        internal PyBuffer(PyObject exporter, PyBUF flags)
         {
             _view = new Py_buffer();
 
@@ -25,17 +25,17 @@ namespace Python.Runtime
             var intPtrBuf = new IntPtr[_view.ndim];
             if (_view.shape != IntPtr.Zero)
             {
-                Marshal.Copy(_view.shape, intPtrBuf, 0, (int)_view.len * sizeof(IntPtr));
+                Marshal.Copy(_view.shape, intPtrBuf, 0, _view.ndim);
                 Shape = intPtrBuf.Select(x => (long)x).ToArray();
             }
 
             if (_view.strides != IntPtr.Zero) {
-                Marshal.Copy(_view.strides, intPtrBuf, 0, (int)_view.len * sizeof(IntPtr));
+                Marshal.Copy(_view.strides, intPtrBuf, 0, _view.ndim);
                 Strides = intPtrBuf.Select(x => (long)x).ToArray();
             }
 
             if (_view.suboffsets != IntPtr.Zero) {
-                Marshal.Copy(_view.suboffsets, intPtrBuf, 0, (int)_view.len * sizeof(IntPtr));
+                Marshal.Copy(_view.suboffsets, intPtrBuf, 0, _view.ndim);
                 SubOffsets = intPtrBuf.Select(x => (long)x).ToArray();
             }
         }

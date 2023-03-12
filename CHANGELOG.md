@@ -17,6 +17,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Make a second call to `pythonnet.load` a no-op, as it was intended.
 
 - Added support for multiple inheritance when inheriting from a class and/or multiple interfaces.
+- Fixed error occuring when calling `GetBuffer` for anything other than `PyBUF.SIMPLE` 
 
 ## [3.0.1](https://github.com/pythonnet/pythonnet/releases/tag/v3.0.1) - 2022-11-03
 
