@@ -50,6 +50,7 @@ file = "version.txt"
 
 [tool.setuptools.packages.find]
 include = ["pythonnet*"]
+exclude = [".gitignore"]
 
 [tool.pytest.ini_options]
 xfail_strict = true
