@@ -1,8 +1,11 @@
 using System;
 using System.Diagnostics;
+using System.Dynamic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
+using RuntimeBinder = Microsoft.CSharp.RuntimeBinder;
 
 namespace Python.Runtime
 {
@@ -274,6 +277,99 @@ namespace Python.Runtime
                 return g.type_subscript(idx);
             }
             return Exceptions.RaiseTypeError("unsubscriptable object");
+        }
+
+        /// <summary>
+        /// Type __getattro__ implementation.
+        /// </summary>
+        public static NewReference tp_getattro(BorrowedReference ob, BorrowedReference key)
+        {
+
+            if (!Runtime.PyString_Check(key))
+            {
+                return Exceptions.RaiseTypeError("string expected");
+            }
+
+            var result = Runtime.PyObject_GenericGetAttr(ob, key);
+
+            // Property not found, but it can still be a dynamic one if the object is an IDynamicMetaObjectProvider
+            if (result.IsNull())
+            {
+                var clrObj = (CLRObject)GetManagedObject(ob)!;
+                if (clrObj?.inst is IDynamicMetaObjectProvider)
+                {
+
+                    // The call to Runtime.PyObject_GenericGetAttr above ended up with an AttributeError
+                    // for dynamic properties since they are not found.
+                    if (Exceptions.ExceptionMatches(Exceptions.AttributeError))
+                    {
+                        Exceptions.Clear();
+                    }
+
+                    // TODO: Cache call site.
+
+                    var name = Runtime.GetManagedString(key);
+                    var binder = RuntimeBinder.Binder.GetMember(
+                        RuntimeBinder.CSharpBinderFlags.None,
+                        name,
+                        clrObj.inst.GetType(),
+                        new[] { RuntimeBinder.CSharpArgumentInfo.Create(RuntimeBinder.CSharpArgumentInfoFlags.None, null) });
+                    var callsite = CallSite<Func<CallSite, object, object>>.Create(binder);
+
+                    try
+                    {
+                        var res = callsite.Target(callsite, clrObj.inst);
+                        return Converter.ToPython(res);
+                    }
+                    catch (RuntimeBinder.RuntimeBinderException)
+                    {
+                        Exceptions.SetError(Exceptions.AttributeError, $"'{clrObj?.inst.GetType()}' object has no attribute '{name}'");
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Type __setattro__ implementation.
+        /// </summary>
+        public static int tp_setattro(BorrowedReference ob, BorrowedReference key, BorrowedReference val)
+        {
+            if (!Runtime.PyString_Check(key))
+            {
+                Exceptions.RaiseTypeError("string expected");
+                return -1;
+            }
+
+            // If the object is an IDynamicMetaObjectProvider, the property is set as a C# dynamic property, not as a Python attribute
+            var clrObj = (CLRObject)GetManagedObject(ob)!;
+            if (clrObj?.inst is IDynamicMetaObjectProvider)
+            {
+                // TODO: Cache call site.
+
+                var name = Runtime.GetManagedString(key);
+                var binder = RuntimeBinder.Binder.SetMember(
+                    RuntimeBinder.CSharpBinderFlags.None,
+                    name,
+                    clrObj.inst.GetType(),
+                    new[]
+                    {
+                        RuntimeBinder.CSharpArgumentInfo.Create(RuntimeBinder.CSharpArgumentInfoFlags.None, null),
+                        RuntimeBinder.CSharpArgumentInfo.Create(RuntimeBinder.CSharpArgumentInfoFlags.None, null)
+                    });
+                var callsite = CallSite<Func<CallSite, object, object, object>>.Create(binder);
+
+                var value = ((CLRObject)GetManagedObject(val))?.inst ?? PyObject.FromNullableReference(val);
+                callsite.Target(callsite, clrObj.inst, value);
+
+                return 0;
+            }
+
+            int res = Runtime.PyObject_GenericSetAttr(ob, key, val);
+            Runtime.PyType_Modified(ob);
+
+            return res;
         }
     }
 }

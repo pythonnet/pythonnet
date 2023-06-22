@@ -65,5 +65,6 @@
 
   <ItemGroup>
     <PackageReference Include="fasterflect" Version="3.0.0" />
+    <PackageReference Include="Perfolizer" Version="0.3.4" />
   </ItemGroup>
 </Project>

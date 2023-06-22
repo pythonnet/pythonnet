@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Dynamic;
-using System.Linq.Expressions;
+using System.Globalization;
+using System.Reflection;
 
 using NUnit.Framework;
 
@@ -923,6 +924,190 @@ class TestSetProtectedStaticReadOnlyFieldFails(TestPropertyAccess.Fixture):
             using (Py.GIL())
             {
                 Assert.Throws<PythonException>(() => model.SetValue());
+            }
+        }
+
+        private static TestCaseData[] DynamicPropertiesGetterTestCases() => new[]
+        {
+            new TestCaseData(true),
+            new TestCaseData(10),
+            new TestCaseData(10.1),
+            new TestCaseData(10.2m),
+            new TestCaseData("Some string"),
+            new TestCaseData(new DateTime(2023, 6, 22)),
+            new TestCaseData(new List<int> { 1, 2, 3, 4, 5 }),
+            new TestCaseData(new Dictionary<string, int> { { "first", 1 }, { "second", 2 }, { "third", 3 } }),
+            new TestCaseData(new Fixture()),
+        };
+
+        [TestCaseSource(nameof(DynamicPropertiesGetterTestCases))]
+        public void TestGetPublicDynamicObjectPropertyWorks(object property)
+        {
+            dynamic model = PyModule.FromString("module", @"
+from clr import AddReference
+AddReference(""Python.EmbeddingTest"")
+AddReference(""System"")
+
+from Python.EmbeddingTest import *
+
+class TestGetPublicDynamicObjectPropertyWorks:
+    def GetValue(self, fixture):
+        return fixture.SomeProperty
+").GetAttr("TestGetPublicDynamicObjectPropertyWorks").Invoke();
+
+            dynamic fixture = new DynamicFixture();
+            fixture.SomeProperty = property;
+
+            using (Py.GIL())
+            {
+                Assert.AreEqual(property, (model.GetValue(fixture) as PyObject).AsManagedObject(property.GetType()));
+            }
+        }
+
+        [Test]
+        public void TestGetNonExistingPublicDynamicObjectPropertyThrows()
+        {
+            dynamic model = PyModule.FromString("module", @"
+from clr import AddReference
+AddReference(""Python.EmbeddingTest"")
+AddReference(""System"")
+
+from Python.EmbeddingTest import *
+
+class TestGetNonExistingPublicDynamicObjectPropertyThrows:
+    def GetValue(self, fixture):
+        try:
+            prop = fixture.AnotherProperty
+        except AttributeError as e:
+            return e
+
+        return None
+").GetAttr("TestGetNonExistingPublicDynamicObjectPropertyThrows").Invoke();
+
+            dynamic fixture = new DynamicFixture();
+            fixture.SomeProperty = "Some property";
+
+            using (Py.GIL())
+            {
+                var result = model.GetValue(fixture) as PyObject;
+                Assert.IsFalse(result.IsNone());
+                Assert.AreEqual(result.PyType, Exceptions.AttributeError);
+                Assert.AreEqual("'Python.EmbeddingTest.TestPropertyAccess+DynamicFixture' object has no attribute 'AnotherProperty'",
+                    result.ToString());
+            }
+        }
+
+        public class DynamicFixture : DynamicObject
+        {
+            private Dictionary<string, object> _properties = new Dictionary<string, object>();
+
+            public override bool TryGetMember(GetMemberBinder binder, out object result)
+            {
+                return _properties.TryGetValue(binder.Name, out result);
+            }
+
+            public override bool TrySetMember(SetMemberBinder binder, object value)
+            {
+                _properties[binder.Name] = value;
+                return true;
+            }
+
+            public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
+            {
+                try
+                {
+                    result = _properties.GetType().InvokeMember(binder.Name, BindingFlags.InvokeMethod, null, _properties, args,
+                        CultureInfo.InvariantCulture);
+                    return true;
+                }
+                catch
+                {
+                    result = null;
+                    return false;
+                }
+            }
+        }
+
+        public class TestPerson : IComparable, IComparable<TestPerson>
+        {
+            public int Id { get; private set; }
+            public string Name { get; private set; }
+
+            public TestPerson(int id, string name)
+            {
+                Id = id;
+                Name = name;
+            }
+
+            public int CompareTo(object obj)
+            {
+                return CompareTo(obj as TestPerson);
+            }
+
+            public int CompareTo(TestPerson other)
+            {
+                if (ReferenceEquals(this, other)) return 0;
+                if (other == null) return 1;
+                if (Id < other.Id) return -1;
+                if (Id > other.Id) return 1;
+                return 0;
+            }
+
+            public override bool Equals(object obj)
+            {
+                return Equals(obj as TestPerson);
+            }
+
+            public bool Equals(TestPerson other)
+            {
+                return CompareTo(other) == 0;
+            }
+        }
+
+        private static TestCaseData[] DynamicPropertiesSetterTestCases() => new[]
+        {
+            new TestCaseData("True", null),
+            new TestCaseData("10", null),
+            new TestCaseData("10.1", null),
+            new TestCaseData("'Some string'", null),
+            new TestCaseData("datetime(2023, 6, 22)", null),
+            new TestCaseData("[1, 2, 3, 4, 5]", null),
+            new TestCaseData("System.DateTime(2023, 6, 22)", typeof(DateTime)),
+            new TestCaseData("TestPropertyAccess.TestPerson(123, 'John doe')", typeof(TestPerson)),
+            new TestCaseData("System.Collections.Generic.List[str]()", typeof(List<string>)),
+        };
+
+        [TestCaseSource(nameof(DynamicPropertiesSetterTestCases))]
+        public void TestSetPublicDynamicObjectPropertyWorks(string valueCode, Type expectedType)
+        {
+            dynamic model = PyModule.FromString("module", $@"
+from clr import AddReference
+AddReference(""Python.EmbeddingTest"")
+AddReference(""System"")
+
+from datetime import datetime
+import System
+from Python.EmbeddingTest import *
+
+value = {valueCode}
+
+class TestGetPublicDynamicObjectPropertyWorks:
+    def SetValue(self, fixture):
+        fixture.SomeProperty = value
+
+    def GetPythonValue(self):
+        return value
+").GetAttr("TestGetPublicDynamicObjectPropertyWorks").Invoke();
+
+            dynamic fixture = new DynamicFixture();
+
+            using (Py.GIL())
+            {
+                model.SetValue(fixture);
+                var expectedAsPyObject = model.GetPythonValue() as PyObject;
+                var expected = expectedType != null ? expectedAsPyObject.AsManagedObject(expectedType) : expectedAsPyObject;
+
+                Assert.AreEqual(expected, fixture.SomeProperty);
             }
         }
 
