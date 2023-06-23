@@ -16,7 +16,6 @@
     <PackageReference Include="quantconnect.pythonnet" Version="2.0.18" GeneratePathProperty="true">
       <IncludeAssets>compile</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Perfolizer" Version="0.3.4" />
   </ItemGroup>
 
   <Target Name="GetRuntimeLibBuildOutput" BeforeTargets="Build">
