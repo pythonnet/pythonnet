@@ -82,7 +82,8 @@ namespace Python.Runtime
                     }
 
                     var name = Runtime.GetManagedString(key);
-                    var callSite = GetAttrCallSite(name, clrObj.inst.GetType());
+                    var clrObjectType = clrObj.inst.GetType();
+                    var callSite = GetAttrCallSite(name, clrObjectType);
 
                     try
                     {
@@ -91,7 +92,7 @@ namespace Python.Runtime
                     }
                     catch (RuntimeBinder.RuntimeBinderException)
                     {
-                        Exceptions.SetError(Exceptions.AttributeError, $"'{clrObj?.inst.GetType()}' object has no attribute '{name}'");
+                        Exceptions.SetError(Exceptions.AttributeError, $"'{clrObjectType}' object has no attribute '{name}'");
                     }
                 }
             }
