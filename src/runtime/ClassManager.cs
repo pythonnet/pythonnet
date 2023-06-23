@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Dynamic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -183,6 +184,11 @@ namespace Python.Runtime
                 impl = new KeyValuePairEnumerableObject(type);
             }
 
+            else if (typeof(IDynamicMetaObjectProvider).IsAssignableFrom(type))
+            {
+                impl = new DynamicClassObject(type);
+            }
+
             else if (type.IsInterface)
             {
                 impl = new InterfaceObject(type);
@@ -221,7 +227,7 @@ namespace Python.Runtime
             impl.indexer = info.indexer;
             impl.richcompare.Clear();
 
-            
+
             // Finally, initialize the class __dict__ and return the object.
             using var newDict = Runtime.PyObject_GenericGetDict(pyType.Reference);
             BorrowedReference dict = newDict.Borrow();

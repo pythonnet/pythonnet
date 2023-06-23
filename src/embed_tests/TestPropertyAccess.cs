@@ -927,76 +927,6 @@ class TestSetProtectedStaticReadOnlyFieldFails(TestPropertyAccess.Fixture):
             }
         }
 
-        private static TestCaseData[] DynamicPropertiesGetterTestCases() => new[]
-        {
-            new TestCaseData(true),
-            new TestCaseData(10),
-            new TestCaseData(10.1),
-            new TestCaseData(10.2m),
-            new TestCaseData("Some string"),
-            new TestCaseData(new DateTime(2023, 6, 22)),
-            new TestCaseData(new List<int> { 1, 2, 3, 4, 5 }),
-            new TestCaseData(new Dictionary<string, int> { { "first", 1 }, { "second", 2 }, { "third", 3 } }),
-            new TestCaseData(new Fixture()),
-        };
-
-        [TestCaseSource(nameof(DynamicPropertiesGetterTestCases))]
-        public void TestGetPublicDynamicObjectPropertyWorks(object property)
-        {
-            dynamic model = PyModule.FromString("module", @"
-from clr import AddReference
-AddReference(""Python.EmbeddingTest"")
-AddReference(""System"")
-
-from Python.EmbeddingTest import *
-
-class TestGetPublicDynamicObjectPropertyWorks:
-    def GetValue(self, fixture):
-        return fixture.SomeProperty
-").GetAttr("TestGetPublicDynamicObjectPropertyWorks").Invoke();
-
-            dynamic fixture = new DynamicFixture();
-            fixture.SomeProperty = property;
-
-            using (Py.GIL())
-            {
-                Assert.AreEqual(property, (model.GetValue(fixture) as PyObject).AsManagedObject(property.GetType()));
-            }
-        }
-
-        [Test]
-        public void TestGetNonExistingPublicDynamicObjectPropertyThrows()
-        {
-            dynamic model = PyModule.FromString("module", @"
-from clr import AddReference
-AddReference(""Python.EmbeddingTest"")
-AddReference(""System"")
-
-from Python.EmbeddingTest import *
-
-class TestGetNonExistingPublicDynamicObjectPropertyThrows:
-    def GetValue(self, fixture):
-        try:
-            prop = fixture.AnotherProperty
-        except AttributeError as e:
-            return e
-
-        return None
-").GetAttr("TestGetNonExistingPublicDynamicObjectPropertyThrows").Invoke();
-
-            dynamic fixture = new DynamicFixture();
-            fixture.SomeProperty = "Some property";
-
-            using (Py.GIL())
-            {
-                var result = model.GetValue(fixture) as PyObject;
-                Assert.IsFalse(result.IsNone());
-                Assert.AreEqual(result.PyType, Exceptions.AttributeError);
-                Assert.AreEqual("'Python.EmbeddingTest.TestPropertyAccess+DynamicFixture' object has no attribute 'AnotherProperty'",
-                    result.ToString());
-            }
-        }
-
         public class DynamicFixture : DynamicObject
         {
             private Dictionary<string, object> _properties = new Dictionary<string, object>();
@@ -1026,6 +956,10 @@ class TestGetNonExistingPublicDynamicObjectPropertyThrows:
                     return false;
                 }
             }
+
+            public Dictionary<string, object> Properties { get { return _properties; } }
+
+            public string NonDynamicProperty { get; set; }
         }
 
         public class TestPerson : IComparable, IComparable<TestPerson>
@@ -1064,6 +998,76 @@ class TestGetNonExistingPublicDynamicObjectPropertyThrows:
             }
         }
 
+        private static TestCaseData[] DynamicPropertiesGetterTestCases() => new[]
+        {
+            new TestCaseData(true),
+            new TestCaseData(10),
+            new TestCaseData(10.1),
+            new TestCaseData(10.2m),
+            new TestCaseData("Some string"),
+            new TestCaseData(new DateTime(2023, 6, 22)),
+            new TestCaseData(new List<int> { 1, 2, 3, 4, 5 }),
+            new TestCaseData(new Dictionary<string, int> { { "first", 1 }, { "second", 2 }, { "third", 3 } }),
+            new TestCaseData(new Fixture()),
+        };
+
+        [TestCaseSource(nameof(DynamicPropertiesGetterTestCases))]
+        public void TestGetPublicDynamicObjectPropertyWorks(object property)
+        {
+            dynamic model = PyModule.FromString("module", @"
+from clr import AddReference
+AddReference(""Python.EmbeddingTest"")
+AddReference(""System"")
+
+from Python.EmbeddingTest import *
+
+class TestGetPublicDynamicObjectPropertyWorks:
+    def GetValue(self, fixture):
+        return fixture.DynamicProperty
+").GetAttr("TestGetPublicDynamicObjectPropertyWorks").Invoke();
+
+            dynamic fixture = new DynamicFixture();
+            fixture.DynamicProperty = property;
+
+            using (Py.GIL())
+            {
+                Assert.AreEqual(property, (model.GetValue(fixture) as PyObject).AsManagedObject(property.GetType()));
+            }
+        }
+
+        [Test]
+        public void TestGetNonExistingPublicDynamicObjectPropertyThrows()
+        {
+            dynamic model = PyModule.FromString("module", @"
+from clr import AddReference
+AddReference(""Python.EmbeddingTest"")
+AddReference(""System"")
+
+from Python.EmbeddingTest import *
+
+class TestGetNonExistingPublicDynamicObjectPropertyThrows:
+    def GetValue(self, fixture):
+        try:
+            prop = fixture.AnotherProperty
+        except AttributeError as e:
+            return e
+
+        return None
+").GetAttr("TestGetNonExistingPublicDynamicObjectPropertyThrows").Invoke();
+
+            dynamic fixture = new DynamicFixture();
+            fixture.DynamicProperty = "Dynamic property";
+
+            using (Py.GIL())
+            {
+                var result = model.GetValue(fixture) as PyObject;
+                Assert.IsFalse(result.IsNone());
+                Assert.AreEqual(result.PyType, Exceptions.AttributeError);
+                Assert.AreEqual("'Python.EmbeddingTest.TestPropertyAccess+DynamicFixture' object has no attribute 'AnotherProperty'",
+                    result.ToString());
+            }
+        }
+
         private static TestCaseData[] DynamicPropertiesSetterTestCases() => new[]
         {
             new TestCaseData("True", null),
@@ -1093,7 +1097,7 @@ value = {valueCode}
 
 class TestGetPublicDynamicObjectPropertyWorks:
     def SetValue(self, fixture):
-        fixture.SomeProperty = value
+        fixture.DynamicProperty = value
 
     def GetPythonValue(self):
         return value
@@ -1107,7 +1111,36 @@ class TestGetPublicDynamicObjectPropertyWorks:
                 var expectedAsPyObject = model.GetPythonValue() as PyObject;
                 var expected = expectedType != null ? expectedAsPyObject.AsManagedObject(expectedType) : expectedAsPyObject;
 
-                Assert.AreEqual(expected, fixture.SomeProperty);
+                Assert.AreEqual(expected, fixture.DynamicProperty);
+            }
+        }
+
+        [Test]
+        public void TestSetPublicNonDynamicObjectPropertyToActualPropertyWorks()
+        {
+            var expected = "Non Dynamic Property";
+            dynamic model = PyModule.FromString("module", $@"
+from clr import AddReference
+AddReference(""Python.EmbeddingTest"")
+AddReference(""System"")
+
+from datetime import datetime
+import System
+from Python.EmbeddingTest import *
+
+class TestGetPublicDynamicObjectPropertyWorks:
+    def SetValue(self, fixture):
+        fixture.NonDynamicProperty = ""{expected}""
+").GetAttr("TestGetPublicDynamicObjectPropertyWorks").Invoke();
+
+            var fixture = new DynamicFixture();
+
+            using (Py.GIL())
+            {
+                model.SetValue(fixture);
+                Assert.AreEqual(expected, fixture.NonDynamicProperty);
+                Assert.AreEqual(expected, ((dynamic)fixture).NonDynamicProperty);
+                Assert.IsFalse(fixture.Properties.ContainsKey(nameof(fixture.NonDynamicProperty)));
             }
         }
 
