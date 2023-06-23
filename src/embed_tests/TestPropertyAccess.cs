@@ -1036,6 +1036,34 @@ class TestGetPublicDynamicObjectPropertyWorks:
         }
 
         [Test]
+        public void TestGetNullPublicDynamicObjectPropertyWorks()
+        {
+            dynamic model = PyModule.FromString("module", @"
+from clr import AddReference
+AddReference(""Python.EmbeddingTest"")
+AddReference(""System"")
+
+from Python.EmbeddingTest import *
+
+class TestGetNullPublicDynamicObjectPropertyWorks:
+    def GetValue(self, fixture):
+        return fixture.DynamicProperty
+
+    def IsNone(self, fixture):
+        return fixture.DynamicProperty is None
+").GetAttr("TestGetNullPublicDynamicObjectPropertyWorks").Invoke();
+
+            dynamic fixture = new DynamicFixture();
+            fixture.DynamicProperty = null;
+
+            using (Py.GIL())
+            {
+                Assert.IsNull(model.GetValue(fixture));
+                Assert.IsTrue(model.IsNone(fixture).As<bool>());
+            }
+        }
+
+        [Test]
         public void TestGetNonExistingPublicDynamicObjectPropertyThrows()
         {
             dynamic model = PyModule.FromString("module", @"
@@ -1116,6 +1144,33 @@ class TestGetPublicDynamicObjectPropertyWorks:
         }
 
         [Test]
+        public void TestSetNullPublicDynamicObjectPropertyWorks()
+        {
+            dynamic model = PyModule.FromString("module", $@"
+from clr import AddReference
+AddReference(""Python.EmbeddingTest"")
+AddReference(""System"")
+
+from datetime import datetime
+import System
+from Python.EmbeddingTest import *
+
+class TestSetNullPublicDynamicObjectPropertyWorks:
+    def SetValue(self, fixture):
+        fixture.DynamicProperty = None
+").GetAttr("TestSetNullPublicDynamicObjectPropertyWorks").Invoke();
+
+            dynamic fixture = new DynamicFixture();
+
+            using (Py.GIL())
+            {
+                model.SetValue(fixture);
+
+                Assert.IsTrue(fixture.DynamicProperty.IsNone());
+            }
+        }
+
+        [Test]
         public void TestSetPublicNonDynamicObjectPropertyToActualPropertyWorks()
         {
             var expected = "Non Dynamic Property";
@@ -1128,10 +1183,10 @@ from datetime import datetime
 import System
 from Python.EmbeddingTest import *
 
-class TestGetPublicDynamicObjectPropertyWorks:
+class TestSetPublicNonDynamicObjectPropertyToActualPropertyWorks:
     def SetValue(self, fixture):
         fixture.NonDynamicProperty = ""{expected}""
-").GetAttr("TestGetPublicDynamicObjectPropertyWorks").Invoke();
+").GetAttr("TestSetPublicNonDynamicObjectPropertyToActualPropertyWorks").Invoke();
 
             var fixture = new DynamicFixture();
 

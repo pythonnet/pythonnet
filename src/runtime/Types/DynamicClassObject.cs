@@ -1,10 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
-using System.Linq;
 using System.Runtime.CompilerServices;
-
-using Fasterflect;
 
 using RuntimeBinder = Microsoft.CSharp.RuntimeBinder;
 
@@ -23,12 +20,12 @@ namespace Python.Runtime
         {
         }
 
-        private static Dictionary<Tuple<Type, string>, CallSite<Func<CallSite, object, object>>> _getAttrCallSites = new();
-        private static Dictionary<Tuple<Type, string>, CallSite<Func<CallSite, object, object, object>>> _setAttrCallSites = new();
+        private static Dictionary<ValueTuple<Type, string>, CallSite<Func<CallSite, object, object>>> _getAttrCallSites = new();
+        private static Dictionary<ValueTuple<Type, string>, CallSite<Func<CallSite, object, object, object>>> _setAttrCallSites = new();
 
         private static CallSite<Func<CallSite, object, object>> GetAttrCallSite(string name, Type objectType)
         {
-            var key = Tuple.Create(objectType, name);
+            var key = ValueTuple.Create(objectType, name);
             if (!_getAttrCallSites.TryGetValue(key, out var callSite))
             {
                 var binder = RuntimeBinder.Binder.GetMember(
@@ -45,7 +42,7 @@ namespace Python.Runtime
 
         private static CallSite<Func<CallSite, object, object, object>> SetAttrCallSite(string name, Type objectType)
         {
-            var key = Tuple.Create(objectType, name);
+            var key = ValueTuple.Create(objectType, name);
             if (!_setAttrCallSites.TryGetValue(key, out var callSite))
             {
                 var binder = RuntimeBinder.Binder.SetMember(
@@ -111,7 +108,8 @@ namespace Python.Runtime
             var name = Runtime.GetManagedString(key);
 
             // If the key corresponds to a member of the class, we let the default implementation handle it.
-            if (clrObj.inst.GetType().GetMember(name).Length != 0)
+            var clrObjectType = clrObj.inst.GetType();
+            if (clrObjectType.GetMember(name).Length != 0)
             {
                 return Runtime.PyObject_GenericSetAttr(ob, key, val);
             }
@@ -119,7 +117,7 @@ namespace Python.Runtime
             // If the value is a managed object, we get it from the reference. If it is a Python object, we assign it as is.
             var value = ((CLRObject)GetManagedObject(val))?.inst ?? PyObject.FromNullableReference(val);
 
-            var callsite = SetAttrCallSite(name, clrObj.inst.GetType());
+            var callsite = SetAttrCallSite(name, clrObjectType);
             callsite.Target(callsite, clrObj.inst, value);
 
             return 0;
