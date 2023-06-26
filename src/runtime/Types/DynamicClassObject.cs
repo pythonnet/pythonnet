@@ -86,6 +86,12 @@ namespace Python.Runtime
                 {
                     // Do nothing, AttributeError was already raised in Python side and it was not cleared.
                 }
+                // Catch C# exceptions and raise them as Python exceptions.
+                catch(Exception exception)
+                {
+                    Exceptions.Clear();
+                    Exceptions.SetError(exception);
+                }
             }
 
             return result;
@@ -110,7 +116,15 @@ namespace Python.Runtime
             var value = ((CLRObject)GetManagedObject(val))?.inst ?? PyObject.FromNullableReference(val);
 
             var callsite = SetAttrCallSite(name, clrObjectType);
-            callsite.Target(callsite, clrObj.inst, value);
+            try
+            {
+                callsite.Target(callsite, clrObj.inst, value);
+            }
+            // Catch C# exceptions and raise them as Python exceptions.
+            catch (Exception exception)
+            {
+                Exceptions.SetError(exception);
+            }
 
             return 0;
         }
