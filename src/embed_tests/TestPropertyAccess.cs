@@ -1247,6 +1247,37 @@ class PythonModel(TestPropertyAccess.IModel):
                 $"Elapsed: {stopwatch.Elapsed.TotalMilliseconds}ms for {iterations} iterations. {thousandInvocationsPerSecond} KIPS");
         }
 
+        [TestCaseSource(nameof(DynamicPropertiesGetterTestCases))]
+        public void TestGetPublicDynamicObjectPropertyCanCatchException(object property)
+        {
+            dynamic model = PyModule.FromString("module", @"
+from clr import AddReference
+AddReference(""Python.EmbeddingTest"")
+AddReference(""System"")
+
+from Python.EmbeddingTest import *
+
+class TestGetPublicDynamicObjectPropertyThrowsPythonException:
+    def CallDynamicMethodWithoutCatchingExceptions(self, fixture):
+        return fixture.DynamicMethod()
+
+    def CallDynamicMethodCatchingExceptions(self, fixture, defaultValue):
+        try:
+            return fixture.DynamicMethod()
+        except:
+            return defaultValue
+").GetAttr("TestGetPublicDynamicObjectPropertyThrowsPythonException").Invoke();
+
+            dynamic fixture = new DynamicFixture();
+            fixture.DynamicMethod = new Func<string>(() => throw new ArgumentException("Test"));
+
+            using (Py.GIL())
+            {
+                Assert.Throws<ArgumentException>(() => model.CallDynamicMethodWithoutCatchingExceptions(fixture));
+                Assert.AreEqual(property, model.CallDynamicMethodCatchingExceptions(fixture, property).AsManagedObject(property.GetType()));
+            }
+        }
+
         public interface IModel
         {
             void InvokeModel();
