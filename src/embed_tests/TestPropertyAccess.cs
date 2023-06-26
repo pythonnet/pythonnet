@@ -1091,7 +1091,7 @@ class TestGetNonExistingPublicDynamicObjectPropertyThrows:
                 var result = model.GetValue(fixture) as PyObject;
                 Assert.IsFalse(result.IsNone());
                 Assert.AreEqual(result.PyType, Exceptions.AttributeError);
-                Assert.AreEqual("'Python.EmbeddingTest.TestPropertyAccess+DynamicFixture' object has no attribute 'AnotherProperty'",
+                Assert.AreEqual("'DynamicFixture' object has no attribute 'AnotherProperty'",
                     result.ToString());
             }
         }

@@ -184,11 +184,6 @@ namespace Python.Runtime
                 impl = new KeyValuePairEnumerableObject(type);
             }
 
-            else if (typeof(IDynamicMetaObjectProvider).IsAssignableFrom(type))
-            {
-                impl = new DynamicClassObject(type);
-            }
-
             else if (type.IsInterface)
             {
                 impl = new InterfaceObject(type);
@@ -205,6 +200,11 @@ namespace Python.Runtime
 #pragma warning restore CS0618 // Type or member is obsolete
             {
                 impl = new ClassDerivedObject(type);
+            }
+
+            else if (typeof(IDynamicMetaObjectProvider).IsAssignableFrom(type))
+            {
+                impl = new DynamicClassObject(type);
             }
 
             else

@@ -67,33 +67,24 @@ namespace Python.Runtime
         {
             var result = Runtime.PyObject_GenericGetAttr(ob, key);
 
-            // Property not found, but it can still be a dynamic one if the object is an IDynamicMetaObjectProvider
-            if (result.IsNull())
+            // If AttributeError was raised, we try to get the attribute from the managed object dynamic properties.
+            if (Exceptions.ExceptionMatches(Exceptions.AttributeError))
             {
                 var clrObj = (CLRObject)GetManagedObject(ob)!;
-                if (clrObj?.inst is IDynamicMetaObjectProvider)
+
+                var name = Runtime.GetManagedString(key);
+                var clrObjectType = clrObj.inst.GetType();
+                var callSite = GetAttrCallSite(name, clrObjectType);
+
+                try
                 {
-
-                    // The call to Runtime.PyObject_GenericGetAttr above ended up with an AttributeError
-                    // for dynamic properties since they are not found in the C# object definition.
-                    if (Exceptions.ExceptionMatches(Exceptions.AttributeError))
-                    {
-                        Exceptions.Clear();
-                    }
-
-                    var name = Runtime.GetManagedString(key);
-                    var clrObjectType = clrObj.inst.GetType();
-                    var callSite = GetAttrCallSite(name, clrObjectType);
-
-                    try
-                    {
-                        var res = callSite.Target(callSite, clrObj.inst);
-                        return Converter.ToPython(res);
-                    }
-                    catch (RuntimeBinder.RuntimeBinderException)
-                    {
-                        Exceptions.SetError(Exceptions.AttributeError, $"'{clrObjectType}' object has no attribute '{name}'");
-                    }
+                    var res = callSite.Target(callSite, clrObj.inst);
+                    Exceptions.Clear();
+                    result = Converter.ToPython(res);
+                }
+                catch (RuntimeBinder.RuntimeBinderException)
+                {
+                    // Do nothing, AttributeError was already raised in Python side and it was not cleared.
                 }
             }
 
