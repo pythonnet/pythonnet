@@ -17,7 +17,7 @@ to:
 
 -  Reference ``Python.Runtime.dll`` (e.g. via a ``PackageReference``)
 -  Call ``PythonEngine.Initialize()`` to initialize Python
--  Call ``PythonEngine.ImportModule(name)`` to import a module
+-  Call ``var mod = PyModule.Import(name)`` to import a module as ``mod``
 
 The module you import can either start working with your managed app
 environment at the time its imported, or you can explicitly lookup and
