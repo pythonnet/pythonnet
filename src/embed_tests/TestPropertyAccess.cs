@@ -1096,6 +1096,67 @@ class TestGetNonExistingPublicDynamicObjectPropertyThrows:
             }
         }
 
+        public class CSharpTestClass
+        {
+            public string CSharpProperty { get; set; }
+        }
+
+        [Test]
+        public void TestKeepsPythonReferenceForDynamicPropertiesFromPythonClassDerivedFromCSharpClass()
+        {
+            var expectedCSharpPropertyValue = "C# property";
+            var expectedPythonPropertyValue = "Python property";
+
+            var testModule = PyModule.FromString("module", $@"
+from clr import AddReference
+AddReference(""Python.EmbeddingTest"")
+AddReference(""System"")
+
+from Python.EmbeddingTest import TestPropertyAccess
+
+class PythonTestClass(TestPropertyAccess.CSharpTestClass):
+    def __init__(self):
+        super().__init__()
+
+def SetPythonObjectToFixture(fixture: TestPropertyAccess.DynamicFixture) -> None:
+    obj = PythonTestClass()
+    obj.CSharpProperty = '{expectedCSharpPropertyValue}'
+    obj.PythonProperty = '{expectedPythonPropertyValue}'
+    fixture.PythonClassObject = obj
+
+def AssertPythonClassObjectType(fixture: TestPropertyAccess.DynamicFixture) -> None:
+    if type(fixture.PythonClassObject) != PythonTestClass:
+        raise Exception('PythonClassObject is not of type PythonTestClass')
+
+def AccessCSharpProperty(fixture: TestPropertyAccess.DynamicFixture) -> str:
+    return fixture.PythonClassObject.CSharpProperty
+
+def AccessPythonProperty(fixture: TestPropertyAccess.DynamicFixture) -> str:
+    return fixture.PythonClassObject.PythonProperty
+");
+
+            dynamic fixture = new DynamicFixture();
+
+            using (Py.GIL())
+            {
+                dynamic SetPythonObjectToFixture = testModule.GetAttr("SetPythonObjectToFixture");
+                SetPythonObjectToFixture(fixture);
+
+                dynamic AssertPythonClassObjectType = testModule.GetAttr("AssertPythonClassObjectType");
+                Assert.DoesNotThrow(() => AssertPythonClassObjectType(fixture));
+
+                // Access the C# class property
+                dynamic AccessCSharpProperty = testModule.GetAttr("AccessCSharpProperty");
+                Assert.AreEqual(expectedCSharpPropertyValue, AccessCSharpProperty(fixture).As<string>());
+                Assert.AreEqual(expectedCSharpPropertyValue, fixture.PythonClassObject.CSharpProperty.As<string>());
+
+                // Access the Python class property
+                dynamic AccessPythonProperty = testModule.GetAttr("AccessPythonProperty");
+                Assert.AreEqual(expectedPythonPropertyValue, AccessPythonProperty(fixture).As<string>());
+                Assert.AreEqual(expectedPythonPropertyValue, fixture.PythonClassObject.PythonProperty.As<string>());
+            }
+        }
+
         private static TestCaseData[] DynamicPropertiesSetterTestCases() => new[]
         {
             new TestCaseData("True", null),
@@ -1136,10 +1197,15 @@ class TestGetPublicDynamicObjectPropertyWorks:
             using (Py.GIL())
             {
                 model.SetValue(fixture);
-                var expectedAsPyObject = model.GetPythonValue() as PyObject;
-                var expected = expectedType != null ? expectedAsPyObject.AsManagedObject(expectedType) : expectedAsPyObject;
 
-                Assert.AreEqual(expected, fixture.DynamicProperty);
+                var expectedAsPyObject = model.GetPythonValue() as PyObject;
+                Assert.AreEqual(expectedAsPyObject, fixture.DynamicProperty);
+
+                if (expectedType != null)
+                {
+                    Assert.AreEqual(expectedAsPyObject.AsManagedObject(expectedType), fixture.DynamicProperty.AsManagedObject(expectedType));
+                }
+
             }
         }
 
