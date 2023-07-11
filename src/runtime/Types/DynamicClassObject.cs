@@ -112,13 +112,10 @@ namespace Python.Runtime
                 return Runtime.PyObject_GenericSetAttr(ob, key, val);
             }
 
-            // If the value is a managed object, we get it from the reference. If it is a Python object, we assign it as is.
-            var value = ((CLRObject)GetManagedObject(val))?.inst ?? PyObject.FromNullableReference(val);
-
             var callsite = SetAttrCallSite(name, clrObjectType);
             try
             {
-                callsite.Target(callsite, clrObj.inst, value);
+                callsite.Target(callsite, clrObj.inst, PyObject.FromNullableReference(val));
             }
             // Catch C# exceptions and raise them as Python exceptions.
             catch (Exception exception)
