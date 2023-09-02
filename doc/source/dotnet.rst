@@ -110,7 +110,7 @@ Code executed from the scope will have access to the variable:
    using (Py.GIL())
    {
        // create a Python scope
-       using (PyScope scope = Py.CreateScope())
+       using (PyModule scope = Py.CreateScope())
        {
            // convert the Person object to a PyObject
            PyObject pyPerson = person.ToPython();
