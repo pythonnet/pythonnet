@@ -143,6 +143,13 @@ def test_enum_undefined_value():
     Test.FieldTest().EnumField = Test.ShortEnum(20, True)
 
 
+def test_enum_repr():
+    """Test enumeration repr."""
+    from System import DayOfWeek
+
+    assert repr(DayOfWeek.Monday) == "Monday"
+
+
 def test_enum_conversion():
     """Test enumeration conversion."""
     ob = Test.FieldTest()

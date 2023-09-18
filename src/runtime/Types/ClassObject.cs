@@ -49,6 +49,27 @@ namespace Python.Runtime
 
 
         /// <summary>
+        /// ClassObject __repr__ implementation.
+        /// </summary>
+        public new static NewReference tp_repr(BorrowedReference ob)
+        {
+            if (GetManagedObject(ob) is not CLRObject co)
+            {
+                return Exceptions.RaiseTypeError("invalid object");
+            }
+
+            var inst = co.inst;
+            var obType = inst.GetType();
+            if (obType.IsEnum)
+            {
+                var repr = string.Format("{0}.{1}", obType.Name, inst.ToString());
+                return Runtime.PyString_FromString(repr);
+            }
+
+            return ClassBase.tp_repr(ob);
+        }
+
+        /// <summary>
         /// Implements __new__ for reflected classes and value types.
         /// </summary>
         static NewReference tp_new_impl(BorrowedReference tp, BorrowedReference args, BorrowedReference kw)
