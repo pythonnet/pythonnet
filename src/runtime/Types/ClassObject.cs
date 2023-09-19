@@ -49,6 +49,26 @@ namespace Python.Runtime
 
 
         /// <summary>
+        /// given an enum, write a __repr__ string formatted in the same
+        /// way as a python repr string. Something like:
+        ///   '&lt;Color.GREEN: 2&gt;';
+        /// with a binary value for [Flags] enums
+        /// </summary>
+        /// <param name="inst">Instace of the enum object</param>
+        /// <returns></returns>
+        private static string getEnumReprString(object inst)
+        {
+            var obType = inst.GetType();
+
+            var isFlags = obType.IsFlagsEnum();
+            var intValue = Convert.ToInt32(inst);
+            var intStr = isFlags ? "0x" + intValue.ToString("X4") : intValue.ToString();
+
+            var repr = $"<{obType.Name}.{inst}: {intStr}>";
+            return repr;
+        }
+
+        /// <summary>
         /// ClassObject __repr__ implementation.
         /// </summary>
         public new static NewReference tp_repr(BorrowedReference ob)
@@ -57,13 +77,9 @@ namespace Python.Runtime
             {
                 return Exceptions.RaiseTypeError("invalid object");
             }
-
-            var inst = co.inst;
-            var obType = inst.GetType();
-            if (obType.IsEnum)
+            if (co.inst.GetType().IsEnum)
             {
-                var repr = string.Format("{0}.{1}", obType.Name, inst.ToString());
-                return Runtime.PyString_FromString(repr);
+                return Runtime.PyString_FromString(getEnumReprString(co.inst));
             }
 
             return ClassBase.tp_repr(ob);

@@ -147,7 +147,10 @@ def test_enum_repr():
     """Test enumeration repr."""
     from System import DayOfWeek
 
-    assert repr(DayOfWeek.Monday) == "DayOfWeek.Monday"
+    assert repr(DayOfWeek.Monday) == "<DayOfWeek.Monday: 1>"
+
+    flags_value = Test.FlagsEnum.One | Test.FlagsEnum.Two
+    assert repr(flags_value) == "<FlagsEnum.One, Two: 0x0003>"
 
 
 def test_enum_conversion():
