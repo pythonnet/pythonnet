@@ -149,8 +149,8 @@ def test_enum_repr():
 
     assert repr(DayOfWeek.Monday) == "<DayOfWeek.Monday: 1>"
 
-    flags_value = Test.FlagsEnum.One | Test.FlagsEnum.Two
-    assert repr(flags_value) == "<FlagsEnum.One, Two: 0x0003>"
+    assert repr(Test.FlagsEnum(7)) == "<FlagsEnum.Two, Five: 0x0007>"
+    assert repr(Test.FlagsEnum(8)) == "<FlagsEnum.8: 0x0008>"
 
 
 def test_enum_conversion():
