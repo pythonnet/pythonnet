@@ -60,11 +60,50 @@ namespace Python.Runtime
         {
             var obType = inst.GetType();
 
+            var integralType = obType.GetEnumUnderlyingType();
             var isFlags = obType.IsFlagsEnum();
-            var intValue = Convert.ToInt32(inst);
-            var intStr = isFlags ? "0x" + intValue.ToString("X4") : intValue.ToString();
 
-            var repr = $"<{obType.Name}.{inst}: {intStr}>";
+            string strValue = "";
+            switch (Type.GetTypeCode(integralType))
+            {
+                case TypeCode.SByte:
+                    var valueSB = Convert.ToSByte(inst);
+                    strValue = isFlags ? "0x" + valueSB.ToString("X2") : valueSB.ToString();
+                    break;
+                case TypeCode.Byte:
+                    var valueB = Convert.ToByte(inst);
+                    strValue = isFlags ? "0x" + valueB.ToString("X2") : valueB.ToString();
+                    break;
+                case TypeCode.Int16:
+                    var valueI16 = Convert.ToInt16(inst);
+                    strValue = isFlags ? "0x" + valueI16.ToString("X4") : valueI16.ToString();
+                    break;
+                case TypeCode.UInt16:
+                    var valueUI16 = Convert.ToUInt16(inst);
+                    strValue = isFlags ? "0x" + valueUI16.ToString("X4") : valueUI16.ToString();
+                    break;
+                case TypeCode.Int32:
+                    var valueI32 = Convert.ToInt32(inst);
+                    strValue = isFlags ? "0x" + valueI32.ToString("X8") : valueI32.ToString();
+                    break;
+                case TypeCode.UInt32:
+                    var valueUI32 = Convert.ToUInt32(inst);
+                    strValue = isFlags ? "0x" + valueUI32.ToString("X8") : valueUI32.ToString();
+                    break;
+                case TypeCode.Int64:
+                    var valueI64 = Convert.ToInt64(inst);
+                    strValue = isFlags ? "0x" + valueI64.ToString("X16") : valueI64.ToString();
+                    break;
+                case TypeCode.UInt64:
+                    var valueUI64 = Convert.ToUInt64(inst);
+                    strValue = isFlags ? "0x" + valueUI64.ToString("X16") : valueUI64.ToString();
+                    break;
+                default:
+                    break;
+            }
+
+
+            var repr = $"<{obType.Name}.{inst}: {strValue}>";
             return repr;
         }
 
