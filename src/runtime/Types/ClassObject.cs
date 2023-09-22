@@ -1,7 +1,9 @@
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 
 namespace Python.Runtime
@@ -47,6 +49,20 @@ namespace Python.Runtime
             return Runtime.PyString_FromString(str);
         }
 
+        private static string ConvertFlags(Enum value)
+        {
+            Type primitiveType = value.GetType().GetEnumUnderlyingType();
+            string format = "X" + (Marshal.SizeOf(primitiveType) * 2).ToString(CultureInfo.InvariantCulture);
+            var primitive = (IFormattable)Convert.ChangeType(value, primitiveType);
+            return "0x" + primitive.ToString(format, null);
+
+        }
+
+        private static string ConvertValue(Enum value)
+        {
+            Type primitiveType = value.GetType().GetEnumUnderlyingType();
+            return Convert.ChangeType(value, primitiveType).ToString()!;
+        }
 
         /// <summary>
         /// given an enum, write a __repr__ string formatted in the same
@@ -56,54 +72,13 @@ namespace Python.Runtime
         /// </summary>
         /// <param name="inst">Instace of the enum object</param>
         /// <returns></returns>
-        private static string getEnumReprString(object inst)
+        private static string GetEnumReprString(Enum inst)
         {
             var obType = inst.GetType();
 
-            var integralType = obType.GetEnumUnderlyingType();
-            var isFlags = obType.IsFlagsEnum();
+            string strValue2 = obType.IsFlagsEnum() ? ConvertFlags(inst) : ConvertValue(inst);
 
-            string strValue = "";
-            switch (Type.GetTypeCode(integralType))
-            {
-                case TypeCode.SByte:
-                    var valueSB = Convert.ToSByte(inst);
-                    strValue = isFlags ? "0x" + valueSB.ToString("X2") : valueSB.ToString();
-                    break;
-                case TypeCode.Byte:
-                    var valueB = Convert.ToByte(inst);
-                    strValue = isFlags ? "0x" + valueB.ToString("X2") : valueB.ToString();
-                    break;
-                case TypeCode.Int16:
-                    var valueI16 = Convert.ToInt16(inst);
-                    strValue = isFlags ? "0x" + valueI16.ToString("X4") : valueI16.ToString();
-                    break;
-                case TypeCode.UInt16:
-                    var valueUI16 = Convert.ToUInt16(inst);
-                    strValue = isFlags ? "0x" + valueUI16.ToString("X4") : valueUI16.ToString();
-                    break;
-                case TypeCode.Int32:
-                    var valueI32 = Convert.ToInt32(inst);
-                    strValue = isFlags ? "0x" + valueI32.ToString("X8") : valueI32.ToString();
-                    break;
-                case TypeCode.UInt32:
-                    var valueUI32 = Convert.ToUInt32(inst);
-                    strValue = isFlags ? "0x" + valueUI32.ToString("X8") : valueUI32.ToString();
-                    break;
-                case TypeCode.Int64:
-                    var valueI64 = Convert.ToInt64(inst);
-                    strValue = isFlags ? "0x" + valueI64.ToString("X16") : valueI64.ToString();
-                    break;
-                case TypeCode.UInt64:
-                    var valueUI64 = Convert.ToUInt64(inst);
-                    strValue = isFlags ? "0x" + valueUI64.ToString("X16") : valueUI64.ToString();
-                    break;
-                default:
-                    break;
-            }
-
-
-            var repr = $"<{obType.Name}.{inst}: {strValue}>";
+            var repr = $"<{obType.Name}.{inst}: {strValue2}>";
             return repr;
         }
 
@@ -118,7 +93,7 @@ namespace Python.Runtime
             }
             if (co.inst.GetType().IsEnum)
             {
-                return Runtime.PyString_FromString(getEnumReprString(co.inst));
+                return Runtime.PyString_FromString(GetEnumReprString((Enum)co.inst));
             }
 
             return ClassBase.tp_repr(ob);
