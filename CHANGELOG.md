@@ -9,6 +9,8 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ### Added
 
+- use enum name in repr
+
 ### Changed
 
 ### Fixed
