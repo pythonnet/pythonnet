@@ -1,47 +1,34 @@
-namespace Python.EmbeddingTest
+using NUnit.Framework;
+using Python.Runtime;
+
+namespace Python.EmbeddingTest;
+
+public class References : BaseFixture
 {
-    using NUnit.Framework;
-    using Python.Runtime;
-
-    public class References
+    [Test]
+    public void MoveToPyObject_SetsNull()
     {
-        [OneTimeSetUp]
-        public void SetUp()
+        using var dict = new PyDict();
+        NewReference reference = Runtime.Runtime.PyDict_Items(dict.Reference);
+        try
         {
-            PythonEngine.Initialize();
-        }
+            Assert.IsFalse(reference.IsNull());
 
-        [OneTimeTearDown]
-        public void Dispose()
+            using (reference.MoveToPyObject())
+                Assert.IsTrue(reference.IsNull());
+        }
+        finally
         {
-            PythonEngine.Shutdown();
+            reference.Dispose();
         }
+    }
 
-        [Test]
-        public void MoveToPyObject_SetsNull()
-        {
-            var dict = new PyDict();
-            NewReference reference = Runtime.PyDict_Items(dict.Reference);
-            try
-            {
-                Assert.IsFalse(reference.IsNull());
-
-                using (reference.MoveToPyObject())
-                    Assert.IsTrue(reference.IsNull());
-            }
-            finally
-            {
-                reference.Dispose();
-            }
-        }
-
-        [Test]
-        public void CanBorrowFromNewReference()
-        {
-            var dict = new PyDict();
-            using NewReference reference = Runtime.PyDict_Items(dict.Reference);
-            BorrowedReference borrowed = reference.BorrowOrThrow();
-            PythonException.ThrowIfIsNotZero(Runtime.PyList_Reverse(borrowed));
-        }
+    [Test]
+    public void CanBorrowFromNewReference()
+    {
+        using var dict = new PyDict();
+        using NewReference reference = Runtime.Runtime.PyDict_Items(dict.Reference);
+        BorrowedReference borrowed = reference.BorrowOrThrow();
+        PythonException.ThrowIfIsNotZero(Runtime.Runtime.PyList_Reverse(borrowed));
     }
 }

@@ -1,37 +1,37 @@
 using NUnit.Framework;
 using Python.Runtime;
 
-namespace Python.EmbeddingTest
+namespace Python.EmbeddingTest;
+
+// As the SetUpFixture, the OneTimeTearDown of this class is executed after
+// all tests have run.
+[SetUpFixture]
+public partial class GlobalTestsSetup
 {
-
-    // As the SetUpFixture, the OneTimeTearDown of this class is executed after
-    // all tests have run.
-    [SetUpFixture]
-    public partial class GlobalTestsSetup
+    [OneTimeSetUp]
+    public void GlobalSetup()
     {
-        [OneTimeSetUp]
-        public void GlobalSetup()
-        {
-            Finalizer.Instance.ErrorHandler += FinalizerErrorHandler;
-        }
+        PythonEngine.Initialize();
+        Finalizer.Instance.ErrorHandler += FinalizerErrorHandler;
+    }
 
-        private void FinalizerErrorHandler(object sender, Finalizer.ErrorArgs e)
+    private void FinalizerErrorHandler(object sender, Finalizer.ErrorArgs e)
+    {
+        if (e.Error is RuntimeShutdownException)
         {
-            if (e.Error is RuntimeShutdownException)
-            {
-                // allow objects to leak after the python runtime run
-                // they were created in is gone
-                e.Handled = true;
-            }
+            // allow objects to leak after the python runtime run
+            // they were created in is gone
+            e.Handled = true;
         }
+    }
 
-        [OneTimeTearDown]
-        public void FinalCleanup()
+    [OneTimeTearDown]
+    public void FinalCleanup()
+    {
+        PyObjectConversions.Reset();
+        if (PythonEngine.IsInitialized)
         {
-            if (PythonEngine.IsInitialized)
-            {
-                PythonEngine.Shutdown();
-            }
+            PythonEngine.Shutdown();
         }
     }
 }

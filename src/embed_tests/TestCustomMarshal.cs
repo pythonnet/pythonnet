@@ -1,35 +1,21 @@
-using System;
 using NUnit.Framework;
 using Python.Runtime;
 
-namespace Python.EmbeddingTest
+namespace Python.EmbeddingTest;
+
+public class TestCustomMarshal : BaseFixture
 {
-    public class TestCustomMarshal
+    [Test]
+    public static void GetManagedStringTwice()
     {
-        [OneTimeSetUp]
-        public void SetUp()
-        {
-            PythonEngine.Initialize();
-        }
+        const string expected = "FooBar";
 
-        [OneTimeTearDown]
-        public void Dispose()
-        {
-            PythonEngine.Shutdown();
-        }
+        using var op = Runtime.Runtime.PyString_FromString(expected);
+        string s1 = Runtime.Runtime.GetManagedString(op.BorrowOrThrow());
+        string s2 = Runtime.Runtime.GetManagedString(op.Borrow());
 
-        [Test]
-        public static void GetManagedStringTwice()
-        {
-            const string expected = "FooBar";
-
-            using var op = Runtime.Runtime.PyString_FromString(expected);
-            string s1 = Runtime.Runtime.GetManagedString(op.BorrowOrThrow());
-            string s2 = Runtime.Runtime.GetManagedString(op.Borrow());
-
-            Assert.AreEqual(1, Runtime.Runtime.Refcount32(op.Borrow()));
-            Assert.AreEqual(expected, s1);
-            Assert.AreEqual(expected, s2);
-        }
+        Assert.AreEqual(1, Runtime.Runtime.Refcount32(op.Borrow()));
+        Assert.AreEqual(expected, s1);
+        Assert.AreEqual(expected, s2);
     }
 }
