@@ -26,7 +26,7 @@ public class TestFinalizer
     public void TearDown()
     {
         Finalizer.Instance.Threshold = _oldThreshold;
-        PythonEngine.Shutdown();
+        PythonEngine.Shutdown(allowReload: true);
     }
 
     private static void FullGCCollect()
@@ -89,7 +89,7 @@ public class TestFinalizer
     }
 
     [Test]
-    [Obsolete("GC tests are not guaranteed")]
+    // [Obsolete("GC tests are not guaranteed")]
     public void CollectOnShutdown()
     {
         IntPtr op = MakeAGarbage(out var shortWeak, out var longWeak);
@@ -100,7 +100,7 @@ public class TestFinalizer
         Assert.IsTrue(garbage.Contains(op),
             "Garbage should contains the collected object");
 
-        PythonEngine.Shutdown();
+        PythonEngine.Shutdown(allowReload: true);
         garbage = Finalizer.Instance.GetCollectedObjects();
 
         if (garbage.Count > 0)

@@ -367,14 +367,13 @@ obj.Field += 10
         public static void ShutdownPython()
         {
             PythonEngine.EndAllowThreads(_state);
-            PythonEngine.Shutdown();
+            PythonEngine.Shutdown(allowReload: true);
         }
 
         public static void ShutdownPythonCompletely()
         {
             PythonEngine.EndAllowThreads(_state);
-
-            PythonEngine.Shutdown();
+            PythonEngine.Shutdown(allowReload: true);
         }
 
         static void OnDomainUnload(object sender, EventArgs e)

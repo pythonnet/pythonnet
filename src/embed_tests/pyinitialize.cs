@@ -13,38 +13,36 @@ public class PyInitializeTest
     public static void StartAndStopTwice()
     {
         PythonEngine.Initialize();
-        PythonEngine.Shutdown();
+        PythonEngine.Shutdown(allowReload: true);
 
         PythonEngine.Initialize();
-        PythonEngine.Shutdown();
+        PythonEngine.Shutdown(allowReload: true);
     }
 
     [Test]
     public static void LoadDefaultArgs()
     {
-        using (new PythonEngine())
+        PythonEngine.Initialize();
+        using (var argv = new PyList(Runtime.Runtime.PySys_GetObject("argv")))
         {
-            using(var argv = new PyList(Runtime.Runtime.PySys_GetObject("argv")))
-            {
-                Assert.AreNotEqual(0, argv.Length());
-            }
+            Assert.AreNotEqual(0, argv.Length());
         }
+        PythonEngine.Shutdown(allowReload: true);
     }
 
     [Test]
     public static void LoadSpecificArgs()
     {
         var args = new[] { "test1", "test2" };
-        using (new PythonEngine(args))
+        PythonEngine.Initialize(args);
+        using (var argv = new PyList(Runtime.Runtime.PySys_GetObject("argv")))
         {
-            using (var argv = new PyList(Runtime.Runtime.PySys_GetObject("argv")))
-            {
-                using var v0 = argv[0];
-                using var v1 = argv[1];
-                Assert.AreEqual(args[0], v0.ToString());
-                Assert.AreEqual(args[1], v1.ToString());
-            }
+            using var v0 = argv[0];
+            using var v1 = argv[1];
+            Assert.AreEqual(args[0], v0.ToString());
+            Assert.AreEqual(args[1], v1.ToString());
         }
+        PythonEngine.Shutdown(allowReload: true);
     }
 
     // regression test for https://github.com/pythonnet/pythonnet/issues/1561
@@ -63,7 +61,7 @@ public class PyInitializeTest
 
         Assert.Less(Runtime.Runtime.Refcount32(clsRef), 256);
 
-        PythonEngine.Shutdown();
+        PythonEngine.Shutdown(allowReload: true);
         Assert.Greater(Runtime.Runtime.Refcount32(clsRef), 0);
     }
 
@@ -73,7 +71,6 @@ public class PyInitializeTest
     /// More complex version of StartAndStopTwice test
     /// </summary>
     [Test]
-    [Ignore("GH#376: System.OverflowException : Arithmetic operation resulted in an overflow")]
     //[Ignore("System.ArgumentException : Cannot pass a GCHandle across AppDomains")]
     public void ReInitialize()
     {
@@ -84,7 +81,7 @@ public class PyInitializeTest
             // Import any class or struct from .NET
             PythonEngine.RunSimpleString(code);
         }
-        PythonEngine.Shutdown();
+        PythonEngine.Shutdown(allowReload: true);
 
         PythonEngine.Initialize();
         using (Py.GIL())
@@ -97,7 +94,7 @@ public class PyInitializeTest
             // If replacing int with Int64, OverflowException will be replaced with AppDomain exception.
             PythonEngine.RunSimpleString("Int32(1)");
         }
-        PythonEngine.Shutdown();
+        PythonEngine.Shutdown(allowReload: true);
     }
 
     /// <summary>
@@ -123,7 +120,7 @@ public class PyInitializeTest
         shutdown_count = 0;
         PythonEngine.Initialize();
         PythonEngine.AddShutdownHandler(OnShutdownIncrement);
-        PythonEngine.Shutdown();
+        PythonEngine.Shutdown(allowReload: true);
         Assert.That(shutdown_count, Is.EqualTo(1));
 
         // Test we can run multiple shutdown handlers in the right order.
@@ -131,7 +128,7 @@ public class PyInitializeTest
         PythonEngine.Initialize();
         PythonEngine.AddShutdownHandler(OnShutdownIncrement);
         PythonEngine.AddShutdownHandler(OnShutdownDouble);
-        PythonEngine.Shutdown();
+        PythonEngine.Shutdown(allowReload: true);
         // Correct: 4 * 2 + 1 = 9
         // Wrong:  (4 + 1) * 2 = 10
         Assert.That(shutdown_count, Is.EqualTo(9));
@@ -145,7 +142,7 @@ public class PyInitializeTest
         PythonEngine.AddShutdownHandler(OnShutdownIncrement);
         PythonEngine.AddShutdownHandler(OnShutdownDouble);
         PythonEngine.RemoveShutdownHandler(OnShutdownDouble);
-        PythonEngine.Shutdown();
+        PythonEngine.Shutdown(allowReload: true);
         // Correct: (4 + 1) * 2 + 1 + 1 = 12
         // Wrong:   (4 * 2) + 1 + 1 + 1 = 11
         Assert.That(shutdown_count, Is.EqualTo(12));

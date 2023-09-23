@@ -14,7 +14,7 @@ public class BaseFixture
     [OneTimeTearDown]
     public void BaseTearDown()
     {
-        PyObjectConversions.Reset();
         PythonEngine.Shutdown(allowReload: true);
+        PyObjectConversions.Reset();
     }
 }

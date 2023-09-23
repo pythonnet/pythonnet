@@ -79,7 +79,7 @@ public class TestPythonEngineProperties : BaseFixture
         string s = PythonEngine.PythonPath;
 
         StringAssert.Contains("python", s.ToLower());
-        PythonEngine.Shutdown();
+        PythonEngine.Shutdown(allowReload: true);
     }
 
     [Test]
@@ -89,7 +89,7 @@ public class TestPythonEngineProperties : BaseFixture
         string s = PythonEngine.ProgramName;
 
         Assert.NotNull(s);
-        PythonEngine.Shutdown();
+        PythonEngine.Shutdown(allowReload: true);
     }
 
     /// <summary>
@@ -105,7 +105,7 @@ public class TestPythonEngineProperties : BaseFixture
         string enginePythonHome = PythonEngine.PythonHome;
 
         Assert.AreEqual(envPythonHome, enginePythonHome);
-        PythonEngine.Shutdown();
+        PythonEngine.Shutdown(allowReload: true);
     }
 
     [Test]
@@ -113,7 +113,7 @@ public class TestPythonEngineProperties : BaseFixture
     {
         PythonEngine.Initialize();
         var pythonHomeBackup = PythonEngine.PythonHome;
-        PythonEngine.Shutdown();
+        PythonEngine.Shutdown(allowReload: true);
 
         if (pythonHomeBackup == "")
             Assert.Inconclusive("Can't reset PythonHome to empty string, skipping");
@@ -124,7 +124,7 @@ public class TestPythonEngineProperties : BaseFixture
         PythonEngine.Initialize();
 
         Assert.AreEqual(pythonHome, PythonEngine.PythonHome);
-        PythonEngine.Shutdown();
+        PythonEngine.Shutdown(allowReload: true);
 
         // Restoring valid pythonhome.
         PythonEngine.PythonHome = pythonHomeBackup;
@@ -135,7 +135,7 @@ public class TestPythonEngineProperties : BaseFixture
     {
         PythonEngine.Initialize();
         var pythonHomeBackup = PythonEngine.PythonHome;
-        PythonEngine.Shutdown();
+        PythonEngine.Shutdown(allowReload: true);
 
         if (pythonHomeBackup == "")
             Assert.Inconclusive("Can't reset PythonHome to empty string, skipping");
@@ -147,7 +147,7 @@ public class TestPythonEngineProperties : BaseFixture
         PythonEngine.Initialize();
 
         Assert.AreEqual(pythonHome, PythonEngine.PythonHome);
-        PythonEngine.Shutdown();
+        PythonEngine.Shutdown(allowReload: true);
 
         PythonEngine.PythonHome = pythonHomeBackup;
     }
@@ -161,7 +161,7 @@ public class TestPythonEngineProperties : BaseFixture
         var backup = PythonEngine.PythonHome;
         if (backup == "")
         {
-            PythonEngine.Shutdown();
+            PythonEngine.Shutdown(allowReload: true);
             Assert.Inconclusive("Can't reset PythonHome to empty string, skipping");
         }
         PythonEngine.PythonHome = "";
@@ -169,7 +169,7 @@ public class TestPythonEngineProperties : BaseFixture
         Assert.AreEqual("", PythonEngine.PythonHome);
 
         PythonEngine.PythonHome = backup;
-        PythonEngine.Shutdown();
+        PythonEngine.Shutdown(allowReload: true);
     }
 
     [Test]
@@ -177,7 +177,7 @@ public class TestPythonEngineProperties : BaseFixture
     {
         if (PythonEngine.IsInitialized)
         {
-            PythonEngine.Shutdown();
+            PythonEngine.Shutdown(allowReload: true);
         }
 
         var programNameBackup = PythonEngine.ProgramName;
@@ -188,7 +188,7 @@ public class TestPythonEngineProperties : BaseFixture
         PythonEngine.Initialize();
 
         Assert.AreEqual(programName, PythonEngine.ProgramName);
-        PythonEngine.Shutdown();
+        PythonEngine.Shutdown(allowReload: true);
 
         PythonEngine.ProgramName = programNameBackup;
     }
@@ -220,7 +220,7 @@ public class TestPythonEngineProperties : BaseFixture
         // See https://docs.python.org/3/c-api/init.html#c.Py_GetPath
         // After PythonPath is set, then PythonEngine.PythonPath will correctly return the full search path.
 
-        PythonEngine.Shutdown();
+        PythonEngine.Shutdown(allowReload: true);
 
         PythonEngine.PythonPath = path;
         PythonEngine.Initialize();
@@ -228,6 +228,6 @@ public class TestPythonEngineProperties : BaseFixture
         Assert.AreEqual(path, PythonEngine.PythonPath);
         if (importShouldSucceed) Py.Import(moduleName);
 
-        PythonEngine.Shutdown();
+        PythonEngine.Shutdown(allowReload: true);
     }
 }

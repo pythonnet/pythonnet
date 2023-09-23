@@ -9,6 +9,12 @@ namespace Python.EmbeddingTest;
 
 public class Codecs : BaseFixture
 {
+    [SetUp]
+    public void SetUp()
+    {
+        PyObjectConversions.Reset();
+    }
+
     [Test]
     public void TupleConversionsGeneric()
     {
