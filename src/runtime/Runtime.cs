@@ -312,9 +312,9 @@ namespace Python.Runtime
                 Debug.Assert(everythingSeemsCollected);
             }
 
-            ResetPyMembers();
             Finalizer.Shutdown();
             InternString.Shutdown();
+            ResetPyMembers();
 
             if (!HostedInPython)
             {
