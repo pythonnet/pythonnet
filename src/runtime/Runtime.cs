@@ -66,6 +66,7 @@ namespace Python.Runtime
 
         // .NET core: System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
         internal static bool IsWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
+        internal static bool IsNetCore = RuntimeInformation.FrameworkDescription == ".NET" || RuntimeInformation.FrameworkDescription == ".NET Core";
 
         internal static Version InteropVersion { get; }
             = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
@@ -113,14 +114,6 @@ namespace Python.Runtime
             }
             _isInitialized = true;
 
-            if (ShutdownWithoutReload)
-            {
-                throw new Exception(
-                    "Runtime was shut down without allowReload: true, can " +
-                    "not be restarted in this process"
-                );
-            }
-
             bool interpreterAlreadyInitialized = TryUsingDll(
                 () => Py_IsInitialized() != 0
             );
@@ -153,6 +146,18 @@ namespace Python.Runtime
                     NewRun();
                 }
             }
+
+            if (ShutdownWithoutReload && RuntimeData.StashedDataFromDifferentDomain())
+            {
+                if (!HostedInPython)
+                    Py_Finalize();
+
+                // Shutdown again
+                throw new Exception(
+                    "Runtime was shut down with allowReload: false, can not be reloaded in different domain"
+                );
+            }
+
             MainManagedThreadId = Thread.CurrentThread.ManagedThreadId;
 
             Finalizer.Initialize();
@@ -172,6 +177,7 @@ namespace Python.Runtime
             // Initialize modules that depend on the runtime class.
             AssemblyManager.Initialize();
             OperatorMethod.Initialize();
+
             if (RuntimeData.HasStashData())
             {
                 RuntimeData.RestoreRuntimeData();
@@ -273,7 +279,7 @@ namespace Python.Runtime
 
             var state = PyGILState_Ensure();
 
-            if (!HostedInPython && !ProcessIsTerminating && allowReload)
+            if (!HostedInPython && !ProcessIsTerminating && !IsNetCore && allowReload)
             {
                 // avoid saving dead objects
                 TryCollectingGarbage(runs: 3);

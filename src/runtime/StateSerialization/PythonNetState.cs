@@ -9,6 +9,7 @@ namespace Python.Runtime.StateSerialization;
 [Serializable]
 internal class PythonNetState
 {
+    public int DomainId { get; init; }
     public MetatypeState Metatype { get; init; }
     public SharedObjectsState SharedObjects { get; init; }
     public TypeManagerState Types { get; init; }

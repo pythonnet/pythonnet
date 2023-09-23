@@ -303,7 +303,7 @@ obj.Field += 10
 
                     var caller = CreateInstanceInstanceAndUnwrap<T2>(domain);
                     caller.Execute(arg);
-                    theProxy.Call("ShutdownPythonCompletely");
+                    theProxy.Call("ShutdownPython");
                 }
                 finally
                 {
@@ -365,12 +365,6 @@ obj.Field += 10
         }
 
         public static void ShutdownPython()
-        {
-            PythonEngine.EndAllowThreads(_state);
-            PythonEngine.Shutdown(allowReload: true);
-        }
-
-        public static void ShutdownPythonCompletely()
         {
             PythonEngine.EndAllowThreads(_state);
             PythonEngine.Shutdown(allowReload: true);
