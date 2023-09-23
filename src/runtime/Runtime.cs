@@ -294,20 +294,26 @@ namespace Python.Runtime
             DisposeLazyObject(hexCallable);
             PyObjectConversions.Reset();
 
-            PyGC_Collect();
-            bool everythingSeemsCollected = TryCollectingGarbage(MaxCollectRetriesOnShutdown,
-                                                                 forceBreakLoops: true);
-            Debug.Assert(everythingSeemsCollected);
+            if (!ProcessIsTerminating)
+            {
+                PyGC_Collect();
+                bool everythingSeemsCollected = TryCollectingGarbage(MaxCollectRetriesOnShutdown,
+                                                                     forceBreakLoops: true);
+                Debug.Assert(everythingSeemsCollected);
+            }
 
+            ResetPyMembers();
             Finalizer.Shutdown();
             InternString.Shutdown();
 
-            ResetPyMembers();
-
             if (!HostedInPython)
             {
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
+                if (!ProcessIsTerminating)
+                {
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                }
+
                 PyGILState_Release(state);
                 // Then release the GIL for good, if there is somehting to release
                 // Use the unchecked version as the checked version calls `abort()`
