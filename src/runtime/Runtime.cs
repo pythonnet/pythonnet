@@ -96,8 +96,9 @@ namespace Python.Runtime
             return runNumber;
         }
 
-        internal static bool HostedInPython;
-        internal static bool ProcessIsTerminating;
+        internal static bool HostedInPython = false;
+        internal static bool ProcessIsTerminating = false;
+        internal static bool ShutdownWithoutReload = false;
 
         /// <summary>
         /// Initialize the runtime...
@@ -111,6 +112,14 @@ namespace Python.Runtime
                 return;
             }
             _isInitialized = true;
+
+            if (ShutdownWithoutReload)
+            {
+                throw new Exception(
+                    "Runtime was shut down without allowReload: true, can " +
+                    "not be restarted in this process"
+                );
+            }
 
             bool interpreterAlreadyInitialized = TryUsingDll(
                 () => Py_IsInitialized() != 0
@@ -253,17 +262,18 @@ namespace Python.Runtime
             return Util.ReadPtr<NativeFunc>(pyType.Borrow(), TypeOffset.tp_iternext);
         }
 
-        internal static void Shutdown()
+        internal static void Shutdown(bool allowReload)
         {
             if (Py_IsInitialized() == 0 || !_isInitialized)
             {
                 return;
             }
             _isInitialized = false;
+            ShutdownWithoutReload = !allowReload;
 
             var state = PyGILState_Ensure();
 
-            if (!HostedInPython && !ProcessIsTerminating)
+            if (!HostedInPython && !ProcessIsTerminating && allowReload)
             {
                 // avoid saving dead objects
                 TryCollectingGarbage(runs: 3);
