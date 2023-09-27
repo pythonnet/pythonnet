@@ -939,7 +939,7 @@ namespace Python.Runtime
             Debug.Assert(ob != null);
             var type = PyObject_TYPE(ob);
             int offset = Util.ReadInt32(type, TypeOffset.tp_weaklistoffset);
-            if (offset == 0) return BorrowedReference.Null;
+            if (offset <= 0) return BorrowedReference.Null;
             Debug.Assert(offset > 0);
             return Util.ReadRef(ob, offset);
         }
