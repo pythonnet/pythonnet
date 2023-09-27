@@ -164,8 +164,8 @@ public unsafe partial class Runtime
             PyUnicode_AsUTF8 = (delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr>)GetFunctionByName(nameof(PyUnicode_AsUTF8), GetUnmanagedDll(_PythonDll));
             PyUnicode_DecodeUTF16 = (delegate* unmanaged[Cdecl]<IntPtr, nint, IntPtr, IntPtr, NewReference>)GetFunctionByName(nameof(PyUnicode_DecodeUTF16), GetUnmanagedDll(_PythonDll));
             PyUnicode_GetLength = (delegate* unmanaged[Cdecl]<BorrowedReference, nint>)GetFunctionByName(nameof(PyUnicode_GetLength), GetUnmanagedDll(_PythonDll));
-            PyUnicode_AsUnicode = (delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr>)GetFunctionByName(nameof(PyUnicode_AsUnicode), GetUnmanagedDll(_PythonDll));
             PyUnicode_AsUTF16String = (delegate* unmanaged[Cdecl]<BorrowedReference, NewReference>)GetFunctionByName(nameof(PyUnicode_AsUTF16String), GetUnmanagedDll(_PythonDll));
+            PyUnicode_ReadChar = (delegate* unmanaged[Cdecl]<BorrowedReference, nint, int>)GetFunctionByName(nameof(PyUnicode_ReadChar), GetUnmanagedDll(_PythonDll));
             PyUnicode_FromOrdinal = (delegate* unmanaged[Cdecl]<int, NewReference>)GetFunctionByName(nameof(PyUnicode_FromOrdinal), GetUnmanagedDll(_PythonDll));
             PyUnicode_InternFromString = (delegate* unmanaged[Cdecl]<StrPtr, NewReference>)GetFunctionByName(nameof(PyUnicode_InternFromString), GetUnmanagedDll(_PythonDll));
             PyUnicode_Compare = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, int>)GetFunctionByName(nameof(PyUnicode_Compare), GetUnmanagedDll(_PythonDll));
@@ -441,7 +441,7 @@ public unsafe partial class Runtime
         internal static delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr> PyUnicode_AsUTF8 { get; }
         internal static delegate* unmanaged[Cdecl]<IntPtr, nint, IntPtr, IntPtr, NewReference> PyUnicode_DecodeUTF16 { get; }
         internal static delegate* unmanaged[Cdecl]<BorrowedReference, nint> PyUnicode_GetLength { get; }
-        internal static delegate* unmanaged[Cdecl]<BorrowedReference, IntPtr> PyUnicode_AsUnicode { get; }
+        internal static delegate* unmanaged[Cdecl]<BorrowedReference, nint, int> PyUnicode_ReadChar { get; }
         internal static delegate* unmanaged[Cdecl]<BorrowedReference, NewReference> PyUnicode_AsUTF16String { get; }
         internal static delegate* unmanaged[Cdecl]<int, NewReference> PyUnicode_FromOrdinal { get; }
         internal static delegate* unmanaged[Cdecl]<StrPtr, NewReference> PyUnicode_InternFromString { get; }

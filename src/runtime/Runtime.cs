@@ -1290,8 +1290,9 @@ namespace Python.Runtime
         internal static nint PyUnicode_GetLength(BorrowedReference ob) => Delegates.PyUnicode_GetLength(ob);
 
 
-        internal static IntPtr PyUnicode_AsUnicode(BorrowedReference ob) => Delegates.PyUnicode_AsUnicode(ob);
         internal static NewReference PyUnicode_AsUTF16String(BorrowedReference ob) => Delegates.PyUnicode_AsUTF16String(ob);
+
+        internal static int PyUnicode_ReadChar(BorrowedReference ob, nint index) => Delegates.PyUnicode_ReadChar(ob, index);
 
 
 
