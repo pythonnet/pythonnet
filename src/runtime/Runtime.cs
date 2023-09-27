@@ -598,23 +598,8 @@ namespace Python.Runtime
         [Obsolete("Use NewReference or PyObject constructor instead")]
         internal static unsafe void XIncref(BorrowedReference op)
         {
-#if !CUSTOM_INCDEC_REF
             Py_IncRef(op);
             return;
-#else
-            var p = (void*)op;
-            if ((void*)0 != p)
-            {
-                if (Is32Bit)
-                {
-                    (*(int*)p)++;
-                }
-                else
-                {
-                    (*(long*)p)++;
-                }
-            }
-#endif
         }
 
         internal static unsafe void XDecref(StolenReference op)
@@ -623,40 +608,9 @@ namespace Python.Runtime
             Debug.Assert(op == null || Refcount(new BorrowedReference(op.Pointer)) > 0);
             Debug.Assert(_isInitialized || Py_IsInitialized() != 0 || _Py_IsFinalizing() != false);
 #endif
-#if !CUSTOM_INCDEC_REF
             if (op == null) return;
             Py_DecRef(op.AnalyzerWorkaround());
             return;
-#else
-            var p = (void*)op;
-            if ((void*)0 != p)
-            {
-                if (Is32Bit)
-                {
-                    --(*(int*)p);
-                }
-                else
-                {
-                    --(*(long*)p);
-                }
-                if ((*(int*)p) == 0)
-                {
-                    // PyObject_HEAD: struct _typeobject *ob_type
-                    void* t = Is32Bit
-                        ? (void*)(*((uint*)p + 1))
-                        : (void*)(*((ulong*)p + 1));
-                    // PyTypeObject: destructor tp_dealloc
-                    void* f = Is32Bit
-                        ? (void*)(*((uint*)t + 6))
-                        : (void*)(*((ulong*)t + 6));
-                    if ((void*)0 == f)
-                    {
-                        return;
-                    }
-                    NativeCall.Void_Call_1(new IntPtr(f), op);
-                }
-            }
-#endif
         }
 
         [Pure]
