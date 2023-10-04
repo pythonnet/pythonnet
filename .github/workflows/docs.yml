@@ -1,6 +1,14 @@
 name: Documentation
 
-on: [push, pull_request]
+on:
+  push:
+    paths:
+      - 'doc/**'
+      - '.github/workflows/docs.yml'
+  pull_request:
+    paths:
+      - 'doc/**'
+      - '.github/workflows/docs.yml'
 
 jobs:
   build:
