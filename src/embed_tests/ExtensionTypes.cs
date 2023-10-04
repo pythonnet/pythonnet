@@ -1,25 +1,11 @@
 using System;
-
 using NUnit.Framework;
-
 using Python.Runtime;
 
 namespace Python.EmbeddingTest;
 
-public class ExtensionTypes
+public class ExtensionTypes : BaseFixture
 {
-    [OneTimeSetUp]
-    public void SetUp()
-    {
-        PythonEngine.Initialize();
-    }
-
-    [OneTimeTearDown]
-    public void Dispose()
-    {
-        PythonEngine.Shutdown();
-    }
-
     [Test]
     public void WeakrefIsNone_AfterBoundMethodIsGone()
     {

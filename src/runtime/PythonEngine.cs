@@ -309,13 +309,13 @@ namespace Python.Runtime
 
         static void OnDomainUnload(object _, EventArgs __)
         {
-            Shutdown();
+            Shutdown(allowReload: true);
         }
 
         static void OnProcessExit(object _, EventArgs __)
         {
             Runtime.ProcessIsTerminating = true;
-            Shutdown();
+            Shutdown(allowReload: false);
         }
 
         /// <summary>
@@ -367,6 +367,11 @@ namespace Python.Runtime
         /// </summary>
         public static void Shutdown()
         {
+            Shutdown(allowReload: false);
+        }
+
+        public static void Shutdown(bool allowReload)
+        {
             if (!initialized)
             {
                 return;
@@ -389,7 +394,7 @@ namespace Python.Runtime
 
             ExecuteShutdownHandlers();
             // Remember to shut down the runtime.
-            Runtime.Shutdown();
+            Runtime.Shutdown(allowReload);
 
             initialized = false;
 

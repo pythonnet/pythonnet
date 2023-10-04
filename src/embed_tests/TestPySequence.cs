@@ -2,94 +2,81 @@ using System;
 using NUnit.Framework;
 using Python.Runtime;
 
-namespace Python.EmbeddingTest
+namespace Python.EmbeddingTest;
+
+public class TestPySequence : BaseFixture
 {
-    public class TestPySequence
+    [Test]
+    public void TestIsSequenceTrue()
     {
-        [OneTimeSetUp]
-        public void SetUp()
-        {
-            PythonEngine.Initialize();
-        }
+        var t = new PyString("FooBar");
+        Assert.True(PySequence.IsSequenceType(t));
+    }
 
-        [OneTimeTearDown]
-        public void Dispose()
-        {
-            PythonEngine.Shutdown();
-        }
+    [Test]
+    public void TestIsSequenceFalse()
+    {
+        var t = new PyInt(5);
+        Assert.False(PySequence.IsSequenceType(t));
+    }
 
-        [Test]
-        public void TestIsSequenceTrue()
-        {
-            var t = new PyString("FooBar");
-            Assert.True(PySequence.IsSequenceType(t));
-        }
+    [Test]
+    public void TestGetSlice()
+    {
+        var t = new PyString("FooBar");
 
-        [Test]
-        public void TestIsSequenceFalse()
-        {
-            var t = new PyInt(5);
-            Assert.False(PySequence.IsSequenceType(t));
-        }
+        PyObject s = t.GetSlice(0, 3);
+        Assert.AreEqual("Foo", s.ToString());
 
-        [Test]
-        public void TestGetSlice()
-        {
-            var t = new PyString("FooBar");
+        PyObject s2 = t.GetSlice(3, 6);
+        Assert.AreEqual("Bar", s2.ToString());
 
-            PyObject s = t.GetSlice(0, 3);
-            Assert.AreEqual("Foo", s.ToString());
+        PyObject s3 = t.GetSlice(0, 6);
+        Assert.AreEqual("FooBar", s3.ToString());
 
-            PyObject s2 = t.GetSlice(3, 6);
-            Assert.AreEqual("Bar", s2.ToString());
+        PyObject s4 = t.GetSlice(0, 12);
+        Assert.AreEqual("FooBar", s4.ToString());
+    }
 
-            PyObject s3 = t.GetSlice(0, 6);
-            Assert.AreEqual("FooBar", s3.ToString());
+    [Test]
+    public void TestConcat()
+    {
+        var t1 = new PyString("Foo");
+        var t2 = new PyString("Bar");
 
-            PyObject s4 = t.GetSlice(0, 12);
-            Assert.AreEqual("FooBar", s4.ToString());
-        }
+        PyObject actual = t1.Concat(t2);
 
-        [Test]
-        public void TestConcat()
-        {
-            var t1 = new PyString("Foo");
-            var t2 = new PyString("Bar");
+        Assert.AreEqual("FooBar", actual.ToString());
+    }
 
-            PyObject actual = t1.Concat(t2);
+    [Test]
+    public void TestRepeat()
+    {
+        var t1 = new PyString("Foo");
 
-            Assert.AreEqual("FooBar", actual.ToString());
-        }
+        PyObject actual = t1.Repeat(3);
+        Assert.AreEqual("FooFooFoo", actual.ToString());
 
-        [Test]
-        public void TestRepeat()
-        {
-            var t1 = new PyString("Foo");
+        actual = t1.Repeat(-3);
+        Assert.AreEqual("", actual.ToString());
+    }
 
-            PyObject actual = t1.Repeat(3);
-            Assert.AreEqual("FooFooFoo", actual.ToString());
+    [Test]
+    public void TestContains()
+    {
+        var t1 = new PyString("FooBar");
 
-            actual = t1.Repeat(-3);
-            Assert.AreEqual("", actual.ToString());
-        }
+        Assert.True(t1.Contains(new PyString("a")));
+        Assert.False(t1.Contains(new PyString("z")));
+    }
 
-        [Test]
-        public void TestContains()
-        {
-            var t1 = new PyString("FooBar");
+    [Test]
+    public void TestIndex()
+    {
+        var t1 = new PyString("FooBar");
 
-            Assert.True(t1.Contains(new PyString("a")));
-            Assert.False(t1.Contains(new PyString("z")));
-        }
-
-        [Test]
-        public void TestIndex()
-        {
-            var t1 = new PyString("FooBar");
-
-            Assert.AreEqual(4, t1.Index32(new PyString("a")));
-            Assert.AreEqual(5L, t1.Index64(new PyString("r")));
-            Assert.AreEqual(-(nint)1, t1.Index(new PyString("z")));
-        }
+        Assert.AreEqual(4, t1.Index32(new PyString("a")));
+        Assert.AreEqual(5L, t1.Index64(new PyString("r")));
+        Assert.AreEqual(-(nint)1, t1.Index(new PyString("z")));
     }
 }

@@ -4,279 +4,266 @@ using Python.Runtime;
 using Python.Runtime.Codecs;
 
 using System;
-using System.Linq;
 using System.Reflection;
 
-namespace Python.EmbeddingTest
+namespace Python.EmbeddingTest;
+
+public class TestOperator : BaseFixture
 {
-    public class TestOperator
+    public class OperableObject
     {
-        [OneTimeSetUp]
-        public void SetUp()
+        public int Num { get; set; }
+
+        public override int GetHashCode()
         {
-            PythonEngine.Initialize();
+            return unchecked(159832395 + Num.GetHashCode());
         }
 
-        [OneTimeTearDown]
-        public void Dispose()
+        public override bool Equals(object obj)
         {
-            PythonEngine.Shutdown();
+            return obj is OperableObject @object &&
+                   Num == @object.Num;
         }
 
-        public class OperableObject
+        public OperableObject(int num)
         {
-            public int Num { get; set; }
+            Num = num;
+        }
 
-            public override int GetHashCode()
-            {
-                return unchecked(159832395 + Num.GetHashCode());
-            }
+        public static OperableObject operator ~(OperableObject a)
+        {
+            return new OperableObject(~a.Num);
+        }
 
-            public override bool Equals(object obj)
-            {
-                return obj is OperableObject @object &&
-                       Num == @object.Num;
-            }
+        public static OperableObject operator +(OperableObject a)
+        {
+            return new OperableObject(+a.Num);
+        }
 
-            public OperableObject(int num)
-            {
-                Num = num;
-            }
+        public static OperableObject operator -(OperableObject a)
+        {
+            return new OperableObject(-a.Num);
+        }
 
-            public static OperableObject operator ~(OperableObject a)
-            {
-                return new OperableObject(~a.Num);
-            }
+        public static OperableObject operator +(int a, OperableObject b)
+        {
+            return new OperableObject(a + b.Num);
+        }
+        public static OperableObject operator +(OperableObject a, OperableObject b)
+        {
+            return new OperableObject(a.Num + b.Num);
+        }
+        public static OperableObject operator +(OperableObject a, int b)
+        {
+            return new OperableObject(a.Num + b);
+        }
 
-            public static OperableObject operator +(OperableObject a)
-            {
-                return new OperableObject(+a.Num);
-            }
+        public static OperableObject operator -(int a, OperableObject b)
+        {
+            return new OperableObject(a - b.Num);
+        }
+        public static OperableObject operator -(OperableObject a, OperableObject b)
+        {
+            return new OperableObject(a.Num - b.Num);
+        }
+        public static OperableObject operator -(OperableObject a, int b)
+        {
+            return new OperableObject(a.Num - b);
+        }
 
-            public static OperableObject operator -(OperableObject a)
-            {
-                return new OperableObject(-a.Num);
-            }
+        public static OperableObject operator *(int a, OperableObject b)
+        {
+            return new OperableObject(a * b.Num);
+        }
+        public static OperableObject operator *(OperableObject a, OperableObject b)
+        {
+            return new OperableObject(a.Num * b.Num);
+        }
+        public static OperableObject operator *(OperableObject a, int b)
+        {
+            return new OperableObject(a.Num * b);
+        }
 
-            public static OperableObject operator +(int a, OperableObject b)
-            {
-                return new OperableObject(a + b.Num);
-            }
-            public static OperableObject operator +(OperableObject a, OperableObject b)
-            {
-                return new OperableObject(a.Num + b.Num);
-            }
-            public static OperableObject operator +(OperableObject a, int b)
-            {
-                return new OperableObject(a.Num + b);
-            }
+        public static OperableObject operator /(int a, OperableObject b)
+        {
+            return new OperableObject(a / b.Num);
+        }
+        public static OperableObject operator /(OperableObject a, OperableObject b)
+        {
+            return new OperableObject(a.Num / b.Num);
+        }
+        public static OperableObject operator /(OperableObject a, int b)
+        {
+            return new OperableObject(a.Num / b);
+        }
 
-            public static OperableObject operator -(int a, OperableObject b)
-            {
-                return new OperableObject(a - b.Num);
-            }
-            public static OperableObject operator -(OperableObject a, OperableObject b)
-            {
-                return new OperableObject(a.Num - b.Num);
-            }
-            public static OperableObject operator -(OperableObject a, int b)
-            {
-                return new OperableObject(a.Num - b);
-            }
+        public static OperableObject operator %(int a, OperableObject b)
+        {
+            return new OperableObject(a % b.Num);
+        }
+        public static OperableObject operator %(OperableObject a, OperableObject b)
+        {
+            return new OperableObject(a.Num % b.Num);
+        }
+        public static OperableObject operator %(OperableObject a, int b)
+        {
+            return new OperableObject(a.Num % b);
+        }
 
-            public static OperableObject operator *(int a, OperableObject b)
-            {
-                return new OperableObject(a * b.Num);
-            }
-            public static OperableObject operator *(OperableObject a, OperableObject b)
-            {
-                return new OperableObject(a.Num * b.Num);
-            }
-            public static OperableObject operator *(OperableObject a, int b)
-            {
-                return new OperableObject(a.Num * b);
-            }
+        public static OperableObject operator &(int a, OperableObject b)
+        {
+            return new OperableObject(a & b.Num);
+        }
+        public static OperableObject operator &(OperableObject a, OperableObject b)
+        {
+            return new OperableObject(a.Num & b.Num);
+        }
+        public static OperableObject operator &(OperableObject a, int b)
+        {
+            return new OperableObject(a.Num & b);
+        }
 
-            public static OperableObject operator /(int a, OperableObject b)
-            {
-                return new OperableObject(a / b.Num);
-            }
-            public static OperableObject operator /(OperableObject a, OperableObject b)
-            {
-                return new OperableObject(a.Num / b.Num);
-            }
-            public static OperableObject operator /(OperableObject a, int b)
-            {
-                return new OperableObject(a.Num / b);
-            }
+        public static OperableObject operator |(int a, OperableObject b)
+        {
+            return new OperableObject(a | b.Num);
+        }
+        public static OperableObject operator |(OperableObject a, OperableObject b)
+        {
+            return new OperableObject(a.Num | b.Num);
+        }
+        public static OperableObject operator |(OperableObject a, int b)
+        {
+            return new OperableObject(a.Num | b);
+        }
 
-            public static OperableObject operator %(int a, OperableObject b)
-            {
-                return new OperableObject(a % b.Num);
-            }
-            public static OperableObject operator %(OperableObject a, OperableObject b)
-            {
-                return new OperableObject(a.Num % b.Num);
-            }
-            public static OperableObject operator %(OperableObject a, int b)
-            {
-                return new OperableObject(a.Num % b);
-            }
+        public static OperableObject operator ^(int a, OperableObject b)
+        {
+            return new OperableObject(a ^ b.Num);
+        }
+        public static OperableObject operator ^(OperableObject a, OperableObject b)
+        {
+            return new OperableObject(a.Num ^ b.Num);
+        }
+        public static OperableObject operator ^(OperableObject a, int b)
+        {
+            return new OperableObject(a.Num ^ b);
+        }
 
-            public static OperableObject operator &(int a, OperableObject b)
-            {
-                return new OperableObject(a & b.Num);
-            }
-            public static OperableObject operator &(OperableObject a, OperableObject b)
-            {
-                return new OperableObject(a.Num & b.Num);
-            }
-            public static OperableObject operator &(OperableObject a, int b)
-            {
-                return new OperableObject(a.Num & b);
-            }
+        public static bool operator ==(int a, OperableObject b)
+        {
+            return (a == b.Num);
+        }
+        public static bool operator ==(OperableObject a, OperableObject b)
+        {
+            return (a.Num == b.Num);
+        }
+        public static bool operator ==(OperableObject a, int b)
+        {
+            return (a.Num == b);
+        }
 
-            public static OperableObject operator |(int a, OperableObject b)
-            {
-                return new OperableObject(a | b.Num);
-            }
-            public static OperableObject operator |(OperableObject a, OperableObject b)
-            {
-                return new OperableObject(a.Num | b.Num);
-            }
-            public static OperableObject operator |(OperableObject a, int b)
-            {
-                return new OperableObject(a.Num | b);
-            }
+        public static bool operator !=(int a, OperableObject b)
+        {
+            return (a != b.Num);
+        }
+        public static bool operator !=(OperableObject a, OperableObject b)
+        {
+            return (a.Num != b.Num);
+        }
+        public static bool operator !=(OperableObject a, int b)
+        {
+            return (a.Num != b);
+        }
 
-            public static OperableObject operator ^(int a, OperableObject b)
-            {
-                return new OperableObject(a ^ b.Num);
-            }
-            public static OperableObject operator ^(OperableObject a, OperableObject b)
-            {
-                return new OperableObject(a.Num ^ b.Num);
-            }
-            public static OperableObject operator ^(OperableObject a, int b)
-            {
-                return new OperableObject(a.Num ^ b);
-            }
+        public static bool operator <=(int a, OperableObject b)
+        {
+            return (a <= b.Num);
+        }
+        public static bool operator <=(OperableObject a, OperableObject b)
+        {
+            return (a.Num <= b.Num);
+        }
+        public static bool operator <=(OperableObject a, int b)
+        {
+            return (a.Num <= b);
+        }
 
-            public static bool operator ==(int a, OperableObject b)
-            {
-                return (a == b.Num);
-            }
-            public static bool operator ==(OperableObject a, OperableObject b)
-            {
-                return (a.Num == b.Num);
-            }
-            public static bool operator ==(OperableObject a, int b)
-            {
-                return (a.Num == b);
-            }
+        public static bool operator >=(int a, OperableObject b)
+        {
+            return (a >= b.Num);
+        }
+        public static bool operator >=(OperableObject a, OperableObject b)
+        {
+            return (a.Num >= b.Num);
+        }
+        public static bool operator >=(OperableObject a, int b)
+        {
+            return (a.Num >= b);
+        }
 
-            public static bool operator !=(int a, OperableObject b)
+        public static bool operator >=(OperableObject a, (int, int) b)
+        {
+            using (Py.GIL())
             {
-                return (a != b.Num);
+                int bNum = b.Item1;
+                return a.Num >= bNum;
             }
-            public static bool operator !=(OperableObject a, OperableObject b)
+        }
+        public static bool operator <=(OperableObject a, (int, int) b)
+        {
+            using (Py.GIL())
             {
-                return (a.Num != b.Num);
-            }
-            public static bool operator !=(OperableObject a, int b)
-            {
-                return (a.Num != b);
-            }
-
-            public static bool operator <=(int a, OperableObject b)
-            {
-                return (a <= b.Num);
-            }
-            public static bool operator <=(OperableObject a, OperableObject b)
-            {
-                return (a.Num <= b.Num);
-            }
-            public static bool operator <=(OperableObject a, int b)
-            {
-                return (a.Num <= b);
-            }
-
-            public static bool operator >=(int a, OperableObject b)
-            {
-                return (a >= b.Num);
-            }
-            public static bool operator >=(OperableObject a, OperableObject b)
-            {
-                return (a.Num >= b.Num);
-            }
-            public static bool operator >=(OperableObject a, int b)
-            {
-                return (a.Num >= b);
-            }
-
-            public static bool operator >=(OperableObject a, (int, int) b)
-            {
-                using (Py.GIL())
-                {
-                    int bNum = b.Item1;
-                    return a.Num >= bNum;
-                }
-            }
-            public static bool operator <=(OperableObject a, (int, int) b)
-            {
-                using (Py.GIL())
-                {
-                    int bNum = b.Item1;
-                    return a.Num <= bNum;
-                }
-            }
-
-            public static bool operator <(int a, OperableObject b)
-            {
-                return (a < b.Num);
-            }
-            public static bool operator <(OperableObject a, OperableObject b)
-            {
-                return (a.Num < b.Num);
-            }
-            public static bool operator <(OperableObject a, int b)
-            {
-                return (a.Num < b);
-            }
-
-            public static bool operator >(int a, OperableObject b)
-            {
-                return (a > b.Num);
-            }
-            public static bool operator >(OperableObject a, OperableObject b)
-            {
-                return (a.Num > b.Num);
-            }
-            public static bool operator >(OperableObject a, int b)
-            {
-                return (a.Num > b);
-            }
-
-            public static OperableObject operator <<(OperableObject a, int offset)
-            {
-                return new OperableObject(a.Num << offset);
-            }
-
-            public static OperableObject operator >>(OperableObject a, int offset)
-            {
-                return new OperableObject(a.Num >> offset);
+                int bNum = b.Item1;
+                return a.Num <= bNum;
             }
         }
 
-        [Test]
-        public void SymmetricalOperatorOverloads()
+        public static bool operator <(int a, OperableObject b)
         {
-            string name = string.Format("{0}.{1}",
-                typeof(OperableObject).DeclaringType.Name,
-                typeof(OperableObject).Name);
-            string module = MethodBase.GetCurrentMethod().DeclaringType.Namespace;
+            return (a < b.Num);
+        }
+        public static bool operator <(OperableObject a, OperableObject b)
+        {
+            return (a.Num < b.Num);
+        }
+        public static bool operator <(OperableObject a, int b)
+        {
+            return (a.Num < b);
+        }
 
-            PythonEngine.Exec($@"
+        public static bool operator >(int a, OperableObject b)
+        {
+            return (a > b.Num);
+        }
+        public static bool operator >(OperableObject a, OperableObject b)
+        {
+            return (a.Num > b.Num);
+        }
+        public static bool operator >(OperableObject a, int b)
+        {
+            return (a.Num > b);
+        }
+
+        public static OperableObject operator <<(OperableObject a, int offset)
+        {
+            return new OperableObject(a.Num << offset);
+        }
+
+        public static OperableObject operator >>(OperableObject a, int offset)
+        {
+            return new OperableObject(a.Num >> offset);
+        }
+    }
+
+    [Test]
+    public void SymmetricalOperatorOverloads()
+    {
+        string name = string.Format("{0}.{1}",
+            typeof(OperableObject).DeclaringType.Name,
+            typeof(OperableObject).Name);
+        string module = MethodBase.GetCurrentMethod().DeclaringType.Namespace;
+
+        PythonEngine.Exec($@"
 from {module} import *
 cls = {name}
 a = cls(-2)
@@ -333,43 +320,43 @@ assert c == (a.Num < b.Num)
 c = a > b
 assert c == (a.Num > b.Num)
 ");
-        }
+    }
 
-        [Test]
-        public void EnumOperator()
-        {
-            PythonEngine.Exec($@"
+    [Test]
+    public void EnumOperator()
+    {
+        PythonEngine.Exec($@"
 from System.IO import FileAccess
 c = FileAccess.Read | FileAccess.Write");
-        }
+    }
 
-        [Test]
-        public void OperatorOverloadMissingArgument()
-        {
-            string name = string.Format("{0}.{1}",
-                typeof(OperableObject).DeclaringType.Name,
-                typeof(OperableObject).Name);
-            string module = MethodBase.GetCurrentMethod().DeclaringType.Namespace;
+    [Test]
+    public void OperatorOverloadMissingArgument()
+    {
+        string name = string.Format("{0}.{1}",
+            typeof(OperableObject).DeclaringType.Name,
+            typeof(OperableObject).Name);
+        string module = MethodBase.GetCurrentMethod().DeclaringType.Namespace;
 
-            Assert.Throws<PythonException>(() =>
-            PythonEngine.Exec($@"
+        Assert.Throws<PythonException>(() =>
+        PythonEngine.Exec($@"
 from {module} import *
 cls = {name}
 a = cls(2)
 b = cls(10)
 a.op_Addition()
 "));
-        }
+    }
 
-        [Test]
-        public void ForwardOperatorOverloads()
-        {
-            string name = string.Format("{0}.{1}",
-                typeof(OperableObject).DeclaringType.Name,
-                typeof(OperableObject).Name);
-            string module = MethodBase.GetCurrentMethod().DeclaringType.Namespace;
+    [Test]
+    public void ForwardOperatorOverloads()
+    {
+        string name = string.Format("{0}.{1}",
+            typeof(OperableObject).DeclaringType.Name,
+            typeof(OperableObject).Name);
+        string module = MethodBase.GetCurrentMethod().DeclaringType.Namespace;
 
-            PythonEngine.Exec($@"
+        PythonEngine.Exec($@"
 from {module} import *
 cls = {name}
 a = cls(2)
@@ -416,17 +403,17 @@ assert c == (a.Num < b)
 c = a > b
 assert c == (a.Num > b)
 ");
-        }
+    }
 
-        [Test]
-        public void TupleComparisonOperatorOverloads()
-        {
-                TupleCodec<ValueTuple>.Register();
-                string name = string.Format("{0}.{1}",
-                typeof(OperableObject).DeclaringType.Name,
-                typeof(OperableObject).Name);
-            string module = MethodBase.GetCurrentMethod().DeclaringType.Namespace;
-                PythonEngine.Exec($@"
+    [Test]
+    public void TupleComparisonOperatorOverloads()
+    {
+            TupleCodec<ValueTuple>.Register();
+            string name = string.Format("{0}.{1}",
+            typeof(OperableObject).DeclaringType.Name,
+            typeof(OperableObject).Name);
+        string module = MethodBase.GetCurrentMethod().DeclaringType.Namespace;
+            PythonEngine.Exec($@"
 from {module} import *
 cls = {name}
 a = cls(2)
@@ -444,18 +431,18 @@ assert c == (b[0] >= a.Num)
 c = b <= a
 assert c == (b[0] <= a.Num)
 ");
-        }
+    }
 
 
-        [Test]
-        public void ReverseOperatorOverloads()
-        {
-            string name = string.Format("{0}.{1}",
-                typeof(OperableObject).DeclaringType.Name,
-                typeof(OperableObject).Name);
-            string module = MethodBase.GetCurrentMethod().DeclaringType.Namespace;
+    [Test]
+    public void ReverseOperatorOverloads()
+    {
+        string name = string.Format("{0}.{1}",
+            typeof(OperableObject).DeclaringType.Name,
+            typeof(OperableObject).Name);
+        string module = MethodBase.GetCurrentMethod().DeclaringType.Namespace;
 
-            PythonEngine.Exec($@"
+        PythonEngine.Exec($@"
 from {module} import *
 cls = {name}
 a = 2
@@ -504,16 +491,16 @@ c = a > b
 assert c == (a > b.Num)
 ");
 
-        }
-        [Test]
-        public void ShiftOperatorOverloads()
-        {
-            string name = string.Format("{0}.{1}",
-                typeof(OperableObject).DeclaringType.Name,
-                typeof(OperableObject).Name);
-            string module = MethodBase.GetCurrentMethod().DeclaringType.Namespace;
+    }
+    [Test]
+    public void ShiftOperatorOverloads()
+    {
+        string name = string.Format("{0}.{1}",
+            typeof(OperableObject).DeclaringType.Name,
+            typeof(OperableObject).Name);
+        string module = MethodBase.GetCurrentMethod().DeclaringType.Namespace;
 
-            PythonEngine.Exec($@"
+        PythonEngine.Exec($@"
 from {module} import *
 cls = {name}
 a = cls(2)
@@ -525,6 +512,5 @@ assert c.Num == a.Num << b.Num
 c = a >> b.Num
 assert c.Num == a.Num >> b.Num
 ");
-        }
     }
 }

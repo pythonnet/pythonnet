@@ -66,6 +66,7 @@ namespace Python.Runtime
 
         // .NET core: System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
         internal static bool IsWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
+        internal static bool IsNetCore = RuntimeInformation.FrameworkDescription == ".NET" || RuntimeInformation.FrameworkDescription == ".NET Core";
 
         internal static Version InteropVersion { get; }
             = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
@@ -96,8 +97,9 @@ namespace Python.Runtime
             return runNumber;
         }
 
-        internal static bool HostedInPython;
-        internal static bool ProcessIsTerminating;
+        internal static bool HostedInPython = false;
+        internal static bool ProcessIsTerminating = false;
+        internal static bool ShutdownWithoutReload = false;
 
         /// <summary>
         /// Initialize the runtime...
@@ -144,6 +146,18 @@ namespace Python.Runtime
                     NewRun();
                 }
             }
+
+            if (ShutdownWithoutReload && RuntimeData.StashedDataFromDifferentDomain())
+            {
+                if (!HostedInPython)
+                    Py_Finalize();
+
+                // Shutdown again
+                throw new Exception(
+                    "Runtime was shut down with allowReload: false, can not be reloaded in different domain"
+                );
+            }
+
             MainManagedThreadId = Thread.CurrentThread.ManagedThreadId;
 
             Finalizer.Initialize();
@@ -163,6 +177,7 @@ namespace Python.Runtime
             // Initialize modules that depend on the runtime class.
             AssemblyManager.Initialize();
             OperatorMethod.Initialize();
+
             if (RuntimeData.HasStashData())
             {
                 RuntimeData.RestoreRuntimeData();
@@ -253,17 +268,18 @@ namespace Python.Runtime
             return Util.ReadPtr<NativeFunc>(pyType.Borrow(), TypeOffset.tp_iternext);
         }
 
-        internal static void Shutdown()
+        internal static void Shutdown(bool allowReload)
         {
             if (Py_IsInitialized() == 0 || !_isInitialized)
             {
                 return;
             }
             _isInitialized = false;
+            ShutdownWithoutReload = !allowReload;
 
             var state = PyGILState_Ensure();
 
-            if (!HostedInPython && !ProcessIsTerminating)
+            if (!HostedInPython && !ProcessIsTerminating && !IsNetCore && allowReload)
             {
                 // avoid saving dead objects
                 TryCollectingGarbage(runs: 3);
@@ -294,20 +310,26 @@ namespace Python.Runtime
             DisposeLazyObject(hexCallable);
             PyObjectConversions.Reset();
 
-            PyGC_Collect();
-            bool everythingSeemsCollected = TryCollectingGarbage(MaxCollectRetriesOnShutdown,
-                                                                 forceBreakLoops: true);
-            Debug.Assert(everythingSeemsCollected);
+            if (!ProcessIsTerminating)
+            {
+                PyGC_Collect();
+                bool everythingSeemsCollected = TryCollectingGarbage(MaxCollectRetriesOnShutdown,
+                                                                     forceBreakLoops: true);
+                Debug.Assert(everythingSeemsCollected);
+            }
 
             Finalizer.Shutdown();
             InternString.Shutdown();
-
             ResetPyMembers();
 
             if (!HostedInPython)
             {
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
+                if (!ProcessIsTerminating)
+                {
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                }
+
                 PyGILState_Release(state);
                 // Then release the GIL for good, if there is somehting to release
                 // Use the unchecked version as the checked version calls `abort()`

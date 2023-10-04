@@ -17,6 +17,10 @@ namespace Python.Runtime
 {
     public static class RuntimeData
     {
+        static readonly string DataName = "_pythonnet_data";
+        static readonly string DomainIdName = "_pythonnet_domain_id";
+
+
         private static Type? _formatterType;
         public static Type? FormatterType
         {
@@ -34,11 +38,11 @@ namespace Python.Runtime
         public static ICLRObjectStorer? WrappersStorer { get; set; }
 
         /// <summary>
-        /// Clears the old "clr_data" entry if a previous one is present.
+        /// Clears the old DataName entry if a previous one is present.
         /// </summary>
         static void ClearCLRData ()
         {
-            BorrowedReference capsule = PySys_GetObject("clr_data");
+            BorrowedReference capsule = PySys_GetObject(DataName);
             if (!capsule.IsNull)
             {
                 IntPtr oldData = PyCapsule_GetPointer(capsule, IntPtr.Zero);
@@ -51,6 +55,7 @@ namespace Python.Runtime
         {
             var runtimeStorage = new PythonNetState
             {
+                DomainId = AppDomain.CurrentDomain.Id,
                 Metatype = MetaType.SaveRuntimeData(),
                 ImportHookState = ImportHook.SaveRuntimeData(),
                 Types = TypeManager.SaveRuntimeData(),
@@ -72,7 +77,10 @@ namespace Python.Runtime
             ClearCLRData();
 
             using NewReference capsule = PyCapsule_New(mem, IntPtr.Zero, IntPtr.Zero);
-            int res = PySys_SetObject("clr_data", capsule.BorrowOrThrow());
+            int res = PySys_SetObject(DataName, capsule.BorrowOrThrow());
+            PythonException.ThrowIfIsNotZero(res);
+            using NewReference id = PyInt_FromInt32(AppDomain.CurrentDomain.Id);
+            res = PySys_SetObject(DomainIdName, id.BorrowOrThrow());
             PythonException.ThrowIfIsNotZero(res);
         }
 
@@ -90,7 +98,7 @@ namespace Python.Runtime
 
         private static void RestoreRuntimeDataImpl()
         {
-            BorrowedReference capsule = PySys_GetObject("clr_data");
+            BorrowedReference capsule = PySys_GetObject(DataName);
             if (capsule.IsNull)
             {
                 return;
@@ -115,12 +123,24 @@ namespace Python.Runtime
 
         public static bool HasStashData()
         {
-            return !PySys_GetObject("clr_data").IsNull;
+            return !PySys_GetObject(DataName).IsNull;
+        }
+
+        public static bool StashedDataFromDifferentDomain()
+        {
+            var val = PySys_GetObject(DomainIdName);
+            if (!val.IsNull)
+            {
+                var n = PyLong_AsLongLong(val);
+                if (n != null)
+                    return (int)n != AppDomain.CurrentDomain.Id;
+            }
+            return false;
         }
 
         public static void ClearStash()
         {
-            PySys_SetObject("clr_data", default);
+            PySys_SetObject(DataName, default);
         }
 
         static bool CheckSerializable (object o)

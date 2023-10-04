@@ -1,32 +1,19 @@
-using System;
 using NUnit.Framework;
 using Python.Runtime;
 
-namespace Python.EmbeddingTest
+namespace Python.EmbeddingTest;
+
+public class TestPyWith : BaseFixture
 {
-    public class TestPyWith
+    /// <summary>
+    /// Test that exception is raised in context manager that ignores it.
+    /// </summary>
+    [Test]
+    public void TestWithPositive()
     {
-        [OneTimeSetUp]
-        public void SetUp()
-        {
-            PythonEngine.Initialize();
-        }
+        var locals = new PyDict();
 
-        [OneTimeTearDown]
-        public void Dispose()
-        {
-            PythonEngine.Shutdown();
-        }
-
-        /// <summary>
-        /// Test that exception is raised in context manager that ignores it.
-        /// </summary>
-        [Test]
-        public void TestWithPositive()
-        {
-            var locals = new PyDict();
-
-            PythonEngine.Exec(@"
+        PythonEngine.Exec(@"
 class CmTest:
     def __enter__(self):
         return self
@@ -39,32 +26,32 @@ class CmTest:
 a = CmTest()
 ", null, locals);
 
-            var a = locals.GetItem("a");
+        var a = locals.GetItem("a");
 
-            try
-            {
-                Py.With(a, cmTest =>
-                {
-                    cmTest.fail();
-                });
-            }
-            catch (PythonException e)
-            {
-                TestContext.Out.WriteLine(e.Message);
-                Assert.IsTrue(e.Type.Name == "ZeroDivisionError");
-            }
-        }
-
-
-        /// <summary>
-        /// Test that exception is not raised in context manager that handles it
-        /// </summary>
-        [Test]
-        public void TestWithNegative()
+        try
         {
-            var locals = new PyDict();
+            Py.With(a, cmTest =>
+            {
+                cmTest.fail();
+            });
+        }
+        catch (PythonException e)
+        {
+            TestContext.Out.WriteLine(e.Message);
+            Assert.IsTrue(e.Type.Name == "ZeroDivisionError");
+        }
+    }
 
-            PythonEngine.Exec(@"
+
+    /// <summary>
+    /// Test that exception is not raised in context manager that handles it
+    /// </summary>
+    [Test]
+    public void TestWithNegative()
+    {
+        var locals = new PyDict();
+
+        PythonEngine.Exec(@"
 class CmTest:
     def __enter__(self):
         print('Enter')
@@ -78,11 +65,10 @@ class CmTest:
 a = CmTest()
 ", null, locals);
 
-            var a = locals.GetItem("a");
-            Py.With(a, cmTest =>
-            {
-                cmTest.fail();
-            });
-        }
+        var a = locals.GetItem("a");
+        Py.With(a, cmTest =>
+        {
+            cmTest.fail();
+        });
     }
 }
