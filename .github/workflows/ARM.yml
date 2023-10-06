@@ -4,15 +4,7 @@ on:
   push:
     branches:
       - master
-    paths-ignore:
-      - .github/workflows/main.yml
-      - .github/workflows/nuget-preview.yml
-      - 'doc/**'
   pull_request:
-    paths-ignore:
-      - .github/workflows/main.yml
-      - .github/workflows/nuget-preview.yml
-      - 'doc/**'
 
 jobs:
   build-test-arm:
