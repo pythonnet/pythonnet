@@ -9,7 +9,8 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ### Added
 
-- use enum name in repr
+-   Use enum name in `repr`
+-   Support for Python 3.12
 
 ### Changed
 
