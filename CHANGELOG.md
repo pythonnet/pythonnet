@@ -5,6 +5,15 @@ project adheres to [Semantic Versioning][].
 
 This document follows the conventions laid out in [Keep a CHANGELOG][].
 
+## [Unreleased][]
+
+### Added
+
+### Changed
+
+### Fixed
+
+
 ## [3.0.3](https://github.com/pythonnet/pythonnet/releases/tag/v3.0.3) - 2023-10-11
 
 ### Added
@@ -833,7 +842,7 @@ This version improves performance on benchmarks significantly compared to 2.3.
 
 [semantic versioning]: http://semver.org/
 
-[unreleased]: ../../compare/v2.3.0...HEAD
+[unreleased]: ../../compare/v3.0.1...HEAD
 
 [2.3.0]: ../../compare/v2.2.2...v2.3.0
 
