@@ -5,16 +5,15 @@ project adheres to [Semantic Versioning][].
 
 This document follows the conventions laid out in [Keep a CHANGELOG][].
 
-## [Unreleased][]
+## [3.0.3](https://github.com/pythonnet/pythonnet/releases/tag/v3.0.3) - 2023-10-11
 
 ### Added
 
--   Use enum name in `repr`
 -   Support for Python 3.12
 
 ### Changed
 
-### Fixed
+-   Use enum name in `repr`
 
 ## [3.0.2](https://github.com/pythonnet/pythonnet/releases/tag/v3.0.2) - 2023-08-29
 
