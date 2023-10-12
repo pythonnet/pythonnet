@@ -62,4 +62,14 @@ namespace Python.Runtime
             SetGCHandle(ob, gc);
         }
     }
+
+    public class ReusuableCLRObject : IDisposable
+    {
+        public ReusuableCLRObject()
+        {
+        }
+        public void Dispose()
+        {
+        }
+    }
 }
