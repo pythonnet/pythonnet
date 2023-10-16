@@ -1,56 +1,17 @@
-name: Main (ARM)
-
-on:
-  push:
-    branches:
-      - master
-  pull_request:
-
-jobs:
-  build-test-arm:
-    name: Build and Test ARM64
-    runs-on: [self-hosted, linux, ARM64]
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: '6.0.x'
-
-      - name: Clean previous install
-        run: |
-          pip uninstall -y pythonnet
-
-      - name: Install dependencies
-        run: |
-          pip3.8 install -r requirements.txt
-          pip3.8 install pytest numpy # for tests
-
-      - name: Build and Install
-        run: |
-          pip3.8 install -v .
-
-      - name: Set Python DLL path (non Windows)
-        run: |
-          echo PYTHONNET_PYDLL=$(python3.8 -m find_libpython) >> $GITHUB_ENV
-
-      - name: Embedding tests
-        run: dotnet test --logger "console;verbosity=detailed" src/embed_tests/
-
-      - name: Python Tests (Mono)
-        run: python3.8 -m pytest --runtime mono
-
-      - name: Python Tests (.NET Core)
-        run: python3.8 -m pytest --runtime coreclr
-
-      - name: Python tests run from .NET
-        run: dotnet test src/python_tests_runner/
-
-      #- name: Perf tests
-      #  run: |
-      #    pip install --force --no-deps --target src/perf_tests/baseline/ pythonnet==2.5.2
-      #    dotnet test --configuration Release --logger "console;verbosity=detailed" src/perf_tests/
+- name: Setup Go environment
+  uses: actions/setup-go@v4.1.0
+  with:
+    # The Go version to download (if necessary) and use. Supports semver spec and ranges. Be sure to enclose this option in single quotation marks.
+    go-version: # optional
+    # Path to the go.mod or go.work file.
+    go-version-file: # optional
+    # Set this option to true if you want the action to always check for the latest available version that satisfies the version spec
+    check-latest: # optional
+    # Used to pull Go distributions from go-versions. Since there's a default, this is typically not supplied by the user. When running this action on github.com, the default value is sufficient. When running on GHES, you can pass a personal access token for github.com if you are experiencing rate limiting.
+    token: # optional, default is ${{ github.server_url == 'https://github.com' && github.token || '' }}
+    # Used to specify whether caching is needed. Set to true, if you'd like to enable caching.
+    cache: # optional, default is true
+    # Used to specify the path to a dependency file - go.sum
+    cache-dependency-path: # optional
+    # Target architecture for Go to use. Examples: x86, x64. Will use system architecture by default.
+    architecture: # optional
