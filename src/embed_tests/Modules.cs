@@ -178,31 +178,29 @@ namespace Python.EmbeddingTest
         {
             using (Py.GIL())
             {
-                //parent module
-                PyModule.FromString("test", "");
-                //sub-module
-                PyModule.FromString("test.scope",
-                "class Class1():\n" +
+                using var _p1 = PyModule.FromString("test", "");
+                // Sub-module
+                using var _p2 = PyModule.FromString("test.scope",
+                    "class Class1():\n" +
                     "    def __init__(self, value):\n" +
                     "        self.value = value\n" +
                     "    def call(self, arg):\n" +
                     "        return self.value + bb + arg\n" + // use scope variables
                     "    def update(self, arg):\n" +
                     "        global bb\n" +
-                    "        bb = self.value + arg\n"  // update scope variable
-                    , "test"
+                    "        bb = self.value + arg\n",  // update scope variable
+                    "test"
                 );
 
+                dynamic ps2 = Py.Import("test.scope");
+                ps2.bb = 100;
 
-                dynamic _ps = Py.Import("test.scope");
-                _ps.bb = 100;
-
-                dynamic obj1 = _ps.Class1(20);
+                dynamic obj1 = ps2.Class1(20);
                 var result = obj1.call(10).As<int>();
                 Assert.AreEqual(130, result);
 
                 obj1.update(10);
-                result = ps.Get<int>("bb");
+                result = ps2.Get<int>("bb");
                 Assert.AreEqual(30, result);
             }
         }
