@@ -51,7 +51,7 @@ namespace Python.EmbeddingTest
                 ps.Set("a", 1);
                 var result = ps.Eval<int>("a + 2");
                 Assert.AreEqual(3, result);
-            }                
+            }
         }
 
         /// <summary>
@@ -186,13 +186,13 @@ namespace Python.EmbeddingTest
                     "    def __init__(self, value):\n" +
                     "        self.value = value\n" +
                     "    def call(self, arg):\n" +
-                    "        return self.value + bb + arg\n" + //use scope variables
+                    "        return self.value + bb + arg\n" + // use scope variables
                     "    def update(self, arg):\n" +
                     "        global bb\n" +
-                    "        bb = self.value + arg\n"  //update scope variable
+                    "        bb = self.value + arg\n"  // update scope variable
                     , "test"
                 );
-                
+
 
                 dynamic _ps = Py.Import("test.scope");
                 _ps.bb = 100;
@@ -232,7 +232,7 @@ namespace Python.EmbeddingTest
         }
 
         /// <summary>
-        /// Create a scope and import variables from a scope, 
+        /// Create a scope and import variables from a scope,
         /// exec Python statements in the scope then discard it.
         /// </summary>
         [Test]
@@ -256,7 +256,7 @@ namespace Python.EmbeddingTest
         }
 
         /// <summary>
-        /// Create a scope and import variables from a scope, 
+        /// Create a scope and import variables from a scope,
         /// exec Python statements in the scope then discard it.
         /// </summary>
         [Test]
@@ -279,7 +279,7 @@ namespace Python.EmbeddingTest
         }
 
         /// <summary>
-        /// Create a scope and import variables from a scope, 
+        /// Create a scope and import variables from a scope,
         /// call the function imported.
         /// </summary>
         [Test]
@@ -324,7 +324,7 @@ namespace Python.EmbeddingTest
         public void TestVariables()
         {
             using (Py.GIL())
-            { 
+            {
                 (ps.Variables() as dynamic)["ee"] = new PyInt(200);
                 var a0 = ps.Get<int>("ee");
                 Assert.AreEqual(200, a0);
@@ -364,8 +364,8 @@ namespace Python.EmbeddingTest
                     _ps.res = 0;
                     _ps.bb = 100;
                     _ps.th_cnt = 0;
-                    //add function to the scope 
-                    //can be call many times, more efficient than ast 
+                    //add function to the scope
+                    //can be call many times, more efficient than ast
                     ps.Exec(
                         "import threading\n"+
                         "lock = threading.Lock()\n"+

@@ -80,10 +80,15 @@ namespace Python.Runtime
             return new PyModule(op.StealOrThrow());
         }
 
-        public static PyModule FromString(string name, string code, string file = "")
+        public static PyModule FromString(string name, string code)
         {
-            //force valid value
-            if(string.IsNullOrWhiteSpace(file))
+            return FromString(name, code, "");
+        }
+
+        public static PyModule FromString(string name, string code, string file)
+        {
+            // Force valid value
+            if (string.IsNullOrWhiteSpace(file))
             {
                 file = "none";
             }
