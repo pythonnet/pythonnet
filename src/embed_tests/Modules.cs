@@ -206,6 +206,26 @@ namespace Python.EmbeddingTest
         }
 
         /// <summary>
+        /// Test setting the file attribute via a FromString parameter
+        /// </summary>
+        [Test]
+        public void TestCreateModuleWithFilename()
+        {
+            using var _gil = Py.GIL();
+
+            using var mod = PyModule.FromString("mod", "");
+            using var modWithoutName = PyModule.FromString("mod_without_name", "", " ");
+            using var modNullName = PyModule.FromString("mod_null_name", "", null);
+
+            using var modWithName = PyModule.FromString("mod_with_name", "", "some_filename");
+
+            Assert.AreEqual("none", mod.Get<string>("__file__"));
+            Assert.AreEqual("none", modWithoutName.Get<string>("__file__"));
+            Assert.AreEqual("none", modNullName.Get<string>("__file__"));
+            Assert.AreEqual("some_filename", modWithName.Get<string>("__file__"));
+        }
+
+        /// <summary>
         /// Import a python module into the session.
         /// Equivalent to the Python "import" statement.
         /// </summary>
