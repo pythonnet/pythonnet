@@ -335,8 +335,9 @@ def call(func):
         {
             PyObjectConversions.RegisterDecoder(new ValueErrorCodec());
             using var scope = Py.CreateScope();
-            var error = Assert.Throws<ValueErrorWrapper>(()
+            var error = Assert.Throws<ClrBubbledException>(()
                 => PythonEngine.Exec($"raise ValueError('{TestExceptionMessage}')"));
+            Assert.IsInstanceOf<ValueErrorWrapper>(error.InnerException);
             Assert.AreEqual(TestExceptionMessage, error.Message);
         }
 

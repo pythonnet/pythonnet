@@ -163,26 +163,32 @@ namespace Python.Runtime
             var value = new PyObject(valRef);
             var traceback = PyObject.FromNullableReference(tbRef);
 
+            Exception exception = null;
+
             exceptionDispatchInfo = TryGetDispatchInfo(valRef);
             if (exceptionDispatchInfo != null)
             {
-                return exceptionDispatchInfo.SourceException;
+                exception = exceptionDispatchInfo.SourceException;
+                exceptionDispatchInfo = null;
             }
-
-            if (ManagedType.GetManagedObject(valRef) is CLRObject { inst: Exception e })
+            else if (ManagedType.GetManagedObject(valRef) is CLRObject { inst: Exception e })
             {
-                return e;
+                exception = e;
             }
-
-            if (TryDecodePyErr(typeRef, valRef, tbRef) is { } pyErr)
+            else if (TryDecodePyErr(typeRef, valRef, tbRef) is { } pyErr)
             {
-                return pyErr;
+                exception = pyErr;
             }
-
-            if (PyObjectConversions.TryDecode(valRef, typeRef, typeof(Exception), out object? decoded)
+            else if (PyObjectConversions.TryDecode(valRef, typeRef, typeof(Exception), out object? decoded)
                 && decoded is Exception decodedException)
             {
-                return decodedException;
+                exception = decodedException;
+            }
+
+            if (!(exception is null))
+            {
+                using var _ = new Py.GILState();
+                return new ClrBubbledException(exception, TracebackToString(traceback));
             }
 
             using var cause = Runtime.PyException_GetCause(nValRef);

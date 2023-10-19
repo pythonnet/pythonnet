@@ -1339,7 +1339,9 @@ class TestGetPublicDynamicObjectPropertyThrowsPythonException:
 
             using (Py.GIL())
             {
-                Assert.Throws<ArgumentException>(() => model.CallDynamicMethodWithoutCatchingExceptions(fixture));
+                var exception = Assert.Throws<ClrBubbledException>(() => model.CallDynamicMethodWithoutCatchingExceptions(fixture));
+                Assert.IsInstanceOf<ArgumentException>(exception.InnerException);
+
                 Assert.AreEqual(property, model.CallDynamicMethodCatchingExceptions(fixture, property).AsManagedObject(property.GetType()));
             }
         }

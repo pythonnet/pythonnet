@@ -1,4 +1,7 @@
 using System;
+using System.IO;
+using System.Linq;
+
 using NUnit.Framework;
 using Python.Runtime;
 
@@ -10,6 +13,16 @@ namespace Python.EmbeddingTest
         public void SetUp()
         {
             PythonEngine.Initialize();
+
+            // Add scripts folder to path in order to be able to import the test modules
+            string testPath = Path.Combine(TestContext.CurrentContext.TestDirectory, "fixtures");
+            TestContext.Out.WriteLine(testPath);
+
+            using var str = Runtime.Runtime.PyString_FromString(testPath);
+            Assert.IsFalse(str.IsNull());
+            BorrowedReference path = Runtime.Runtime.PySys_GetObject("path");
+            Assert.IsFalse(path.IsNull);
+            Runtime.Runtime.PyList_Append(path, str.Borrow());
         }
 
         [OneTimeTearDown]
@@ -194,6 +207,70 @@ class TestException(NameError):
             Exceptions.SetError(Exceptions.TypeError, "Another error");
             Assert.Throws<InvalidOperationException>(() => pythonException.Normalize());
             Exceptions.Clear();
+        }
+
+        [Test]
+        public void TestGetsPythonCodeInfoInStackTrace()
+        {
+            using (Py.GIL())
+            {
+                dynamic testClassModule = PyModule.FromString("TestGetsPythonCodeInfoInStackTrace_Module", @"
+from clr import AddReference
+AddReference(""Python.EmbeddingTest"")
+
+from Python.EmbeddingTest import *
+
+class TestPythonClass(TestPythonException.TestClass):
+    def CallThrow(self):
+        super().ThrowException()
+");
+
+                try
+                {
+                    var instance = testClassModule.TestPythonClass();
+                    dynamic module = Py.Import("PyImportTest.SampleScript");
+                    module.invokeMethod(instance, "CallThrow");
+                }
+                catch (ClrBubbledException ex)
+                {
+                    Assert.AreEqual("Test Exception Message", ex.InnerException.Message);
+
+                    var pythonTracebackLines = ex.PythonTraceback.TrimEnd('\n').Split('\n').Select(x => x.Trim()).ToList();
+                    Assert.AreEqual(5, pythonTracebackLines.Count);
+
+                    Assert.AreEqual("File \"none\", line 9, in CallThrow", pythonTracebackLines[0]);
+
+                    Assert.IsTrue(new[]
+                    {
+                        "File ",
+                        "fixtures\\PyImportTest\\SampleScript.py",
+                        "line 5",
+                        "in invokeMethodImpl"
+                    }.All(x => pythonTracebackLines[1].Contains(x)));
+                    Assert.AreEqual("getattr(instance, method_name)()", pythonTracebackLines[2]);
+
+                    Assert.IsTrue(new[]
+                    {
+                        "File ",
+                        "fixtures\\PyImportTest\\SampleScript.py",
+                        "line 2",
+                        "in invokeMethod"
+                    }.All(x => pythonTracebackLines[3].Contains(x)));
+                    Assert.AreEqual("invokeMethodImpl(instance, method_name)", pythonTracebackLines[4]);
+                }
+                catch (Exception ex)
+                {
+                    Assert.Fail($"Unexpected exception: {ex}");
+                }
+            }
+        }
+
+        public class TestClass
+        {
+            public void ThrowException()
+            {
+                throw new ArgumentException("Test Exception Message");
+            }
         }
     }
 }

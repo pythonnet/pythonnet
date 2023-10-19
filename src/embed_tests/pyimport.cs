@@ -96,7 +96,8 @@ import clr
 clr.AddReference('{path}')
 ";
 
-            Assert.Throws<BadImageFormatException>(() => PythonEngine.Exec(code));
+            var exception = Assert.Throws<ClrBubbledException>(() => PythonEngine.Exec(code));
+            Assert.IsInstanceOf<BadImageFormatException>(exception.InnerException);
         }
     }
 }
