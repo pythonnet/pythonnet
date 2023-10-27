@@ -1,6 +1,5 @@
 using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Runtime.Serialization;
@@ -185,8 +184,14 @@ namespace Python.Runtime
                 exception = decodedException;
             }
 
-            if (!(exception is null))
+            if (exception is not null)
             {
+                // Return ClrBubbledExceptions when they are bubbled from Python -> C# -> Python -> C# -> ...
+                if (exception is ClrBubbledException)
+                {
+                    return exception;
+                }
+
                 using var _ = new Py.GILState();
                 return new ClrBubbledException(exception, TracebackToString(traceback));
             }

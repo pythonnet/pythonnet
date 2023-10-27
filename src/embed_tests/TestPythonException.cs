@@ -265,11 +265,80 @@ class TestPythonClass(TestPythonException.TestClass):
             }
         }
 
+        [Test]
+        public void TestGetsPythonCodeInfoInStackTraceForNestedInterop()
+        {
+            using (Py.GIL())
+            {
+                dynamic testClassModule = PyModule.FromString("TestGetsPythonCodeInfoInStackTraceForNestedInterop_Module", @"
+from clr import AddReference
+AddReference(""Python.EmbeddingTest"")
+AddReference(""System"")
+
+from Python.EmbeddingTest import *
+from System import Action
+
+class TestPythonClass(TestPythonException.TestClass):
+    def CallThrow(self):
+        super().ThrowExceptionNested()
+
+def GetThrowAction():
+    return Action(CallThrow)
+
+def CallThrow():
+    TestPythonClass().CallThrow()
+");
+
+                try
+                {
+                    var action = testClassModule.GetThrowAction();
+                    action();
+                }
+                catch (ClrBubbledException ex)
+                {
+                    Assert.AreEqual("Test Exception Message", ex.InnerException.Message);
+
+                    var pythonTracebackLines = ex.PythonTraceback.TrimEnd('\n').Split('\n').Select(x => x.Trim()).ToList();
+                    Assert.AreEqual(4, pythonTracebackLines.Count);
+
+                    Assert.IsTrue(new[]
+                    {
+                        "File ",
+                        "fixtures\\PyImportTest\\SampleScript.py",
+                        "line 5",
+                        "in invokeMethodImpl"
+                    }.All(x => pythonTracebackLines[0].Contains(x)));
+                    Assert.AreEqual("getattr(instance, method_name)()", pythonTracebackLines[1]);
+
+                    Assert.IsTrue(new[]
+                    {
+                        "File ",
+                        "fixtures\\PyImportTest\\SampleScript.py",
+                        "line 2",
+                        "in invokeMethod"
+                    }.All(x => pythonTracebackLines[2].Contains(x)));
+                    Assert.AreEqual("invokeMethodImpl(instance, method_name)", pythonTracebackLines[3]);
+                }
+                catch (Exception ex)
+                {
+                    Assert.Fail($"Unexpected exception: {ex}");
+                }
+            }
+        }
+
         public class TestClass
         {
             public void ThrowException()
             {
                 throw new ArgumentException("Test Exception Message");
+            }
+
+            public void ThrowExceptionNested()
+            {
+                using var _ = Py.GIL();
+
+                dynamic module = Py.Import("PyImportTest.SampleScript");
+                module.invokeMethod(this, "ThrowException");
             }
         }
     }
