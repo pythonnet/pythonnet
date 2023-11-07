@@ -24,18 +24,22 @@ namespace Python.Runtime.CollectionWrappers
             {
                 iterObject = PyIter.GetIter(pyObject);
             }
-
-            using var _ = iterObject;
-            while (true)
+            try
             {
-                using var GIL = Py.GIL();
-
-                if (!iterObject.MoveNext())
+                while (true)
                 {
-                    iterObject.Dispose();
-                    break;
+                    using var _ = Py.GIL();
+                    if (!iterObject.MoveNext())
+                    {
+                        break;
+                    }
+                    yield return iterObject.Current.As<T>()!;
                 }
-                yield return iterObject.Current.As<T>()!;
+            }
+            finally
+            {
+                using var _ = Py.GIL();
+                iterObject.Dispose();
             }
         }
     }
