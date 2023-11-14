@@ -212,7 +212,7 @@ namespace Python.Runtime
                 offset++;
                 neg = true;
             }
-            byte[] littleEndianBytes = new byte[(hex.Length - offset + 1) / 2];
+            byte[] littleEndianBytes = new byte[(hex.Length - offset + 1) / 2 + 1];
             for (; offset < hex.Length; offset++)
             {
                 int littleEndianHexIndex = hex.Length - 1 - offset;

@@ -9,6 +9,52 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ### Added
 
+### Changed
+
+### Fixed
+
+
+## [3.0.3](https://github.com/pythonnet/pythonnet/releases/tag/v3.0.3) - 2023-10-11
+
+### Added
+
+-   Support for Python 3.12
+
+### Changed
+
+-   Use enum name in `repr`
+
+## [3.0.2](https://github.com/pythonnet/pythonnet/releases/tag/v3.0.2) - 2023-08-29
+
+### Fixed
+
+-   Fixed error occuring when inheriting a class containing a virtual generic method
+-   Make a second call to `pythonnet.load` a no-op, as it was intended
+-   Added support for multiple inheritance when inheriting from a class and/or multiple interfaces
+-   Fixed error occuring when calling `GetBuffer` for anything other than `PyBUF.SIMPLE`
+-   Bumped `clr_loader` dependency to incorporate patches
+
+## [3.0.1](https://github.com/pythonnet/pythonnet/releases/tag/v3.0.1) - 2022-11-03
+
+### Added
+
+-   Support for Python 3.11
+
+### Changed
+
+-   Allow decoders to override conversion of types derived from primitive types
+
+### Fixed
+
+-   Fixed objects leaking when Python attached event handlers to them even if they were later removed
+-   Fixed `PyInt` conversion to `BigInteger` and `System.String` produced incorrect result for values between 128 and 255.
+-   Fixed implementing a generic interface with a Python class
+
+
+## [3.0.0](https://github.com/pythonnet/pythonnet/releases/tag/v3.0.0) - 2022-09-29
+
+### Added
+
 -   Ability to instantiate new .NET arrays using `Array[T](dim1, dim2, ...)` syntax
 -   Python operator method will call C# operator method for supported binary and unary operators ([#1324][p1324]).
 -   Add GetPythonThreadID and Interrupt methods in PythonEngine
@@ -134,7 +180,24 @@ There is no need to specify it.
 -   support for .NET Framework 4.0-4.6; Mono before 5.4. Python.NET now requires .NET Standard 2.0
 (see [the matrix](https://docs.microsoft.com/en-us/dotnet/standard/net-standard#net-implementation-support))
 
-## [2.5.0][] - 2020-06-14
+## [2.5.2](https://github.com/pythonnet/pythonnet/releases/tag/v2.5.2) - 2021-02-05
+
+Bugfix release.
+
+### Fixed
+-   Fix `object[]` parameters taking precedence when should not in overload resolution
+-   Empty parameter names (as can be generated from F#) do not cause crashes
+
+## [2.5.1](https://github.com/pythonnet/pythonnet/releases/tag/v2.5.1) - 2020-06-18
+
+Bugfix release.
+
+### Fixed
+
+-    Fix incorrect dereference of wrapper object in `tp_repr`, which may result in a program crash
+-    Fix incorrect dereference in params array handling
+
+## [2.5.0](https://github.com/pythonnet/pythonnet/releases/tag/v2.5.0) - 2020-06-14
 
 This version improves performance on benchmarks significantly compared to 2.3.
 
@@ -779,7 +842,7 @@ This version improves performance on benchmarks significantly compared to 2.3.
 
 [semantic versioning]: http://semver.org/
 
-[unreleased]: ../../compare/v2.3.0...HEAD
+[unreleased]: ../../compare/v3.0.1...HEAD
 
 [2.3.0]: ../../compare/v2.2.2...v2.3.0
 

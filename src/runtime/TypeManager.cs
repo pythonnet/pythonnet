@@ -374,7 +374,7 @@ namespace Python.Runtime
             return new PyTuple(bases);
         }
 
-        internal static NewReference CreateSubType(BorrowedReference py_name, IEnumerable<ClassBase> py_base_type, IEnumerable<Type> interfaces, BorrowedReference dictRef)
+        internal static NewReference CreateSubType(BorrowedReference py_name, ClassBase py_base_type, IList<Type> interfaces, BorrowedReference dictRef)
         {
             // Utility to create a subtype of a managed type with the ability for the
             // a python subtype able to override the managed implementation
@@ -415,12 +415,10 @@ namespace Python.Runtime
             }
 
             // create the new managed type subclassing the base managed type
-            var baseClass = py_base_type.FirstOrDefault();
-
-            return ReflectedClrType.CreateSubclass(baseClass, interfaces, name,
-                                                   ns: (string?)namespaceStr,
-                                                   assembly: (string?)assembly,
-                                                    dict: dictRef);
+            return ReflectedClrType.CreateSubclass(py_base_type, interfaces, name,
+                ns: (string?)namespaceStr,
+                assembly: (string?)assembly,
+                dict: dictRef);
         }
 
         internal static IntPtr WriteMethodDef(IntPtr mdef, IntPtr name, IntPtr func, PyMethodFlags flags, IntPtr doc)
@@ -614,6 +612,11 @@ namespace Python.Runtime
             Util.WriteIntPtr(type, TypeOffset.tp_name, raw);
             Util.WriteRef(type, TypeOffset.name, new NewReference(temp).Steal());
             Util.WriteRef(type, TypeOffset.qualname, temp.Steal());
+
+            // Ensure that tp_traverse and tp_clear are always set, since their
+            // existence is enforced in newer Python versions in PyType_Ready
+            Util.WriteIntPtr(type, TypeOffset.tp_traverse, subtype_traverse);
+            Util.WriteIntPtr(type, TypeOffset.tp_clear, subtype_clear);
 
             InheritSubstructs(type.Reference.DangerousGetAddress());
 

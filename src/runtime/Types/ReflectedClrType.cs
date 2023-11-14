@@ -68,7 +68,7 @@ internal sealed class ReflectedClrType : PyType
         TypeManager.InitializeClass(this, cb, cb.type.Value);
     }
 
-    internal static NewReference CreateSubclass(ClassBase baseClass, IEnumerable<Type> interfaces,
+    internal static NewReference CreateSubclass(ClassBase baseClass, IList<Type> interfaces,
                                                 string name, string? assembly, string? ns,
                                                 BorrowedReference dict)
     {

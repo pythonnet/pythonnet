@@ -255,7 +255,7 @@ namespace Python.Runtime
         /// </summary>
         internal static Type CreateDerivedType(string name,
             Type baseType,
-            IEnumerable<Type> interfaces2,
+            IList<Type> typeInterfaces,
             BorrowedReference py_dict,
             string? namespaceStr,
             string? assemblyName,
@@ -276,7 +276,7 @@ namespace Python.Runtime
 
             Type baseClass = baseType;
             var interfaces = new HashSet<Type> { typeof(IPythonDerivedType) };
-            foreach(var t in interfaces2) interfaces.Add(t);
+            foreach(var t in interfaces) interfaces.Add(t);
             // if the base type is an interface then use System.Object as the base class
             // and add the base type to the list of interfaces this new class will implement.
             if (baseType.IsInterface)
@@ -342,13 +342,16 @@ namespace Python.Runtime
                 }
             }
 
-            // override any virtual methods not already overridden by the properties above
+            // override any virtual not already overridden by the properties above
+            // also override any interface method.
             var methods = baseType.GetMethods().Concat(interfaces.SelectMany(x => x.GetMethods()));
             var virtualMethods = new HashSet<string>();
             foreach (MethodInfo method in methods)
             {
-                if (!method.Attributes.HasFlag(MethodAttributes.Virtual)
-                    || method.Attributes.HasFlag(MethodAttributes.Final)
+                if (!method.Attributes.HasFlag(MethodAttributes.Virtual) |
+                    method.Attributes.HasFlag(MethodAttributes.Final)
+                    // overriding generic virtual methods is not supported
+                    // so a call to that should be deferred to the base class method.
                     || method.IsGenericMethod)
                 {
                     continue;
@@ -591,6 +594,7 @@ namespace Python.Runtime
             il.Emit(OpCodes.Ldloc_0);
 
             il.Emit(OpCodes.Ldtoken, method);
+            il.Emit(OpCodes.Ldtoken, method.DeclaringType);
 #pragma warning disable CS0618 // PythonDerivedType is for internal use only
             if (method.ReturnType == typeof(void))
             {
@@ -681,6 +685,7 @@ namespace Python.Runtime
 
             il.DeclareLocal(typeof(object[]));
             il.DeclareLocal(typeof(RuntimeMethodHandle));
+            il.DeclareLocal(typeof(RuntimeTypeHandle));
 
             // this
             il.Emit(OpCodes.Ldarg_0);
@@ -722,6 +727,11 @@ namespace Python.Runtime
             il.Emit(OpCodes.Ldloca_S, 1);
             il.Emit(OpCodes.Initobj, typeof(RuntimeMethodHandle));
             il.Emit(OpCodes.Ldloc_1);
+
+            // type handle is also not required
+            il.Emit(OpCodes.Ldloca_S, 2);
+            il.Emit(OpCodes.Initobj, typeof(RuntimeTypeHandle));
+            il.Emit(OpCodes.Ldloc_2);
 #pragma warning disable CS0618 // PythonDerivedType is for internal use only
 
             // invoke the method
@@ -958,7 +968,7 @@ namespace Python.Runtime
         /// class) it calls it, otherwise it calls the base method.
         /// </summary>
         public static T? InvokeMethod<T>(IPythonDerivedType obj, string methodName, string origMethodName,
-            object[] args, RuntimeMethodHandle methodHandle)
+            object[] args, RuntimeMethodHandle methodHandle, RuntimeTypeHandle declaringTypeHandle)
         {
             var self = GetPyObj(obj);
 
@@ -984,7 +994,10 @@ namespace Python.Runtime
                             }
 
                             PyObject py_result = method.Invoke(pyargs);
-                            PyTuple? result_tuple = MarshalByRefsBack(args, methodHandle, py_result, outsOffset: 1);
+                            var clrMethod = methodHandle != default
+                                ? MethodBase.GetMethodFromHandle(methodHandle, declaringTypeHandle)
+                                : null;
+                            PyTuple? result_tuple = MarshalByRefsBack(args, clrMethod, py_result, outsOffset: 1);
                             return result_tuple is not null
                                 ? result_tuple[0].As<T>()
                                 : py_result.As<T>();
@@ -1014,7 +1027,7 @@ namespace Python.Runtime
         }
 
         public static void InvokeMethodVoid(IPythonDerivedType obj, string methodName, string origMethodName,
-            object?[] args, RuntimeMethodHandle methodHandle)
+            object?[] args, RuntimeMethodHandle methodHandle, RuntimeTypeHandle declaringTypeHandle)
         {
             var self = GetPyObj(obj);
             if (null != self.Ref)
@@ -1039,7 +1052,10 @@ namespace Python.Runtime
                             }
 
                             PyObject py_result = method.Invoke(pyargs);
-                            MarshalByRefsBack(args, methodHandle, py_result, outsOffset: 0);
+                            var clrMethod = methodHandle != default
+                                ? MethodBase.GetMethodFromHandle(methodHandle, declaringTypeHandle)
+                                : null;
+                            MarshalByRefsBack(args, clrMethod, py_result, outsOffset: 0);
                             return;
                         }
                     }
@@ -1071,12 +1087,11 @@ namespace Python.Runtime
         /// as a tuple of new values for those arguments, and updates corresponding
         /// elements of <paramref name="args"/> array.
         /// </summary>
-        private static PyTuple? MarshalByRefsBack(object?[] args, RuntimeMethodHandle methodHandle, PyObject pyResult, int outsOffset)
+        private static PyTuple? MarshalByRefsBack(object?[] args, MethodBase? method, PyObject pyResult, int outsOffset)
         {
-            if (methodHandle == default) return null;
+            if (method is null) return null;
 
-            var originalMethod = MethodBase.GetMethodFromHandle(methodHandle);
-            var parameters = originalMethod.GetParameters();
+            var parameters = method.GetParameters();
             PyTuple? outs = null;
             int byrefIndex = 0;
             for (int i = 0; i < parameters.Length; ++i)

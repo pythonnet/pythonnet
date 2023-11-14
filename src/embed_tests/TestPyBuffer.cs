@@ -110,6 +110,26 @@ namespace Python.EmbeddingTest {
             Assert.AreEqual(1, arr.Refcount);
         }
 
+        [Test]
+        public void MultidimensionalNumPyArray()
+        {
+            var ndarray = np.arange(24).reshape(1,2,3,4).T;
+            PyObject ndim = ndarray.ndim;
+            PyObject shape = ndarray.shape;
+            PyObject strides = ndarray.strides;
+            PyObject contiguous = ndarray.flags["C_CONTIGUOUS"];
+
+            using PyBuffer buf = ndarray.GetBuffer(PyBUF.STRIDED);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(buf.Dimensions, Is.EqualTo(ndim.As<int>()));
+                Assert.That(buf.Shape, Is.EqualTo(shape.As<long[]>()));
+                Assert.That(buf.Strides, Is.EqualTo(strides.As<long[]>()));
+                Assert.That(buf.IsContiguous(BufferOrderStyle.C), Is.EqualTo(contiguous.As<bool>()));
+            });
+        }
+
         [MethodImpl(MethodImplOptions.NoInlining)]
         static void MakeBufAndLeak(PyObject bufProvider)
         {
@@ -120,6 +140,22 @@ namespace Python.EmbeddingTest {
         {
             using var scope = Py.CreateScope();
             return Runtime.Runtime.PyByteArray_FromStringAndSize(str).MoveToPyObject();
+        }
+
+        dynamic np
+        {
+            get
+            {
+                try
+                {
+                    return Py.Import("numpy");
+                }
+                catch (PythonException)
+                {
+                    Assert.Inconclusive("Numpy or dependency not installed");
+                    return null;
+                }
+            }
         }
     }
 }

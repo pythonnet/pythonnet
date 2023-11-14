@@ -1,7 +1,9 @@
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 
 namespace Python.Runtime
@@ -47,6 +49,55 @@ namespace Python.Runtime
             return Runtime.PyString_FromString(str);
         }
 
+        private static string ConvertFlags(Enum value)
+        {
+            Type primitiveType = value.GetType().GetEnumUnderlyingType();
+            string format = "X" + (Marshal.SizeOf(primitiveType) * 2).ToString(CultureInfo.InvariantCulture);
+            var primitive = (IFormattable)Convert.ChangeType(value, primitiveType);
+            return "0x" + primitive.ToString(format, null);
+
+        }
+
+        private static string ConvertValue(Enum value)
+        {
+            Type primitiveType = value.GetType().GetEnumUnderlyingType();
+            return Convert.ChangeType(value, primitiveType).ToString()!;
+        }
+
+        /// <summary>
+        /// given an enum, write a __repr__ string formatted in the same
+        /// way as a python repr string. Something like:
+        ///   '&lt;Color.GREEN: 2&gt;';
+        /// with a binary value for [Flags] enums
+        /// </summary>
+        /// <param name="inst">Instace of the enum object</param>
+        /// <returns></returns>
+        private static string GetEnumReprString(Enum inst)
+        {
+            var obType = inst.GetType();
+
+            string strValue2 = obType.IsFlagsEnum() ? ConvertFlags(inst) : ConvertValue(inst);
+
+            var repr = $"<{obType.Name}.{inst}: {strValue2}>";
+            return repr;
+        }
+
+        /// <summary>
+        /// ClassObject __repr__ implementation.
+        /// </summary>
+        public new static NewReference tp_repr(BorrowedReference ob)
+        {
+            if (GetManagedObject(ob) is not CLRObject co)
+            {
+                return Exceptions.RaiseTypeError("invalid object");
+            }
+            if (co.inst.GetType().IsEnum)
+            {
+                return Runtime.PyString_FromString(GetEnumReprString((Enum)co.inst));
+            }
+
+            return ClassBase.tp_repr(ob);
+        }
 
         /// <summary>
         /// Implements __new__ for reflected classes and value types.

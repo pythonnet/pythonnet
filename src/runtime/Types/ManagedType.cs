@@ -148,9 +148,9 @@ namespace Python.Runtime
         {
             BorrowedReference type = Runtime.PyObject_TYPE(ob);
             int instanceDictOffset = Util.ReadInt32(type, TypeOffset.tp_dictoffset);
-            //Debug.Assert(instanceDictOffset > 0);
+            // Debug.Assert(instanceDictOffset > 0);
             // Python 3.11, sometimes this dict is less than zero.
-            if(instanceDictOffset > 0)
+            if (instanceDictOffset > 0)
                 Runtime.Py_CLEAR(ob, instanceDictOffset);
         }
 

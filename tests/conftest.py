@@ -79,9 +79,10 @@ def pytest_configure(config):
         ["dotnet", "publish", "-f", fw, "-o", str(bin_path), str(test_proj_path)]
     )
 
-    from pythonnet import load
-
-    load(runtime_opt, **runtime_params)
+    import os
+    os.environ["PYTHONNET_RUNTIME"] = runtime_opt
+    for k, v in runtime_params.items():
+        os.environ[f"PYTHONNET_{runtime_opt.upper()}_{k.upper()}"] = v
 
     import clr
 
