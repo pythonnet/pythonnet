@@ -187,7 +187,8 @@ namespace Python.Runtime
             if (exception is not null)
             {
                 // Return ClrBubbledExceptions when they are bubbled from Python -> C# -> Python -> C# -> ...
-                if (exception is ClrBubbledException)
+                // or when the traceback is not available, so we fall back  to the original behavior
+                if (exception is ClrBubbledException || traceback is null)
                 {
                     return exception;
                 }
