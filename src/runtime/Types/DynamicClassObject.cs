@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 
 using RuntimeBinder = Microsoft.CSharp.RuntimeBinder;
@@ -87,7 +88,7 @@ namespace Python.Runtime
                     // Do nothing, AttributeError was already raised in Python side and it was not cleared.
                 }
                 // Catch C# exceptions and raise them as Python exceptions.
-                catch(Exception exception)
+                catch (Exception exception)
                 {
                     Exceptions.Clear();
                     Exceptions.SetError(exception);
@@ -105,9 +106,12 @@ namespace Python.Runtime
             var clrObj = (CLRObject)GetManagedObject(ob)!;
             var name = Runtime.GetManagedString(key);
 
-            // If the key corresponds to a member of the class, we let the default implementation handle it.
+            // If the key corresponds to a valid property or field of the class, we let the default implementation handle it.
             var clrObjectType = clrObj.inst.GetType();
-            if (clrObjectType.GetMember(name).Length != 0)
+            var bindingFlags = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
+            var property = clrObjectType.GetProperty(name, bindingFlags);
+            var field = property == null ? clrObjectType.GetField(name, bindingFlags) : null;
+            if ((property != null && property.SetMethod != null) || field != null)
             {
                 return Runtime.PyObject_GenericSetAttr(ob, key, val);
             }
