@@ -960,6 +960,12 @@ class TestSetProtectedStaticReadOnlyFieldFails(TestPropertyAccess.Fixture):
             public Dictionary<string, object> Properties { get { return _properties; } }
 
             public string NonDynamicProperty { get; set; }
+
+            protected string NonDynamicProtectedProperty { get; set; } = "Default value";
+
+            protected static string NonDynamicProtectedStaticProperty { get; set; } = "Default value";
+
+            protected string NonDynamicProtectedField = "Default value";
         }
 
         public class TestPerson : IComparable, IComparable<TestPerson>
@@ -1262,6 +1268,37 @@ class TestSetPublicNonDynamicObjectPropertyToActualPropertyWorks:
                 Assert.AreEqual(expected, fixture.NonDynamicProperty);
                 Assert.AreEqual(expected, ((dynamic)fixture).NonDynamicProperty);
                 Assert.IsFalse(fixture.Properties.ContainsKey(nameof(fixture.NonDynamicProperty)));
+            }
+        }
+
+        [TestCase("NonDynamicProtectedProperty")]
+        [TestCase("NonDynamicProtectedField")]
+        [TestCase("NonDynamicProtectedStaticProperty")]
+        public void TestSetPublicNonDynamicObjectProtectedPropertyToActualPropertyWorks(string attributeName)
+        {
+            var expected = "Non Dynamic Protected Property";
+            dynamic model = PyModule.FromString("module", $@"
+from clr import AddReference
+AddReference(""Python.EmbeddingTest"")
+AddReference(""System"")
+
+from datetime import datetime
+import System
+from Python.EmbeddingTest import *
+
+class RandomTestDynamicClass(TestPropertyAccess.DynamicFixture):
+    def SetValue(self):
+        self.{attributeName} = ""{expected}""
+").GetAttr("RandomTestDynamicClass").Invoke();
+
+            using (Py.GIL())
+            {
+                Assert.AreNotEqual(expected, model.GetAttr(attributeName).As<string>());
+
+                model.SetValue();
+
+                Assert.AreEqual(expected, model.GetAttr(attributeName).As<string>());
+                Assert.IsFalse(model.Properties.ContainsKey(attributeName).As<bool>());
             }
         }
 
