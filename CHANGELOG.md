@@ -13,6 +13,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ### Fixed
 
+- Improve loader (AddReference) robustness. Ignore and print loader error and try to continue to load if possible.
 
 ## [3.0.3](https://github.com/pythonnet/pythonnet/releases/tag/v3.0.3) - 2023-10-11
 
