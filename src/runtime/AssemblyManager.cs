@@ -414,6 +414,10 @@ namespace Python.Runtime
                 catch (ReflectionTypeLoadException exc)
                 {
                     // Return all types that were successfully loaded
+                    foreach (var item in exc.LoaderExceptions)
+                    {
+                        System.Console.Error.WriteLine("[pythonnet] {0}", item.Message);
+                    }
                     return exc.Types.Where(x => x != null && IsExported(x)).ToArray();
                 }
             }
@@ -425,8 +429,31 @@ namespace Python.Runtime
                 }
                 catch (FileNotFoundException)
                 {
+                    System.Console.Error.WriteLine("[pythonnet] {0} File not found", a.GetName());
                     return new Type[0];
                 }
+                catch (System.TypeLoadException e)
+                {
+                    try
+                    {
+                        return a.GetTypes().Where(IsExported).ToArray();
+                    }
+                    catch (ReflectionTypeLoadException exc)
+                    {
+                        foreach (var item in exc.LoaderExceptions)
+                        {
+                            System.Console.Error.WriteLine("[pythonnet] {0}", item.Message);
+                        }
+                        // Return all types that were successfully loaded
+                        return exc.Types.Where(x => x != null && IsExported(x)).ToArray();
+                    }
+                }
+                catch (Exception e) // System.TypeLoadException
+                {
+                    System.Console.Error.WriteLine("[pythonnet] {0} {1}", a.GetName(), e);
+                    return new Type[0];
+                }
+
             }
         }
 
