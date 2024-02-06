@@ -129,7 +129,7 @@ namespace Python.Runtime.Codecs
             }
             // Invoke Invoke-method of _pyObject
             generator.Emit(OpCodes.Callvirt, FindMethod(typeof(PyObject), nameof(PyObject.Invoke), BindingFlags.Public | BindingFlags.Instance, typeof(PyObject[])));
-            // As<bool> was hard, this is a try for AsManagedObject but also not convienent
+            // As<bool> was hard, this is a try for AsManagedObject but also not convenient
             generator.Emit(OpCodes.Ldtoken, returnType);
             generator.Emit(OpCodes.Call, typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle), BindingFlags.Public | BindingFlags.Static));
             generator.Emit(OpCodes.Callvirt, typeof(PyObject).GetMethod(nameof(PyObject.AsManagedObject), BindingFlags.Public | BindingFlags.Instance));
