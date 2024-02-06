@@ -17,20 +17,29 @@ namespace Python.Runtime
 {
     public static class RuntimeData
     {
-        private static Type? _formatterType;
-        public static Type? FormatterType
+
+        public delegate IFormatter FormatterFactoryDelegate();
+        private readonly static FormatterFactoryDelegate DefaultFormatter = () => new BinaryFormatter();
+        private static FormatterFactoryDelegate? _formatter { get; set; } = null;
+
+        public static FormatterFactoryDelegate Formatter
         {
-            get => _formatterType;
+            get
+            {
+                if (_formatter is null)
+                {
+                    return DefaultFormatter;
+                }
+                return _formatter;
+            }
             set
             {
-                if (!typeof(IFormatter).IsAssignableFrom(value))
-                {
-                    throw new ArgumentException("Not a type implemented IFormatter");
-                }
-                _formatterType = value;
+                _formatter = value;
             }
         }
-
+        public delegate void SerializationHookDelegate();
+        public static SerializationHookDelegate? PostStashHook {get; set;} = null;
+        public static SerializationHookDelegate? PreRestoreHook {get; set;} = null;
         public static ICLRObjectStorer? WrappersStorer { get; set; }
 
         /// <summary>
@@ -74,6 +83,7 @@ namespace Python.Runtime
             using NewReference capsule = PyCapsule_New(mem, IntPtr.Zero, IntPtr.Zero);
             int res = PySys_SetObject("clr_data", capsule.BorrowOrThrow());
             PythonException.ThrowIfIsNotZero(res);
+            PostStashHook?.Invoke();
         }
 
         internal static void RestoreRuntimeData()
@@ -90,6 +100,7 @@ namespace Python.Runtime
 
         private static void RestoreRuntimeDataImpl()
         {
+            PreRestoreHook?.Invoke();
             BorrowedReference capsule = PySys_GetObject("clr_data");
             if (capsule.IsNull)
             {
@@ -252,9 +263,7 @@ namespace Python.Runtime
 
         internal static IFormatter CreateFormatter()
         {
-            return FormatterType != null ?
-                (IFormatter)Activator.CreateInstance(FormatterType)
-                : new BinaryFormatter();
+            return Formatter();
         }
     }
 }
