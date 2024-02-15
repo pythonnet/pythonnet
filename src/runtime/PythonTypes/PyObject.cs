@@ -1136,6 +1136,23 @@ namespace Python.Runtime
             }
         }
 
+        internal int CompareTo(BorrowedReference other)
+        {
+            int greater = Runtime.PyObject_RichCompareBool(this.Reference, other, Runtime.Py_GT);
+            Debug.Assert(greater != -1);
+            if (greater > 0)
+                return 1;
+            int less = Runtime.PyObject_RichCompareBool(this.Reference, other, Runtime.Py_LT);
+            Debug.Assert(less != -1);
+            return less > 0 ? -1 : 0;
+        }
+
+        internal bool Equals(BorrowedReference other)
+        {
+            int equal = Runtime.PyObject_RichCompareBool(this.Reference, other, Runtime.Py_EQ);
+            Debug.Assert(equal != -1);
+            return equal > 0;
+        }
 
         public override bool TryGetMember(GetMemberBinder binder, out object? result)
         {
@@ -1325,7 +1342,7 @@ namespace Python.Runtime
             }
             return true;
         }
-        
+
         public override bool TryBinaryOperation(BinaryOperationBinder binder, object arg, out object? result)
         {
             using var _ = Py.GIL();

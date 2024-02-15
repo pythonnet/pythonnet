@@ -211,6 +211,76 @@ namespace Python.EmbeddingTest
         }
 
         [Test]
+        public void CompareTo()
+        {
+            var v = new PyInt(42);
+
+            #region Signed
+            Assert.AreEqual(0, v.CompareTo(42L));
+            Assert.AreEqual(0, v.CompareTo(42));
+            Assert.AreEqual(0, v.CompareTo((short)42));
+            Assert.AreEqual(0, v.CompareTo((sbyte)42));
+
+            Assert.AreEqual(1, v.CompareTo(41L));
+            Assert.AreEqual(1, v.CompareTo(41));
+            Assert.AreEqual(1, v.CompareTo((short)41));
+            Assert.AreEqual(1, v.CompareTo((sbyte)41));
+
+            Assert.AreEqual(-1, v.CompareTo(43L));
+            Assert.AreEqual(-1, v.CompareTo(43));
+            Assert.AreEqual(-1, v.CompareTo((short)43));
+            Assert.AreEqual(-1, v.CompareTo((sbyte)43));
+            #endregion Signed
+
+            #region Unsigned
+            Assert.AreEqual(0, v.CompareTo(42UL));
+            Assert.AreEqual(0, v.CompareTo(42U));
+            Assert.AreEqual(0, v.CompareTo((ushort)42));
+            Assert.AreEqual(0, v.CompareTo((byte)42));
+
+            Assert.AreEqual(1, v.CompareTo(41UL));
+            Assert.AreEqual(1, v.CompareTo(41U));
+            Assert.AreEqual(1, v.CompareTo((ushort)41));
+            Assert.AreEqual(1, v.CompareTo((byte)41));
+
+            Assert.AreEqual(-1, v.CompareTo(43UL));
+            Assert.AreEqual(-1, v.CompareTo(43U));
+            Assert.AreEqual(-1, v.CompareTo((ushort)43));
+            Assert.AreEqual(-1, v.CompareTo((byte)43));
+            #endregion Unsigned
+        }
+
+        [Test]
+        public void Equals()
+        {
+            var v = new PyInt(42);
+
+            #region Signed
+            Assert.True(v.Equals(42L));
+            Assert.True(v.Equals(42));
+            Assert.True(v.Equals((short)42));
+            Assert.True(v.Equals((sbyte)42));
+
+            Assert.False(v.Equals(41L));
+            Assert.False(v.Equals(41));
+            Assert.False(v.Equals((short)41));
+            Assert.False(v.Equals((sbyte)41));
+            #endregion Signed
+
+            #region Unsigned
+            Assert.True(v.Equals(42UL));
+            Assert.True(v.Equals(42U));
+            Assert.True(v.Equals((ushort)42));
+            Assert.True(v.Equals((byte)42));
+
+            Assert.False(v.Equals(41UL));
+            Assert.False(v.Equals(41U));
+            Assert.False(v.Equals((ushort)41));
+            Assert.False(v.Equals((byte)41));
+            #endregion Unsigned
+        }
+
+        [Test]
         public void ToBigIntegerLarge()
         {
             BigInteger val = BigInteger.Pow(2, 1024) + 3;

@@ -112,5 +112,24 @@ namespace Python.EmbeddingTest
             Assert.AreEqual(4, actual.Length());
             Assert.AreEqual(expected, actual.ToString());
         }
+
+        [Test]
+        public void CompareTo()
+        {
+            var a = new PyString("foo");
+
+            Assert.AreEqual(0, a.CompareTo("foo"));
+            Assert.AreEqual("foo".CompareTo("bar"), a.CompareTo("bar"));
+            Assert.AreEqual("foo".CompareTo("foz"), a.CompareTo("foz"));
+        }
+
+        [Test]
+        public void Equals()
+        {
+            var a = new PyString("foo");
+
+            Assert.True(a.Equals("foo"));
+            Assert.False(a.Equals("bar"));
+        }
     }
 }

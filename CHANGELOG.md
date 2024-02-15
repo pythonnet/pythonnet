@@ -11,6 +11,9 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 -   Added `ToPythonAs<T>()` extension method to allow for explicit conversion using a specific type. ([#2311][i2311])
 
+-   Added `IComparable` and `IEquatable` implementations to `PyInt`, `PyFloat`, and `PyString`
+     to compare with primitive .NET types like `long`.
+
 ### Changed
 
 ### Fixed
