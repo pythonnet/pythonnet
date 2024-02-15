@@ -60,6 +60,22 @@ namespace Python.Runtime
         }
 
         /// <summary>
+        /// Set Variable Method
+        /// </summary>
+        /// <remarks>
+        /// Add a new variable to the variables dict if it not exist
+        /// or update its value if the variable exists.
+        /// </remarks>
+        public PyModule Set(string name, object? value, Type type)
+        {
+            if (name is null) throw new ArgumentNullException(nameof(name));
+
+            using var _value = Converter.ToPython(value, type);
+            SetPyValue(name, _value.Borrow());
+            return this;
+        }
+
+        /// <summary>
         /// Given a module or package name, import the module and return the resulting object.
         /// </summary>
         /// <param name="name">Fully-qualified module or package name</param>
