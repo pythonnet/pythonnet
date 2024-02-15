@@ -126,5 +126,32 @@ namespace Python.EmbeddingTest
             StringAssert.StartsWith("could not convert string to float", ex.Message);
             Assert.IsNull(a);
         }
+
+        [Test]
+        public void CompareTo()
+        {
+            var v = new PyFloat(42);
+
+            Assert.AreEqual(0, v.CompareTo(42f));
+            Assert.AreEqual(0, v.CompareTo(42d));
+
+            Assert.AreEqual(1, v.CompareTo(41f));
+            Assert.AreEqual(1, v.CompareTo(41d));
+
+            Assert.AreEqual(-1, v.CompareTo(43f));
+            Assert.AreEqual(-1, v.CompareTo(43d));
+        }
+
+        [Test]
+        public void Equals()
+        {
+            var v = new PyFloat(42);
+
+            Assert.IsTrue(v.Equals(42f));
+            Assert.IsTrue(v.Equals(42d));
+
+            Assert.IsFalse(v.Equals(41f));
+            Assert.IsFalse(v.Equals(41d));
+        }
     }
 }

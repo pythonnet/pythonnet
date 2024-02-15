@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Runtime.Serialization;
 
 namespace Python.Runtime
@@ -13,7 +14,7 @@ namespace Python.Runtime
     /// 2011-01-29: ...Then why does the string constructor call PyUnicode_FromUnicode()???
     /// </remarks>
     [Serializable]
-    public class PyString : PySequence
+    public class PyString : PySequence, IComparable<string>, IEquatable<string>
     {
         internal PyString(in StolenReference reference) : base(reference) { }
         internal PyString(BorrowedReference reference) : base(reference) { }
@@ -61,5 +62,23 @@ namespace Python.Runtime
         }
 
         public override TypeCode GetTypeCode() => TypeCode.String;
+
+        internal string ToStringUnderGIL()
+        {
+            string? result = Runtime.GetManagedString(this.Reference);
+            Debug.Assert(result is not null);
+            return result!;
+        }
+
+        public bool Equals(string? other)
+            => this.ToStringUnderGIL().Equals(other, StringComparison.CurrentCulture);
+        public int CompareTo(string? other)
+            => string.Compare(this.ToStringUnderGIL(), other, StringComparison.CurrentCulture);
+
+        public override string ToString()
+        {
+            using var _ = Py.GIL();
+            return this.ToStringUnderGIL();
+        }
     }
 }
