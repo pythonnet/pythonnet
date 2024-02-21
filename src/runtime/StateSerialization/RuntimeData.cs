@@ -18,28 +18,47 @@ namespace Python.Runtime
     public static class RuntimeData
     {
 
-        public delegate IFormatter FormatterFactoryDelegate();
-        private readonly static FormatterFactoryDelegate DefaultFormatter = () => new BinaryFormatter();
-        private static FormatterFactoryDelegate? _formatter { get; set; } = null;
+        private readonly static Func<IFormatter> DefaultFormatter = () => new BinaryFormatter();
+        private static Func<IFormatter>? _formatterFactory { get; set; } = null;
 
-        public static FormatterFactoryDelegate Formatter
+        public static Func<IFormatter> FormatterFactory
         {
             get
             {
-                if (_formatter is null)
+                if (_formatterFactory is null)
                 {
                     return DefaultFormatter;
                 }
-                return _formatter;
+                return _formatterFactory;
             }
             set
             {
-                _formatter = value;
+                _formatterFactory = value;
             }
         }
-        public delegate void SerializationHookDelegate();
-        public static SerializationHookDelegate? PostStashHook {get; set;} = null;
-        public static SerializationHookDelegate? PreRestoreHook {get; set;} = null;
+
+        private static Type? _formatterType = null;
+        public static Type? FormatterType
+        {
+            get => _formatterType;
+            set
+            {
+                if (!typeof(IFormatter).IsAssignableFrom(value))
+                {
+                    throw new ArgumentException("Not a type implemented IFormatter");
+                }
+                _formatterType = value;
+            }
+        }
+
+        /// <summary>
+        /// Callback called as a last step in the serialization process
+        /// </summary>
+        public static Action? PostStashHook {get; set;} = null;
+        /// <summary>
+        /// Callback called as the first step in the deserialization process
+        /// </summary>
+        public static Action? PreRestoreHook {get; set;} = null;
         public static ICLRObjectStorer? WrappersStorer { get; set; }
 
         /// <summary>
@@ -261,9 +280,82 @@ namespace Python.Runtime
             }
         }
 
+        /// <summary>
+        /// Frees the pointer stored in a Python capsule and the capsule stored 
+        /// on the sys module object with the given key if it exists. 
+        /// </summary>
+        /// <remarks>
+        /// The memory on the capsule must have been allocated via <code>StashDataInCapsule</code>
+        /// </remarks>
+        /// <param name="key">The name given to the capsule on the `sys` module object</param>
+        public static void FreeCapsuleData(string key)
+        {
+            BorrowedReference oldCapsule = PySys_GetObject(key);
+            if (!oldCapsule.IsNull)
+            {
+                IntPtr oldData = PyCapsule_GetPointer(oldCapsule, IntPtr.Zero);
+                Marshal.FreeHGlobal(oldData);
+                PyCapsule_SetPointer(oldCapsule, IntPtr.Zero);
+                PySys_SetObject(key, null);
+            }
+        }
+
+        /// <summary>
+        /// Stores the <paramref name="data"/>data parameter in a Python capsule and stores 
+        /// the capsule on the `sys` module object with the name <paramref name="key"/>. 
+        /// This method allocates global memory to hold the data of the <paramref name="data"/>
+        /// parameter.
+        /// </summary>
+        /// <remarks>
+        /// No checks on pre-existing names on the `sys` module object are made.
+        /// </remarks>
+        /// <param name="key">The name given to the capsule on the `sys` module object</param>
+        /// <param name="data">The data to be contained in the capsule</param>
+        public static void StashDataInCapsule(string key, byte[] data)
+        {
+            IntPtr mem = Marshal.AllocHGlobal(IntPtr.Size + data.Length);
+            // store the length of the buffer first
+            Marshal.WriteIntPtr(mem, (IntPtr)data.Length);
+            Marshal.Copy(data, 0, mem + IntPtr.Size, data.Length);
+
+            using NewReference capsule = PyCapsule_New(mem, IntPtr.Zero, IntPtr.Zero);
+            int res = PySys_SetObject(key, capsule.BorrowOrThrow());
+            PythonException.ThrowIfIsNotZero(res);
+        }
+
+        /// <summary>
+        /// Retreives the pointer to previously stored data on a Python capsule. 
+        /// Throws if the object corresponding to the <paramref name="key"/> parameter
+        /// on the `sys` module object is not a capsule.
+        /// </summary>
+        /// <param name="key">The name given to the capsule on the `sys` module object</param>
+        /// <returns>The pointer to the data, or IntPtr.Zero if name matches the key</returns>
+        public static IntPtr GetDataFromCapsule(string key)
+        {
+            BorrowedReference capsule = PySys_GetObject(key);
+            if (capsule.IsNull)
+            {
+                // nothing to do.
+                return IntPtr.Zero;
+            }
+            var ptr = PyCapsule_GetPointer(capsule, IntPtr.Zero);
+            if (ptr == IntPtr.Zero)
+            {
+                // The PyCapsule API returns NULL on error; NULL cannot be stored 
+                // as a capsule's value
+                PythonException.ThrowIfIsNull(null);
+            }
+            return ptr;
+        }
+
         internal static IFormatter CreateFormatter()
         {
-            return Formatter();
+
+            if (FormatterType != null)
+            {
+                return (IFormatter)Activator.CreateInstance(FormatterType);
+            }
+            return FormatterFactory();
         }
     }
 }

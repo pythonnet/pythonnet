@@ -10,6 +10,9 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 ### Added
 
 ### Changed
+-   Added a `FormatterFactory` member in RuntimeData to create formatters with parameters. For compatibility, the `FormatterType` member is still present and has precedence when defining both `FormatterFactory` and `FormatterType`
+-   Added a post-serialization and a pre-deserialization step callbacks to extend (de)serialization process
+-   Added an API to stash serialized data on Python capsules
 
 ### Fixed
 
