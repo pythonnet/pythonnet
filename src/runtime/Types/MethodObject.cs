@@ -19,20 +19,20 @@ namespace Python.Runtime
     {
         [NonSerialized]
         private MethodBase[]? _info = null;
+
         private readonly List<MaybeMethodInfo> infoList;
         internal string name;
         internal readonly MethodBinder binder;
         internal bool is_static = false;
-
         internal PyString? doc;
         internal MaybeType type;
 
-        public MethodObject(MaybeType type, string name, MethodBase[] info, bool allow_threads)
+        public MethodObject(MaybeType type, string name, MethodBase[] info, bool allow_threads, bool reverse_args = false)
         {
             this.type = type;
             this.name = name;
             this.infoList = new List<MaybeMethodInfo>();
-            binder = new MethodBinder();
+            binder = new MethodBinder(reverse_args);
             foreach (MethodBase item in info)
             {
                 this.infoList.Add(item);
@@ -45,8 +45,8 @@ namespace Python.Runtime
             binder.allow_threads = allow_threads;
         }
 
-        public MethodObject(MaybeType type, string name, MethodBase[] info)
-            : this(type, name, info, allow_threads: AllowThreads(info))
+        public MethodObject(MaybeType type, string name, MethodBase[] info, bool reverse_args = false)
+            : this(type, name, info, allow_threads: AllowThreads(info), reverse_args)
         {
         }
 
@@ -67,14 +67,14 @@ namespace Python.Runtime
             }
         }
 
-        public virtual NewReference Invoke(BorrowedReference inst, BorrowedReference args, BorrowedReference kw)
+        public virtual NewReference Invoke(BorrowedReference inst, BorrowedReference args, BorrowedReference kw, bool reverse_args = false)
         {
-            return Invoke(inst, args, kw, null);
+            return Invoke(inst, args, kw, null, reverse_args);
         }
 
-        public virtual NewReference Invoke(BorrowedReference target, BorrowedReference args, BorrowedReference kw, MethodBase? info)
+        public virtual NewReference Invoke(BorrowedReference target, BorrowedReference args, BorrowedReference kw, MethodBase? info, bool reverse_args = false)
         {
-            return binder.Invoke(target, args, kw, info, this.info);
+            return binder.Invoke(target, args, kw, info, this.info, reverse_args);
         }
 
         /// <summary>

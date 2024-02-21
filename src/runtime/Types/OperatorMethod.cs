@@ -177,17 +177,14 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// Check if the method is performing a reverse operation.
+        /// Check if the method should have a reversed operation.
         /// </summary>
         /// <param name="method">The operator method.</param>
         /// <returns></returns>
-        public static bool IsReverse(MethodBase method)
+        public static bool HaveReverse(MethodBase method)
         {
-            Type primaryType = method.IsOpsHelper()
-                ? method.DeclaringType.GetGenericArguments()[0]
-                : method.DeclaringType;
-            Type leftOperandType = method.GetParameters()[0].ParameterType;
-            return leftOperandType != primaryType;
+            var pi = method.GetParameters();
+            return OpMethodMap.ContainsKey(method.Name) && pi.Length == 2;
         }
 
         public static void FilterMethods(MethodBase[] methods, out MethodBase[] forwardMethods, out MethodBase[] reverseMethods)
@@ -196,14 +193,11 @@ namespace Python.Runtime
             var reverseMethodsList = new List<MethodBase>();
             foreach (var method in methods)
             {
-                if (IsReverse(method))
+                forwardMethodsList.Add(method);
+                if (HaveReverse(method))
                 {
                     reverseMethodsList.Add(method);
-                } else
-                {
-                    forwardMethodsList.Add(method);
                 }
-
             }
             forwardMethods = forwardMethodsList.ToArray();
             reverseMethods = reverseMethodsList.ToArray();
