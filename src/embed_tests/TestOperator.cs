@@ -15,12 +15,127 @@ namespace Python.EmbeddingTest
         public void SetUp()
         {
             PythonEngine.Initialize();
+            OwnIntCodec.Setup();
         }
 
         [OneTimeTearDown]
         public void Dispose()
         {
             PythonEngine.Shutdown();
+        }
+
+        // Mock Integer class to test math ops on non-native dotnet types
+        public struct OwnInt
+        {
+            private int _value;
+
+            public int Num => _value;
+
+            public OwnInt()
+            {
+                _value = 0;
+            }
+
+            public OwnInt(int value)
+            {
+                _value = value;
+            }
+
+            public static OwnInt operator -(OwnInt p1, OwnInt p2)
+            {
+                return new OwnInt(p1._value - p2._value);
+            }
+
+            public static OwnInt operator +(OwnInt p1, OwnInt p2)
+            {
+                return new OwnInt(p1._value + p2._value);
+            }
+
+            public static OwnInt operator *(OwnInt p1, OwnInt p2)
+            {
+                return new OwnInt(p1._value * p2._value);
+            }
+
+            public static OwnInt operator /(OwnInt p1, OwnInt p2)
+            {
+                return new OwnInt(p1._value / p2._value);
+            }
+
+            public static OwnInt operator %(OwnInt p1, OwnInt p2)
+            {
+                return new OwnInt(p1._value % p2._value);
+            }
+
+            public static OwnInt operator ^(OwnInt p1, OwnInt p2)
+            {
+                return new OwnInt(p1._value ^ p2._value);
+            }
+
+            public static bool operator <(OwnInt p1, OwnInt p2)
+            {
+                return p1._value < p2._value;
+            }
+
+            public static bool operator >(OwnInt p1, OwnInt p2)
+            {
+                return p1._value > p2._value;
+            }
+
+            public static bool operator ==(OwnInt p1, OwnInt p2)
+            {
+                return p1._value == p2._value;
+            }
+
+            public static bool operator !=(OwnInt p1, OwnInt p2)
+            {
+                return p1._value != p2._value;
+            }
+
+            public static OwnInt operator |(OwnInt p1, OwnInt p2)
+            {
+                return new OwnInt(p1._value | p2._value);
+            }
+
+            public static OwnInt operator &(OwnInt p1, OwnInt p2)
+            {
+                return new OwnInt(p1._value & p2._value);
+            }
+
+            public static bool operator <=(OwnInt p1, OwnInt p2)
+            {
+                return p1._value <= p2._value;
+            }
+
+            public static bool operator >=(OwnInt p1, OwnInt p2)
+            {
+                return p1._value >= p2._value;
+            }
+        }
+
+        // Codec for mock class above.
+        public class OwnIntCodec : IPyObjectDecoder
+        {
+            public static void Setup()
+            {
+                PyObjectConversions.RegisterDecoder(new OwnIntCodec());
+            }
+
+            public bool CanDecode(PyType objectType, Type targetType)
+            {
+                return objectType.Name == "int" && targetType == typeof(OwnInt);
+            }
+
+            public bool TryDecode<T>(PyObject pyObj, out T? value)
+            {
+                if (pyObj.PyType.Name != "int" || typeof(T) != typeof(OwnInt))
+                {
+                    value = default(T);
+                    return false;
+                }
+
+                value = (T)(object)new OwnInt(pyObj.As<int>());
+                return true;
+            }
         }
 
         public class OperableObject
@@ -524,6 +639,121 @@ assert c.Num == a.Num << b.Num
 
 c = a >> b.Num
 assert c.Num == a.Num >> b.Num
+");
+        }
+
+        [Test]
+        public void ReverseOperatorWithCodec()
+        {
+            string name = string.Format("{0}.{1}",
+                typeof(OwnInt).DeclaringType.Name,
+                typeof(OwnInt).Name);
+            string module = MethodBase.GetCurrentMethod().DeclaringType.Namespace;
+
+            PythonEngine.Exec($@"
+from {module} import *
+cls = {name}
+a = 2
+b = cls(10)
+
+c = a + b
+assert c.Num == a + b.Num
+
+c = a - b
+assert c.Num == a - b.Num
+
+c = a * b
+assert c.Num == a * b.Num
+
+c = a / b
+assert c.Num == a // b.Num
+
+c = a % b
+assert c.Num == a % b.Num
+
+c = a & b
+assert c.Num == a & b.Num
+
+c = a | b
+assert c.Num == a | b.Num
+
+c = a ^ b
+assert c.Num == a ^ b.Num
+
+c = a == b
+assert c == (a == b.Num)
+
+c = a != b
+assert c == (a != b.Num)
+
+c = a <= b
+assert c == (a <= b.Num)
+
+c = a >= b
+assert c == (a >= b.Num)
+
+c = a < b
+assert c == (a < b.Num)
+
+c = a > b
+assert c == (a > b.Num)
+");
+        }
+
+        [Test]
+        public void ForwardOperatorWithCodec()
+        {
+            string name = string.Format("{0}.{1}",
+                 typeof(OwnInt).DeclaringType.Name,
+                 typeof(OwnInt).Name);
+            string module = MethodBase.GetCurrentMethod().DeclaringType.Namespace;
+
+            PythonEngine.Exec($@"
+from {module} import *
+cls = {name}
+a = cls(2)
+b = 10
+c = a + b
+assert c.Num == a.Num + b
+
+c = a - b
+assert c.Num == a.Num - b
+
+c = a * b
+assert c.Num == a.Num * b
+
+c = a / b
+assert c.Num == a.Num // b
+
+c = a % b
+assert c.Num == a.Num % b
+
+c = a & b
+assert c.Num == a.Num & b
+
+c = a | b
+assert c.Num == a.Num | b
+
+c = a ^ b
+assert c.Num == a.Num ^ b
+
+c = a == b
+assert c == (a.Num == b)
+
+c = a != b
+assert c == (a.Num != b)
+
+c = a <= b
+assert c == (a.Num <= b)
+
+c = a >= b
+assert c == (a.Num >= b)
+
+c = a < b
+assert c == (a.Num < b)
+
+c = a > b
+assert c == (a.Num > b)
 ");
         }
     }
