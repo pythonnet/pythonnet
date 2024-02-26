@@ -32,18 +32,18 @@ namespace Python.Runtime
         public const bool DefaultAllowThreads = true;
         public bool allow_threads = DefaultAllowThreads;
 
-        public bool args_reversed = false;
+        public bool argsReversed = false;
 
-        internal MethodBinder(bool reverse_args = false)
+        internal MethodBinder(bool argsReversed = false)
         {
             list = new List<MaybeMethodBase>();
-            args_reversed = reverse_args;
+            this.argsReversed = argsReversed;
         }
 
-        internal MethodBinder(MethodInfo mi, bool reverse_args = false)
+        internal MethodBinder(MethodInfo mi, bool argsReversed = false)
         {
             list = new List<MaybeMethodBase> { new MaybeMethodBase(mi) };
-            args_reversed = reverse_args;
+            this.argsReversed = argsReversed;
         }
 
         public int Count
@@ -276,11 +276,11 @@ namespace Python.Runtime
         /// <param name="inst">The Python target of the method invocation.</param>
         /// <param name="args">The Python arguments.</param>
         /// <param name="kw">The Python keyword arguments.</param>
-        /// <param name="reverse_args">Reverse arguments of methods. Used for methods such as __radd__, __rsub__, __rmod__ etc</param>
+        /// <param name="argsReversed">Reverse arguments of methods. Used for methods such as __radd__, __rsub__, __rmod__ etc</param>
         /// <returns>A Binding if successful.  Otherwise null.</returns>
-        internal Binding? Bind(BorrowedReference inst, BorrowedReference args, BorrowedReference kw, bool reverse_args = false)
+        internal Binding? Bind(BorrowedReference inst, BorrowedReference args, BorrowedReference kw, bool argsReversed = false)
         {
-            return Bind(inst, args, kw, null, null, reverse_args);
+            return Bind(inst, args, kw, null, null, argsReversed);
         }
 
         /// <summary>
@@ -293,11 +293,11 @@ namespace Python.Runtime
         /// <param name="args">The Python arguments.</param>
         /// <param name="kw">The Python keyword arguments.</param>
         /// <param name="info">If not null, only bind to that method.</param>
-        /// <param name="reverse_args">Reverse arguments of methods. Used for methods such as __radd__, __rsub__, __rmod__ etc</param>
+        /// <param name="argsReversed">Reverse arguments of methods. Used for methods such as __radd__, __rsub__, __rmod__ etc</param>
         /// <returns>A Binding if successful.  Otherwise null.</returns>
-        internal Binding? Bind(BorrowedReference inst, BorrowedReference args, BorrowedReference kw, MethodBase? info, bool reverse_args = false)
+        internal Binding? Bind(BorrowedReference inst, BorrowedReference args, BorrowedReference kw, MethodBase? info, bool argsReversed = false)
         {
-            return Bind(inst, args, kw, info, null, reverse_args);
+            return Bind(inst, args, kw, info, null, argsReversed);
         }
 
         private readonly struct MatchedMethod
@@ -341,9 +341,9 @@ namespace Python.Runtime
         /// <param name="kw">The Python keyword arguments.</param>
         /// <param name="info">If not null, only bind to that method.</param>
         /// <param name="methodinfo">If not null, additionally attempt to bind to the generic methods in this array by inferring generic type parameters.</param>
-        /// <param name="reverse_args">Reverse arguments of methods. Used for methods such as __radd__, __rsub__, __rmod__ etc</param>
+        /// <param name="argsReversed">Reverse arguments of methods. Used for methods such as __radd__, __rsub__, __rmod__ etc</param>
         /// <returns>A Binding if successful.  Otherwise null.</returns>
-        internal Binding? Bind(BorrowedReference inst, BorrowedReference args, BorrowedReference kw, MethodBase? info, MethodBase[]? methodinfo, bool reverse_args = false)
+        internal Binding? Bind(BorrowedReference inst, BorrowedReference args, BorrowedReference kw, MethodBase? info, MethodBase[]? methodinfo, bool argsReversed = false)
         {
             // loop to find match, return invoker w/ or w/o error
             var kwargDict = new Dictionary<string, PyObject>();
@@ -371,10 +371,10 @@ namespace Python.Runtime
                 _methods = GetMethods();
             }
 
-            return Bind(inst, args, kwargDict, _methods, matchGenerics: true, reverse_args);
+            return Bind(inst, args, kwargDict, _methods, matchGenerics: true, argsReversed);
         }
 
-        private static Binding? Bind(BorrowedReference inst, BorrowedReference args, Dictionary<string, PyObject> kwargDict, MethodBase[] methods, bool matchGenerics, bool reversed = false)
+        private static Binding? Bind(BorrowedReference inst, BorrowedReference args, Dictionary<string, PyObject> kwargDict, MethodBase[] methods, bool matchGenerics, bool argsReversed = false)
         {
             var pynargs = (int)Runtime.PyTuple_Size(args);
             var isGeneric = false;
@@ -394,7 +394,7 @@ namespace Python.Runtime
                 // Binary operator methods will have 2 CLR args but only one Python arg
                 // (unary operators will have 1 less each), since Python operator methods are bound.
                 isOperator = isOperator && pynargs == pi.Length - 1;
-                bool isReverse = isOperator && reversed;  // Only cast if isOperator.
+                bool isReverse = isOperator && argsReversed;  // Only cast if isOperator.
                 if (isReverse && OperatorMethod.IsComparisonOp((MethodInfo)mi))
                     continue;  // Comparison operators in Python have no reverse mode.
                 if (!MatchesArgumentCount(pynargs, pi, kwargDict, out bool paramsArray, out ArrayList? defaultArgList, out int kwargsMatched, out int defaultsNeeded) && !isOperator)
@@ -402,12 +402,14 @@ namespace Python.Runtime
                     continue;
                 }
                 // Preprocessing pi to remove either the first or second argument.
-                if (isOperator && !isReverse) {
+                if (isOperator && !isReverse)
+                {
                     // The first Python arg is the right operand, while the bound instance is the left.
                     // We need to skip the first (left operand) CLR argument.
                     pi = pi.Skip(1).ToArray();
                 }
-                else if (isOperator && isReverse) {
+                else if (isOperator && isReverse)
+                {
                     // The first Python arg is the left operand.
                     // We need to take the first CLR argument.
                     pi = pi.Take(1).ToArray();
@@ -817,14 +819,14 @@ namespace Python.Runtime
             return match;
         }
 
-        internal virtual NewReference Invoke(BorrowedReference inst, BorrowedReference args, BorrowedReference kw, bool reverse_args = false)
+        internal virtual NewReference Invoke(BorrowedReference inst, BorrowedReference args, BorrowedReference kw, bool argsReversed = false)
         {
-            return Invoke(inst, args, kw, null, null, reverse_args);
+            return Invoke(inst, args, kw, null, null, argsReversed);
         }
 
-        internal virtual NewReference Invoke(BorrowedReference inst, BorrowedReference args, BorrowedReference kw, MethodBase? info, bool reverse_args = false)
+        internal virtual NewReference Invoke(BorrowedReference inst, BorrowedReference args, BorrowedReference kw, MethodBase? info, bool argsReversed = false)
         {
-            return Invoke(inst, args, kw, info, null, reverse_args = false);
+            return Invoke(inst, args, kw, info, null, argsReversed = false);
         }
 
         protected static void AppendArgumentTypes(StringBuilder to, BorrowedReference args)
@@ -860,7 +862,7 @@ namespace Python.Runtime
             to.Append(')');
         }
 
-        internal virtual NewReference Invoke(BorrowedReference inst, BorrowedReference args, BorrowedReference kw, MethodBase? info, MethodBase[]? methodinfo, bool reverse_args = false)
+        internal virtual NewReference Invoke(BorrowedReference inst, BorrowedReference args, BorrowedReference kw, MethodBase? info, MethodBase[]? methodinfo, bool argsReversed = false)
         {
             // No valid methods, nothing to bind.
             if (GetMethods().Length == 0)
@@ -873,7 +875,7 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError(msg.ToString());
             }
 
-            Binding? binding = Bind(inst, args, kw, info, methodinfo, reverse_args);
+            Binding? binding = Bind(inst, args, kw, info, methodinfo, argsReversed);
             object result;
             IntPtr ts = IntPtr.Zero;
 

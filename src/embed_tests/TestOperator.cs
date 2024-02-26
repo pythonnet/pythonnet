@@ -41,6 +41,17 @@ namespace Python.EmbeddingTest
                 _value = value;
             }
 
+            public override int GetHashCode()
+            {
+                return unchecked(65535 + _value.GetHashCode());
+            }
+
+            public override bool Equals(object obj)
+            {
+                return obj is OwnInt @object &&
+                       Num == @object.Num;
+            }
+
             public static OwnInt operator -(OwnInt p1, OwnInt p2)
             {
                 return new OwnInt(p1._value - p2._value);
@@ -125,14 +136,8 @@ namespace Python.EmbeddingTest
                 return objectType.Name == "int" && targetType == typeof(OwnInt);
             }
 
-            public bool TryDecode<T>(PyObject pyObj, out T? value)
+            public bool TryDecode<T>(PyObject pyObj, out T value)
             {
-                if (pyObj.PyType.Name != "int" || typeof(T) != typeof(OwnInt))
-                {
-                    value = default(T);
-                    return false;
-                }
-
                 value = (T)(object)new OwnInt(pyObj.As<int>());
                 return true;
             }
