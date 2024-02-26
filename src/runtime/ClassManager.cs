@@ -546,7 +546,7 @@ namespace Python.Runtime
                         ci.members[pyName] = new MethodObject(type, name, forwardMethods).AllocObject();
                     // Only methods where only the right operand is the declaring type.
                     if (reverseMethods.Length > 0)
-                        ci.members[pyNameReverse] = new MethodObject(type, name, reverseMethods, reverse_args: true).AllocObject();
+                        ci.members[pyNameReverse] = new MethodObject(type, name, reverseMethods, argsReversed: true).AllocObject();
                 }
             }
 
