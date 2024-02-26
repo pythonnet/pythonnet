@@ -32,7 +32,7 @@ namespace Python.Runtime
             this.type = type;
             this.name = name;
             this.infoList = new List<MaybeMethodInfo>();
-            binder = new MethodBinder(argsReversed);
+            binder = new MethodBinder() { argsReversed = argsReversed };
             foreach (MethodBase item in info)
             {
                 this.infoList.Add(item);
@@ -67,14 +67,14 @@ namespace Python.Runtime
             }
         }
 
-        public virtual NewReference Invoke(BorrowedReference inst, BorrowedReference args, BorrowedReference kw, bool argsReversed = false)
+        public virtual NewReference Invoke(BorrowedReference inst, BorrowedReference args, BorrowedReference kw)
         {
-            return Invoke(inst, args, kw, null, argsReversed);
+            return Invoke(inst, args, kw, null);
         }
 
-        public virtual NewReference Invoke(BorrowedReference target, BorrowedReference args, BorrowedReference kw, MethodBase? info, bool argsReversed = false)
+        public virtual NewReference Invoke(BorrowedReference target, BorrowedReference args, BorrowedReference kw, MethodBase? info)
         {
-            return binder.Invoke(target, args, kw, info, this.info, argsReversed);
+            return binder.Invoke(target, args, kw, info, this.info);
         }
 
         /// <summary>
