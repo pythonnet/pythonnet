@@ -25,9 +25,9 @@ namespace Python.EmbeddingTest
         }
 
         // Mock Integer class to test math ops on non-native dotnet types
-        public struct OwnInt
+        public readonly struct OwnInt
         {
-            private int _value;
+            private readonly int _value;
 
             public int Num => _value;
 
