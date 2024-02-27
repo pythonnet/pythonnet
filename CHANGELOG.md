@@ -9,6 +9,8 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ### Added
 
+-   Added `ToPythonAs<T>()` extension method to allow for explicit conversion using a specific type. ([#2311][i2311])
+
 ### Changed
 
 ### Fixed
@@ -960,3 +962,4 @@ This version improves performance on benchmarks significantly compared to 2.3.
 [i238]: https://github.com/pythonnet/pythonnet/issues/238
 [i1481]: https://github.com/pythonnet/pythonnet/issues/1481
 [i1672]: https://github.com/pythonnet/pythonnet/pull/1672
+[i2311]: https://github.com/pythonnet/pythonnet/issues/2311

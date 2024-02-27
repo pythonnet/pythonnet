@@ -185,6 +185,15 @@ namespace Python.EmbeddingTest
             Assert.AreEqual(pyObject.DangerousGetAddressOrNull(), proxiedHandle);
         }
 
+        [Test]
+        public void GenericToPython()
+        {
+            int i = 42;
+            var pyObject = i.ToPythonAs<IConvertible>();
+            var type = pyObject.GetPythonType();
+            Assert.AreEqual(nameof(IConvertible), type.Name);
+        }
+
         // regression for https://github.com/pythonnet/pythonnet/issues/451
         [Test]
         public void CanGetListFromDerivedClass()
