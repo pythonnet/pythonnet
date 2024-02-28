@@ -187,10 +187,10 @@ namespace Python.EmbeddingTest
             Assert.AreEqual(datetime, result);
         }
 
-        [TestCase("", DateTimeKind.Unspecified)]
-        [TestCase("America/New_York", DateTimeKind.Unspecified)]
-        [TestCase("UTC", DateTimeKind.Utc)]
-        public void ConvertDateTimeWithTimeZonePythonToCSharp(string timeZone, DateTimeKind expectedDateTimeKind)
+        [TestCase("")]
+        [TestCase("America/New_York")]
+        [TestCase("UTC")]
+        public void ConvertDateTimeWithTimeZonePythonToCSharp(string timeZone)
         {
             const int year = 2024;
             const int month = 2;
@@ -231,7 +231,6 @@ def GetNextDay(dateTime):
 
                 var expectedDateTime = new DateTime(year, month, day, hour, minute, second);
                 Assert.AreEqual(expectedDateTime, managedDateTime);
-                Assert.AreEqual(managedDateTime.Kind, expectedDateTimeKind);
             }
         }
 
