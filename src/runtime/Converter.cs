@@ -76,7 +76,6 @@ namespace Python.Runtime
             timeSpanCtor = Runtime.PyObject_GetAttrString(dateTimeMod.Borrow(), "timedelta").MoveToPyObject();
             PythonException.ThrowIfIsNull(timeSpanCtor);
 
-
             tzInfoCtor = new Lazy<PyObject>(() =>
             {
                 var tzInfoMod = PyModule.FromString("custom_tzinfo", @"
@@ -1131,9 +1130,13 @@ class GMT(tzinfo):
                     NewReference minutes = default;
                     if (!tzinfo.IsNone() && !tzinfo.IsNull())
                     {
-                        hours = Runtime.PyObject_GetAttrString(tzinfo.Borrow(), hoursPtr);
-                        minutes = Runtime.PyObject_GetAttrString(tzinfo.Borrow(), minutesPtr);
-                        if (Runtime.PyLong_AsLong(hours.Borrow()) == 0 && Runtime.PyLong_AsLong(minutes.Borrow()) == 0)
+                        var tznameMethod = Runtime.PyObject_GetAttrString(tzinfo.Borrow(), new StrPtr("tzname", Encoding.UTF8));
+                        var args = Runtime.PyTuple_New(1);
+                        Runtime.PyTuple_SetItem(args.Borrow(), 0, Runtime.None.Steal());
+                        var tznameObj = Runtime.PyObject_CallObject(tznameMethod.Borrow(), args.Borrow());
+                        var tzname = Runtime.GetManagedString(tznameObj.Borrow());
+
+                        if (tzname.Contains("UTC", StringComparison.InvariantCultureIgnoreCase))
                         {
                             timeKind = DateTimeKind.Utc;
                         }

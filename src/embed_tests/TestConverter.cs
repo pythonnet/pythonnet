@@ -187,6 +187,54 @@ namespace Python.EmbeddingTest
             Assert.AreEqual(datetime, result);
         }
 
+        [TestCase("", DateTimeKind.Unspecified)]
+        [TestCase("America/New_York", DateTimeKind.Unspecified)]
+        [TestCase("UTC", DateTimeKind.Utc)]
+        public void ConvertDateTimeWithTimeZonePythonToCSharp(string timeZone, DateTimeKind expectedDateTimeKind)
+        {
+            const int year = 2024;
+            const int month = 2;
+            const int day = 27;
+            const int hour = 12;
+            const int minute = 30;
+            const int second = 45;
+
+            using (Py.GIL())
+            {
+                dynamic module = PyModule.FromString("module", @$"
+from clr import AddReference
+AddReference(""Python.EmbeddingTest"")
+AddReference(""System"")
+
+from Python.EmbeddingTest import *
+
+from datetime import datetime
+from pytz import timezone
+
+tzinfo = timezone('{timeZone}') if '{timeZone}' else None
+
+def GetPyDateTime():
+    return datetime({year}, {month}, {day}, {hour}, {minute}, {second}, tzinfo=tzinfo) \
+        if tzinfo else \
+        datetime({year}, {month}, {day}, {hour}, {minute}, {second})
+
+def GetNextDay(dateTime):
+    return TestConverter.GetNextDay(dateTime)
+");
+
+                var pyDateTime = module.GetPyDateTime();
+                var dateTimeResult = default(object);
+
+                Assert.DoesNotThrow(() => Converter.ToManaged(pyDateTime, typeof(DateTime), out dateTimeResult, false));
+
+                var managedDateTime = (DateTime)dateTimeResult;
+
+                var expectedDateTime = new DateTime(year, month, day, hour, minute, second);
+                Assert.AreEqual(expectedDateTime, managedDateTime);
+                Assert.AreEqual(managedDateTime.Kind, expectedDateTimeKind);
+            }
+        }
+
         [Test]
         public void ConvertTimestampRoundTrip()
         {
@@ -362,7 +410,7 @@ class PyGetListImpl(test.GetListImpl):
             List<string> result = inst.GetList();
             CollectionAssert.AreEqual(new[] { "testing" }, result);
         }
-    
+
         [Test]
         public void PrimitiveIntConversion()
         {
