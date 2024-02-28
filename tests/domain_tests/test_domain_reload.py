@@ -1,6 +1,7 @@
 import subprocess
 import os
 import platform
+from unittest import skip
 
 import pytest
 
@@ -88,3 +89,10 @@ def test_nested_type():
 
 def test_import_after_reload():
     _run_test("import_after_reload")
+
+def test_serialize_not_serializable():
+    _run_test("serialize_not_serializable")
+
+@skip("interface methods cannot be overriden")
+def test_serialize_not_serializable_interface():
+    _run_test("serialize_not_serializable_interface")
