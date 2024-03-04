@@ -76,7 +76,6 @@ namespace Python.Runtime
             timeSpanCtor = Runtime.PyObject_GetAttrString(dateTimeMod.Borrow(), "timedelta").MoveToPyObject();
             PythonException.ThrowIfIsNull(timeSpanCtor);
 
-
             tzInfoCtor = new Lazy<PyObject>(() =>
             {
                 var tzInfoMod = PyModule.FromString("custom_tzinfo", @"
@@ -1124,20 +1123,6 @@ class GMT(tzinfo):
                     var minute = Runtime.PyObject_GetAttrString(value, minutePtr);
                     var second = Runtime.PyObject_GetAttrString(value, secondPtr);
                     var microsecond = Runtime.PyObject_GetAttrString(value, microsecondPtr);
-                    var timeKind = DateTimeKind.Unspecified;
-                    var tzinfo = Runtime.PyObject_GetAttrString(value, tzinfoPtr);
-
-                    NewReference hours = default;
-                    NewReference minutes = default;
-                    if (!tzinfo.IsNone() && !tzinfo.IsNull())
-                    {
-                        hours = Runtime.PyObject_GetAttrString(tzinfo.Borrow(), hoursPtr);
-                        minutes = Runtime.PyObject_GetAttrString(tzinfo.Borrow(), minutesPtr);
-                        if (Runtime.PyLong_AsLong(hours.Borrow()) == 0 && Runtime.PyLong_AsLong(minutes.Borrow()) == 0)
-                        {
-                            timeKind = DateTimeKind.Utc;
-                        }
-                    }
 
                     var convertedHour = 0L;
                     var convertedMinute = 0L;
@@ -1158,8 +1143,7 @@ class GMT(tzinfo):
                         (int)convertedHour,
                         (int)convertedMinute,
                         (int)convertedSecond,
-                        millisecond: (int)milliseconds,
-                        timeKind);
+                        (int)milliseconds);
 
                     year.Dispose();
                     month.Dispose();
@@ -1168,16 +1152,6 @@ class GMT(tzinfo):
                     minute.Dispose();
                     second.Dispose();
                     microsecond.Dispose();
-
-                    if (!tzinfo.IsNull())
-                    {
-                        tzinfo.Dispose();
-                        if (!tzinfo.IsNone())
-                        {
-                            hours.Dispose();
-                            minutes.Dispose();
-                        }
-                    }
 
                     Exceptions.Clear();
                     return true;
