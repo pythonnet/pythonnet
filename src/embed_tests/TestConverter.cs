@@ -231,6 +231,36 @@ def GetNextDay(dateTime):
 
                 var expectedDateTime = new DateTime(year, month, day, hour, minute, second);
                 Assert.AreEqual(expectedDateTime, managedDateTime);
+
+                Assert.AreEqual(DateTimeKind.Unspecified, managedDateTime.Kind);
+            }
+        }
+
+        [Test]
+        public void ConvertDateTimeWithExplicitUTCTimeZonePythonToCSharp()
+        {
+            const int year = 2024;
+            const int month = 2;
+            const int day = 27;
+            const int hour = 12;
+            const int minute = 30;
+            const int second = 45;
+
+            using (Py.GIL())
+            {
+                var csDateTime = new DateTime(year, month, day, hour, minute, second, DateTimeKind.Utc);
+                // Converter.ToPython will set the datetime tzinfo to UTC using a custom tzinfo class
+                using var pyDateTime = Converter.ToPython(csDateTime).MoveToPyObject();
+                var dateTimeResult = default(object);
+
+                Assert.DoesNotThrow(() => Converter.ToManaged(pyDateTime, typeof(DateTime), out dateTimeResult, false));
+
+                var managedDateTime = (DateTime)dateTimeResult;
+
+                var expectedDateTime = new DateTime(year, month, day, hour, minute, second);
+                Assert.AreEqual(expectedDateTime, managedDateTime);
+
+                Assert.AreEqual(DateTimeKind.Utc, managedDateTime.Kind);
             }
         }
 

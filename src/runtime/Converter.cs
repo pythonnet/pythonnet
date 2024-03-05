@@ -1123,13 +1123,31 @@ class GMT(tzinfo):
                     var minute = Runtime.PyObject_GetAttrString(value, minutePtr);
                     var second = Runtime.PyObject_GetAttrString(value, secondPtr);
                     var microsecond = Runtime.PyObject_GetAttrString(value, microsecondPtr);
+                    var timeKind = DateTimeKind.Unspecified;
+                    var tzinfo = Runtime.PyObject_GetAttrString(value, tzinfoPtr);
+
+                    NewReference hours = default;
+                    NewReference minutes = default;
+                    if (!ReferenceNullOrNone(tzinfo))
+                    {
+                        // We set the datetime kind to UTC if the tzinfo was set to UTC by the ToPthon method
+                        // using it's custom GMT Python tzinfo class
+                        hours = Runtime.PyObject_GetAttrString(tzinfo.Borrow(), hoursPtr);
+                        minutes = Runtime.PyObject_GetAttrString(tzinfo.Borrow(), minutesPtr);
+                        if (!ReferenceNullOrNone(hours) &&
+                            !ReferenceNullOrNone(minutes) &&
+                            Runtime.PyLong_AsLong(hours.Borrow()) == 0 && Runtime.PyLong_AsLong(minutes.Borrow()) == 0)
+                        {
+                            timeKind = DateTimeKind.Utc;
+                        }
+                    }
 
                     var convertedHour = 0L;
                     var convertedMinute = 0L;
                     var convertedSecond = 0L;
                     var milliseconds = 0L;
                     // could be python date type
-                    if (!hour.IsNull() && !hour.IsNone())
+                    if (!ReferenceNullOrNone(hour))
                     {
                         convertedHour = Runtime.PyLong_AsLong(hour.Borrow());
                         convertedMinute = Runtime.PyLong_AsLong(minute.Borrow());
@@ -1143,7 +1161,8 @@ class GMT(tzinfo):
                         (int)convertedHour,
                         (int)convertedMinute,
                         (int)convertedSecond,
-                        (int)milliseconds);
+                        (int)milliseconds,
+                        timeKind);
 
                     year.Dispose();
                     month.Dispose();
@@ -1152,6 +1171,16 @@ class GMT(tzinfo):
                     minute.Dispose();
                     second.Dispose();
                     microsecond.Dispose();
+
+                    if (!tzinfo.IsNull())
+                    {
+                        tzinfo.Dispose();
+                        if (!tzinfo.IsNone())
+                        {
+                            hours.Dispose();
+                            minutes.Dispose();
+                        }
+                    }
 
                     Exceptions.Clear();
                     return true;
@@ -1181,6 +1210,11 @@ class GMT(tzinfo):
                 Exceptions.SetError(Exceptions.OverflowError, "value too large to convert");
             }
             return false;
+        }
+
+        private static bool ReferenceNullOrNone(NewReference reference)
+        {
+            return reference.IsNull() || reference.IsNone();
         }
 
 
