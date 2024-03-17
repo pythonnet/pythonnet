@@ -54,11 +54,11 @@ namespace Python.Runtime
         /// <summary>
         /// Callback called as a last step in the serialization process
         /// </summary>
-        public static Action? PostStashHook {get; set;} = null;
+        public static Action? PostStashHook { get; set; } = null;
         /// <summary>
         /// Callback called as the first step in the deserialization process
         /// </summary>
-        public static Action? PreRestoreHook {get; set;} = null;
+        public static Action? PreRestoreHook { get; set; } = null;
         public static ICLRObjectStorer? WrappersStorer { get; set; }
 
         /// <summary>
@@ -280,16 +280,17 @@ namespace Python.Runtime
             }
         }
 
+        static readonly string serialization_key_namepsace = "pythonnet_serialization_";
         /// <summary>
-        /// Frees the pointer stored in a Python capsule and the capsule stored 
-        /// on the sys module object with the given key if it exists. 
+        /// Removes the serialization capsule from the `sys` module object.
         /// </summary>
         /// <remarks>
-        /// The memory on the capsule must have been allocated via <code>StashDataInCapsule</code>
+        /// The serialization data must have been set with <code>StashSerializationData</code>
         /// </remarks>
         /// <param name="key">The name given to the capsule on the `sys` module object</param>
-        public static void FreeCapsuleData(string key)
+        public static void FreeSerializationData(string key)
         {
+            key = serialization_key_namepsace + key;
             BorrowedReference oldCapsule = PySys_GetObject(key);
             if (!oldCapsule.IsNull)
             {
@@ -301,42 +302,51 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// Stores the <paramref name="data"/>data parameter in a Python capsule and stores 
+        /// Stores the data in the <paramref name="stream"/> argument in a Python capsule and stores 
         /// the capsule on the `sys` module object with the name <paramref name="key"/>. 
-        /// This method allocates global memory to hold the data of the <paramref name="data"/>
-        /// parameter.
         /// </summary>
         /// <remarks>
         /// No checks on pre-existing names on the `sys` module object are made.
         /// </remarks>
         /// <param name="key">The name given to the capsule on the `sys` module object</param>
-        /// <param name="data">The data to be contained in the capsule</param>
-        public static void StashDataInCapsule(string key, byte[] data)
+        /// <param name="stream">A MemoryStream that contains the data to be placed in the capsule</param>
+        public static void StashSerializationData(string key, MemoryStream stream)
         {
+            var data = stream.GetBuffer();
             IntPtr mem = Marshal.AllocHGlobal(IntPtr.Size + data.Length);
             // store the length of the buffer first
             Marshal.WriteIntPtr(mem, (IntPtr)data.Length);
             Marshal.Copy(data, 0, mem + IntPtr.Size, data.Length);
 
+            try
+            {
             using NewReference capsule = PyCapsule_New(mem, IntPtr.Zero, IntPtr.Zero);
             int res = PySys_SetObject(key, capsule.BorrowOrThrow());
             PythonException.ThrowIfIsNotZero(res);
         }
+            catch
+            {
+                Marshal.FreeHGlobal(mem);
+            }
 
+        }
+
+        static byte[] emptyBuffer = new byte[0];
         /// <summary>
-        /// Retreives the pointer to previously stored data on a Python capsule. 
+        /// Retreives the previously stored data on a Python capsule. 
         /// Throws if the object corresponding to the <paramref name="key"/> parameter
         /// on the `sys` module object is not a capsule.
         /// </summary>
         /// <param name="key">The name given to the capsule on the `sys` module object</param>
-        /// <returns>The pointer to the data, or IntPtr.Zero if name matches the key</returns>
-        public static IntPtr GetDataFromCapsule(string key)
+        /// <returns>A MemoryStream containing the previously saved serialization data. 
+        /// The stream is empty if no name matches the key.  </returns>
+        public static MemoryStream GetSerializationData(string key)
         {
             BorrowedReference capsule = PySys_GetObject(key);
             if (capsule.IsNull)
             {
                 // nothing to do.
-                return IntPtr.Zero;
+                return new MemoryStream(emptyBuffer, writable:false);
             }
             var ptr = PyCapsule_GetPointer(capsule, IntPtr.Zero);
             if (ptr == IntPtr.Zero)
@@ -345,7 +355,10 @@ namespace Python.Runtime
                 // as a capsule's value
                 PythonException.ThrowIfIsNull(null);
             }
-            return ptr;
+            var len = (int)Marshal.ReadIntPtr(ptr);
+            byte[] buffer = new byte[len];
+            Marshal.Copy(ptr+IntPtr.Size, buffer, 0, len);
+            return new MemoryStream(buffer, writable:false);
         }
 
         internal static IFormatter CreateFormatter()
