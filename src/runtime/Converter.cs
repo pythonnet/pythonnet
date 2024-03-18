@@ -352,8 +352,8 @@ class GMT(tzinfo):
             if (kind == DateTimeKind.Unspecified) return new NewReference(Runtime.PyNone);
             var offset = kind == DateTimeKind.Local ? DateTimeOffset.Now.Offset : TimeSpan.Zero;
             using var tzInfoArgs = Runtime.PyTuple_New(2);
-            Runtime.PyTuple_SetItem(tzInfoArgs.Borrow(), 0, Runtime.PyFloat_FromDouble(offset.Hours).Steal());
-            Runtime.PyTuple_SetItem(tzInfoArgs.Borrow(), 1, Runtime.PyFloat_FromDouble(offset.Minutes).Steal());
+            Runtime.PyTuple_SetItem(tzInfoArgs.Borrow(), 0, Runtime.PyLong_FromLongLong(offset.Hours).Steal());
+            Runtime.PyTuple_SetItem(tzInfoArgs.Borrow(), 1, Runtime.PyLong_FromLongLong(offset.Minutes).Steal());
             var returnValue = Runtime.PyObject_CallObject(tzInfoCtor.Value, tzInfoArgs.Borrow());
             return returnValue;
         }

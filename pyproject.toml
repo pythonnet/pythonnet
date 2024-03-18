@@ -2,6 +2,55 @@
 requires = ["setuptools>=42", "wheel", "pycparser"]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "pythonnet"
+description = ".NET and Mono integration for Python"
+license = {text = "MIT"}
+
+readme = "README.rst"
+
+dependencies = [
+    "clr_loader>=0.2.2,<0.3.0"
+]
+
+requires-python = ">=3.7, <3.12"
+
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: C#",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS :: MacOS X",
+]
+
+dynamic = ["version"]
+
+[[project.authors]]
+name = "The Contributors of the Python.NET Project"
+email = "pythonnet@python.org"
+
+[project.urls]
+Homepage = "https://pythonnet.github.io/"
+Sources = "https://github.com/pythonnet/pythonnet"
+
+[tool.setuptools]
+zip-safe = false
+py-modules = ["clr"]
+
+[tool.setuptools.dynamic.version]
+file = "version.txt"
+
+[tool.setuptools.packages.find]
+include = ["pythonnet*"]
+
 [tool.pytest.ini_options]
 xfail_strict = true
 testpaths = [

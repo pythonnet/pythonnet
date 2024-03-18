@@ -93,6 +93,15 @@ def pytest_configure(config):
         check_call(build_cmd)
 
 
+    import os
+    os.environ["PYTHONNET_RUNTIME"] = runtime_opt
+    for k, v in runtime_params.items():
+        os.environ[f"PYTHONNET_{runtime_opt.upper()}_{k.upper()}"] = v
+
+    import clr
+
+    sys.path.append(str(bin_path))
+    clr.AddReference("Python.Test")
 
 
 def pytest_unconfigure(config):

@@ -667,6 +667,9 @@ namespace Python.Runtime
         [Pure]
         internal static int Refcount32(BorrowedReference op) => checked((int)Refcount(op));
 
+        internal static void TryUsingDll(Action op) =>
+            TryUsingDll(() => { op(); return 0; });
+
         /// <summary>
         /// Call specified function, and handle PythonDLL-related failures.
         /// </summary>
