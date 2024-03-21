@@ -19,20 +19,20 @@ namespace Python.Runtime
     {
         [NonSerialized]
         private MethodBase[]? _info = null;
+
         private readonly List<MaybeMethodInfo> infoList;
         internal string name;
         internal readonly MethodBinder binder;
         internal bool is_static = false;
-
         internal PyString? doc;
         internal MaybeType type;
 
-        public MethodObject(MaybeType type, string name, MethodBase[] info, bool allow_threads)
+        public MethodObject(MaybeType type, string name, MethodBase[] info, bool allow_threads, bool argsReversed = false)
         {
             this.type = type;
             this.name = name;
             this.infoList = new List<MaybeMethodInfo>();
-            binder = new MethodBinder();
+            binder = new MethodBinder() { argsReversed = argsReversed };
             foreach (MethodBase item in info)
             {
                 this.infoList.Add(item);
@@ -45,8 +45,8 @@ namespace Python.Runtime
             binder.allow_threads = allow_threads;
         }
 
-        public MethodObject(MaybeType type, string name, MethodBase[] info)
-            : this(type, name, info, allow_threads: AllowThreads(info))
+        public MethodObject(MaybeType type, string name, MethodBase[] info, bool argsReversed = false)
+            : this(type, name, info, allow_threads: AllowThreads(info), argsReversed)
         {
         }
 

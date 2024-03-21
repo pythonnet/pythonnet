@@ -8,8 +8,7 @@ codecov
 
 wheel
 pycparser
-setuptools
-clr-loader
+clr-loader==0.2.*
 
 # Discover libpython
-find_libpython
+find_libpython==0.3.*

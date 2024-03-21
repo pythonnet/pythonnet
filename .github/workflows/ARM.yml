@@ -27,25 +27,25 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install --upgrade -r requirements.txt
-          pip install pytest numpy # for tests
+          pip3.8 install -r requirements.txt
+          pip3.8 install pytest numpy # for tests
 
       - name: Build and Install
         run: |
-          pip install -v .
+          pip3.8 install -v .
 
       - name: Set Python DLL path (non Windows)
         run: |
-          echo PYTHONNET_PYDLL=$(python -m find_libpython) >> $GITHUB_ENV
+          echo PYTHONNET_PYDLL=$(python3.8 -m find_libpython) >> $GITHUB_ENV
 
       - name: Embedding tests
         run: dotnet test --logger "console;verbosity=detailed" src/embed_tests/
 
       - name: Python Tests (Mono)
-        run: python -m pytest --runtime mono
+        run: python3.8 -m pytest --runtime mono
 
       - name: Python Tests (.NET Core)
-        run: python -m pytest --runtime coreclr
+        run: python3.8 -m pytest --runtime coreclr
 
       - name: Python tests run from .NET
         run: dotnet test src/python_tests_runner/

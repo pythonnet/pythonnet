@@ -86,3 +86,5 @@
 -   ([@alxnull](https://github.com/alxnull))
 -   ([@gpetrou](https://github.com/gpetrou))
 -   Ehsan Iran-Nejad ([@eirannejad](https://github.com/eirannejad))
+-   ([@legomanww](https://github.com/legomanww))
+-   ([@gertdreyer](https://github.com/gertdreyer))

@@ -120,7 +120,9 @@ def load(runtime: Union[clr_loader.Runtime, str, None] = None, **params: str) ->
 
     The same parameters as for `set_runtime` can be used. By default,
     `set_default_runtime` is called if no environment has been set yet and no
-    parameters are passed."""
+    parameters are passed.
+
+    After a successful call, further invocations will return immediately."""
     global _LOADED, _LOADER_ASSEMBLY
 
     if _LOADED:
@@ -142,6 +144,8 @@ def load(runtime: Union[clr_loader.Runtime, str, None] = None, **params: str) ->
 
     if func(b"") != 0:
         raise RuntimeError("Failed to initialize Python.Runtime.dll")
+    
+    _LOADED = True
 
     import atexit
 

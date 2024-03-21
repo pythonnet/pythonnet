@@ -390,11 +390,23 @@ DateTimeDecoder.Setup()
         [Test]
         public void ExceptionDecodedNoInstance()
         {
-            PyObjectConversions.RegisterDecoder(new InstancelessExceptionDecoder());
-            using var scope = Py.CreateScope();
-            var error = Assert.Throws<ValueErrorWrapper>(() => PythonEngine.Exec(
-                $"[].__iter__().__next__()"));
-            Assert.AreEqual(TestExceptionMessage, error.Message);
+            if (Runtime.PyVersion < new Version(3, 12))
+            {
+                PyObjectConversions.RegisterDecoder(new InstancelessExceptionDecoder());
+                using var scope = Py.CreateScope();
+
+                var error = Assert.Throws<ValueErrorWrapper>(() =>
+                    PythonEngine.Exec($"[].__iter__().__next__()")
+                );
+                Assert.AreEqual(TestExceptionMessage, error.Message);
+            }
+            else
+            {
+                Assert.Ignore(
+                    "This test does not work for Python 3.12, see " +
+                    "https://github.com/python/cpython/issues/101578"
+                );
+            }
         }
 
         public static void AcceptsDateTime(DateTime v) {}

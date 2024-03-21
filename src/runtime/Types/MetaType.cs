@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 
@@ -79,40 +82,79 @@ namespace Python.Runtime
             BorrowedReference bases = Runtime.PyTuple_GetItem(args, 1);
             BorrowedReference dict = Runtime.PyTuple_GetItem(args, 2);
 
-            // We do not support multiple inheritance, so the bases argument
-            // should be a 1-item tuple containing the type we are subtyping.
-            // That type must itself have a managed implementation. We check
-            // that by making sure its metatype is the CLR metatype.
+            // Extract interface types and base class types.
+            var interfaces = new List<Type>();
 
-            if (Runtime.PyTuple_Size(bases) != 1)
+            // More than one base type case be declared, but an exception will be thrown
+            // if more than one is a class/not an interface.
+            var baseTypes = new List<ClassBase>();
+
+            var baseClassCount = Runtime.PyTuple_Size(bases);
+            if (baseClassCount == 0)
             {
-                return Exceptions.RaiseTypeError("cannot use multiple inheritance with managed classes");
+                return Exceptions.RaiseTypeError("zero base classes ");
             }
 
-            BorrowedReference base_type = Runtime.PyTuple_GetItem(bases, 0);
-            BorrowedReference mt = Runtime.PyObject_TYPE(base_type);
-
-            if (!(mt == PyCLRMetaType || mt == Runtime.PyTypeType))
+            for (nint i = 0; i < baseClassCount; i++)
             {
-                return Exceptions.RaiseTypeError("invalid metatype");
-            }
+                var baseTypeIt = Runtime.PyTuple_GetItem(bases, (int)i);
 
-            // Ensure that the reflected type is appropriate for subclassing,
-            // disallowing subclassing of delegates, enums and array types.
-
-            if (GetManagedObject(base_type) is ClassBase cb)
-            {
-                try
+                if (GetManagedObject(baseTypeIt) is ClassBase classBaseIt)
                 {
-                    if (!cb.CanSubclass())
+                    if (!classBaseIt.type.Valid)
                     {
-                        return Exceptions.RaiseTypeError("delegates, enums and array types cannot be subclassed");
+                        return Exceptions.RaiseTypeError("Invalid type used as a super type.");
+                    }
+                    if (classBaseIt.type.Value.IsInterface)
+                    {
+                        interfaces.Add(classBaseIt.type.Value);
+                    }
+                    else
+                    {
+                        baseTypes.Add(classBaseIt);
                     }
                 }
-                catch (SerializationException)
+                else
                 {
-                    return Exceptions.RaiseTypeError($"Underlying C# Base class {cb.type} has been deleted");
+                    return Exceptions.RaiseTypeError("Non .NET type used as super class for meta type. This is not supported.");
                 }
+            }
+            // if the base type count is 0, there might still be interfaces to implement.
+            if (baseTypes.Count == 0)
+            {
+                baseTypes.Add(new ClassBase(typeof(object)));
+            }
+
+            // Multiple inheritance is not supported, unless the other types are interfaces
+            if (baseTypes.Count > 1)
+            {
+                var types = string.Join(", ", baseTypes.Select(baseType => baseType.type.Value));
+                return Exceptions.RaiseTypeError($"Multiple inheritance with managed classes cannot be used. Types: {types} ");
+            }
+
+            // check if the list of interfaces contains no duplicates.
+            if (interfaces.Distinct().Count() != interfaces.Count)
+            {
+                // generate a string containing the problematic types.
+                var duplicateTypes = interfaces.GroupBy(type => type)
+                    .Where(typeGroup => typeGroup.Count() > 1)
+                    .Select(typeGroup => typeGroup.Key);
+                var duplicateTypesString = string.Join(", ", duplicateTypes);
+
+                return Exceptions.RaiseTypeError($"An interface can only be implemented once. Duplicate types: {duplicateTypesString}");
+            }
+
+            var cb = baseTypes[0];
+            try
+            {
+                if (!cb.CanSubclass())
+                {
+                    return Exceptions.RaiseTypeError("delegates, enums and array types cannot be subclassed");
+                }
+            }
+            catch (SerializationException)
+            {
+                return Exceptions.RaiseTypeError($"Underlying C# Base class {cb.type} has been deleted");
             }
 
             BorrowedReference slots = Runtime.PyDict_GetItem(dict, PyIdentifier.__slots__);
@@ -130,9 +172,11 @@ namespace Python.Runtime
                 using var clsDict = new PyDict(dict);
                 if (clsDict.HasKey("__assembly__") || clsDict.HasKey("__namespace__"))
                 {
-                    return TypeManager.CreateSubType(name, base_type, clsDict);
+                    return TypeManager.CreateSubType(name, baseTypes[0], interfaces, clsDict);
                 }
             }
+
+            var base_type = Runtime.PyTuple_GetItem(bases, 0);
 
             // otherwise just create a basic type without reflecting back into the managed side.
             IntPtr func = Util.ReadIntPtr(Runtime.PyTypeType, TypeOffset.tp_new);

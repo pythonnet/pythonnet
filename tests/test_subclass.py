@@ -9,7 +9,7 @@
 import System
 import pytest
 from Python.Test import (IInterfaceTest, SubClassTest, EventArgsTest,
-                         FunctionsTest, IGenericInterface, GenericVirtualMethodTest)
+                         FunctionsTest, IGenericInterface, GenericVirtualMethodTest, SimpleClass, ISayHello1)
 from System.Collections.Generic import List
 
 
@@ -338,4 +338,9 @@ def test_virtual_generic_method():
     obj = OverloadingSubclass2()
     assert obj.VirtMethod[int](5) == 5
 
-
+def test_implement_interface_and_class():
+    class DualSubClass0(ISayHello1, SimpleClass):
+        __namespace__ = "Test"
+        def SayHello(self):
+            return "hello"
+    obj = DualSubClass0()

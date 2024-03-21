@@ -17,7 +17,7 @@ to:
 
 -  Reference ``Python.Runtime.dll`` (e.g. via a ``PackageReference``)
 -  Call ``PythonEngine.Initialize()`` to initialize Python
--  Call ``PythonEngine.ImportModule(name)`` to import a module
+-  Call ``var mod = PyModule.Import(name)`` to import a module as ``mod``
 
 The module you import can either start working with your managed app
 environment at the time its imported, or you can explicitly lookup and
@@ -42,16 +42,10 @@ application.
 
 Before interacting with any of the objects or APIs provided by the
 ``Python.Runtime`` namespace, calling code must have acquired the Python
-global interpreter lock by calling the ``PythonEngine.AcquireLock``
-method. The only exception to this rule is the
-``PythonEngine.Initialize`` method, which may be called at startup
-without having acquired the GIL.
-
-When finished using Python APIs, managed code must call a corresponding
-``PythonEngine.ReleaseLock`` to release the GIL and allow other threads
-to use Python.
-
-A ``using`` statement may be used to acquire and release the GIL:
+global interpreter lock by ``using'' ``Py.GIL()``. The only exception to
+this rule is the ``PythonEngine.Initialize`` method, which may be called
+at startup without having acquired the GIL. The GIL is released again
+by disposing the return value of `Py.GIL()`:
 
 .. code:: csharp
 
@@ -59,11 +53,28 @@ A ``using`` statement may be used to acquire and release the GIL:
    {
        PythonEngine.Exec("doStuff()");
    }
+   
+   // or
+   {
+       using var _ = Py.GIL()
+       PythonEngine.Exec("doStuff()");
+   }
+   
+   // or
+   var gil = Py.GIL();
+   try
+   {
+       PythonEngine.Exec("doStuff()");
+   }
+   finally
+   {
+       gil.Dispose();
+   }
 
-The AcquireLock and ReleaseLock methods are thin wrappers over the
-unmanaged ``PyGILState_Ensure`` and ``PyGILState_Release`` functions
-from the Python API, and the documentation for those APIs applies to the
-managed versions.
+The ``Py.GIL()'' object is a thin wrapper over the unmanaged
+``PyGILState_Ensure`` (on construction) and ``PyGILState_Release`` (on
+disposal) functions from the Python API, and the documentation for those
+APIs applies to the managed versions.
 
 Passing C# Objects to the Python Engine
 ---------------------------------------
@@ -99,7 +110,7 @@ Code executed from the scope will have access to the variable:
    using (Py.GIL())
    {
        // create a Python scope
-       using (PyScope scope = Py.CreateScope())
+       using (PyModule scope = Py.CreateScope())
        {
            // convert the Person object to a PyObject
            PyObject pyPerson = person.ToPython();

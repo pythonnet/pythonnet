@@ -82,7 +82,18 @@ namespace Python.Runtime
 
         public static PyModule FromString(string name, string code)
         {
-            using NewReference c = Runtime.Py_CompileString(code, "none", (int)RunFlagType.File);
+            return FromString(name, code, "");
+        }
+
+        public static PyModule FromString(string name, string code, string file)
+        {
+            // Force valid value
+            if (string.IsNullOrWhiteSpace(file))
+            {
+                file = "none";
+            }
+
+            using NewReference c = Runtime.Py_CompileString(code, file, (int)RunFlagType.File);
             NewReference m = Runtime.PyImport_ExecCodeModule(name, c.BorrowOrThrow());
             return new PyModule(m.StealOrThrow());
         }

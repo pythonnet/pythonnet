@@ -28,8 +28,11 @@ namespace Python.Runtime
 
         [NonSerialized]
         public bool init = false;
+
         public const bool DefaultAllowThreads = true;
         public bool allow_threads = DefaultAllowThreads;
+
+        public bool argsReversed = false;
 
         internal MethodBinder()
         {
@@ -363,10 +366,10 @@ namespace Python.Runtime
                 _methods = GetMethods();
             }
 
-            return Bind(inst, args, kwargDict, _methods, matchGenerics: true);
+            return Bind(inst, args, kwargDict, _methods, matchGenerics: true, argsReversed);
         }
 
-        static Binding? Bind(BorrowedReference inst, BorrowedReference args, Dictionary<string, PyObject> kwargDict, MethodBase[] methods, bool matchGenerics)
+        private static Binding? Bind(BorrowedReference inst, BorrowedReference args, Dictionary<string, PyObject> kwargDict, MethodBase[] methods, bool matchGenerics, bool argsReversed = false)
         {
             var pynargs = (int)Runtime.PyTuple_Size(args);
             var isGeneric = false;
@@ -386,7 +389,7 @@ namespace Python.Runtime
                 // Binary operator methods will have 2 CLR args but only one Python arg
                 // (unary operators will have 1 less each), since Python operator methods are bound.
                 isOperator = isOperator && pynargs == pi.Length - 1;
-                bool isReverse = isOperator && OperatorMethod.IsReverse((MethodInfo)mi);  // Only cast if isOperator.
+                bool isReverse = isOperator && argsReversed;  // Only cast if isOperator.
                 if (isReverse && OperatorMethod.IsComparisonOp((MethodInfo)mi))
                     continue;  // Comparison operators in Python have no reverse mode.
                 if (!MatchesArgumentCount(pynargs, pi, kwargDict, out bool paramsArray, out ArrayList? defaultArgList, out int kwargsMatched, out int defaultsNeeded) && !isOperator)
@@ -394,12 +397,14 @@ namespace Python.Runtime
                     continue;
                 }
                 // Preprocessing pi to remove either the first or second argument.
-                if (isOperator && !isReverse) {
+                if (isOperator && !isReverse)
+                {
                     // The first Python arg is the right operand, while the bound instance is the left.
                     // We need to skip the first (left operand) CLR argument.
                     pi = pi.Skip(1).ToArray();
                 }
-                else if (isOperator && isReverse) {
+                else if (isOperator && isReverse)
+                {
                     // The first Python arg is the left operand.
                     // We need to take the first CLR argument.
                     pi = pi.Take(1).ToArray();

@@ -10,11 +10,37 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 ### Added
 
 -   Added a decoder to ease use of C# Func<> method arguments.
+
+-   Added `ToPythonAs<T>()` extension method to allow for explicit conversion using a specific type. ([#2311][i2311])
+
+-   Added `IComparable` and `IEquatable` implementations to `PyInt`, `PyFloat`, and `PyString`
+     to compare with primitive .NET types like `long`.
+
 ### Changed
 
 ### Fixed
 
-- Fixed error occuring when inheriting a class containing a virtual generic method.
+-   Fixed RecursionError for reverse operators on C# operable types from python. See #2240
+
+## [3.0.3](https://github.com/pythonnet/pythonnet/releases/tag/v3.0.3) - 2023-10-11
+
+### Added
+
+-   Support for Python 3.12
+
+### Changed
+
+-   Use enum name in `repr`
+
+## [3.0.2](https://github.com/pythonnet/pythonnet/releases/tag/v3.0.2) - 2023-08-29
+
+### Fixed
+
+-   Fixed error occuring when inheriting a class containing a virtual generic method
+-   Make a second call to `pythonnet.load` a no-op, as it was intended
+-   Added support for multiple inheritance when inheriting from a class and/or multiple interfaces
+-   Fixed error occuring when calling `GetBuffer` for anything other than `PyBUF.SIMPLE`
+-   Bumped `clr_loader` dependency to incorporate patches
 
 ## [3.0.1](https://github.com/pythonnet/pythonnet/releases/tag/v3.0.1) - 2022-11-03
 
@@ -824,7 +850,7 @@ This version improves performance on benchmarks significantly compared to 2.3.
 
 [semantic versioning]: http://semver.org/
 
-[unreleased]: ../../compare/v2.3.0...HEAD
+[unreleased]: ../../compare/v3.0.1...HEAD
 
 [2.3.0]: ../../compare/v2.2.2...v2.3.0
 
@@ -941,3 +967,4 @@ This version improves performance on benchmarks significantly compared to 2.3.
 [i238]: https://github.com/pythonnet/pythonnet/issues/238
 [i1481]: https://github.com/pythonnet/pythonnet/issues/1481
 [i1672]: https://github.com/pythonnet/pythonnet/pull/1672
+[i2311]: https://github.com/pythonnet/pythonnet/issues/2311

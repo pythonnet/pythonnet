@@ -51,7 +51,7 @@ namespace Python.EmbeddingTest
                 ps.Set("a", 1);
                 var result = ps.Eval<int>("a + 2");
                 Assert.AreEqual(3, result);
-            }                
+            }
         }
 
         /// <summary>
@@ -170,6 +170,62 @@ namespace Python.EmbeddingTest
         }
 
         /// <summary>
+        /// Create a class in the scope, the class can read variables in the scope.
+        /// Its methods can write the variables with the help of 'global' keyword.
+        /// </summary>
+        [Test]
+        public void TestCreateVirtualPackageStructure()
+        {
+            using (Py.GIL())
+            {
+                using var _p1 = PyModule.FromString("test", "");
+                // Sub-module
+                using var _p2 = PyModule.FromString("test.scope",
+                    "class Class1():\n" +
+                    "    def __init__(self, value):\n" +
+                    "        self.value = value\n" +
+                    "    def call(self, arg):\n" +
+                    "        return self.value + bb + arg\n" + // use scope variables
+                    "    def update(self, arg):\n" +
+                    "        global bb\n" +
+                    "        bb = self.value + arg\n",  // update scope variable
+                    "test"
+                );
+
+                dynamic ps2 = Py.Import("test.scope");
+                ps2.bb = 100;
+
+                dynamic obj1 = ps2.Class1(20);
+                var result = obj1.call(10).As<int>();
+                Assert.AreEqual(130, result);
+
+                obj1.update(10);
+                result = ps2.Get<int>("bb");
+                Assert.AreEqual(30, result);
+            }
+        }
+
+        /// <summary>
+        /// Test setting the file attribute via a FromString parameter
+        /// </summary>
+        [Test]
+        public void TestCreateModuleWithFilename()
+        {
+            using var _gil = Py.GIL();
+
+            using var mod = PyModule.FromString("mod", "");
+            using var modWithoutName = PyModule.FromString("mod_without_name", "", " ");
+            using var modNullName = PyModule.FromString("mod_null_name", "", null);
+
+            using var modWithName = PyModule.FromString("mod_with_name", "", "some_filename");
+
+            Assert.AreEqual("none", mod.Get<string>("__file__"));
+            Assert.AreEqual("none", modWithoutName.Get<string>("__file__"));
+            Assert.AreEqual("none", modNullName.Get<string>("__file__"));
+            Assert.AreEqual("some_filename", modWithName.Get<string>("__file__"));
+        }
+
+        /// <summary>
         /// Import a python module into the session.
         /// Equivalent to the Python "import" statement.
         /// </summary>
@@ -194,7 +250,7 @@ namespace Python.EmbeddingTest
         }
 
         /// <summary>
-        /// Create a scope and import variables from a scope, 
+        /// Create a scope and import variables from a scope,
         /// exec Python statements in the scope then discard it.
         /// </summary>
         [Test]
@@ -218,7 +274,7 @@ namespace Python.EmbeddingTest
         }
 
         /// <summary>
-        /// Create a scope and import variables from a scope, 
+        /// Create a scope and import variables from a scope,
         /// exec Python statements in the scope then discard it.
         /// </summary>
         [Test]
@@ -241,7 +297,7 @@ namespace Python.EmbeddingTest
         }
 
         /// <summary>
-        /// Create a scope and import variables from a scope, 
+        /// Create a scope and import variables from a scope,
         /// call the function imported.
         /// </summary>
         [Test]
@@ -286,7 +342,7 @@ namespace Python.EmbeddingTest
         public void TestVariables()
         {
             using (Py.GIL())
-            { 
+            {
                 (ps.Variables() as dynamic)["ee"] = new PyInt(200);
                 var a0 = ps.Get<int>("ee");
                 Assert.AreEqual(200, a0);
@@ -326,8 +382,8 @@ namespace Python.EmbeddingTest
                     _ps.res = 0;
                     _ps.bb = 100;
                     _ps.th_cnt = 0;
-                    //add function to the scope 
-                    //can be call many times, more efficient than ast 
+                    //add function to the scope
+                    //can be call many times, more efficient than ast
                     ps.Exec(
                         "import threading\n"+
                         "lock = threading.Lock()\n"+
