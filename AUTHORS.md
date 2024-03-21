@@ -56,6 +56,7 @@
 -   Mohamed Koubaa ([@koubaa](https://github.com/koubaa))
 -   Patrick Stewart ([@patstew](https://github.com/patstew))
 -   Peter Kese ([@pkese](https://github.com/pkese))
+-   Ramin Dalkouhi ([@Romout](https://github.com/Romout))
 -   Raphael Nestler ([@rnestler](https://github.com/rnestler))
 -   Rickard Holmberg ([@rickardraysearch](https://github.com/rickardraysearch))
 -   Sam Winstanley ([@swinstanley](https://github.com/swinstanley))
