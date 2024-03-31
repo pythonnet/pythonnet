@@ -10,10 +10,10 @@ license = {text = "MIT"}
 readme = "README.rst"
 
 dependencies = [
-    "clr-loader>=0.2.6",
+    "clr_loader>=0.2.6,<0.3.0"
 ]
 
-requires-python = ">=3.8, <3.13"
+requires-python = ">=3.7, <3.13"
 
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -21,6 +21,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Programming Language :: C#",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -56,10 +57,4 @@ exclude = [".gitignore"]
 xfail_strict = true
 testpaths = [
     "tests"
-]
-
-[tool.pdm.dev-dependencies]
-dev = [
-    "pytest>=8.1.1",
-    "find-libpython>=0.4.0",
 ]
