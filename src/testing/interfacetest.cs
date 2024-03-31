@@ -58,7 +58,7 @@ namespace Python.Test
             return null;
         }
 
-        public ISayHello1 [] GetISayHello1Array()
+        public ISayHello1[] GetISayHello1Array()
         {
             return new[] { this };
         }

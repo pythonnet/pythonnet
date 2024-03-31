@@ -1,16 +1,16 @@
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
-using System.Linq;
 
 using Python.Runtime.Reflection;
 
 namespace Python.Runtime
 {
     [Serializable]
-    internal struct MaybeMethodBase<T> : ISerializable where T: MethodBase
+    internal struct MaybeMethodBase<T> : ISerializable where T : MethodBase
     {
         // .ToString() of the serialized object
         const string SerializationName = "s";
@@ -22,7 +22,7 @@ namespace Python.Runtime
         const string SerializationGenericParamCount = "G";
         const string SerializationFlags = "V";
 
-        public static implicit operator MaybeMethodBase<T> (T? ob) => new (ob);
+        public static implicit operator MaybeMethodBase<T>(T? ob) => new(ob);
 
         readonly string? name;
         readonly MethodBase? info;
@@ -30,11 +30,11 @@ namespace Python.Runtime
         [NonSerialized]
         readonly Exception? deserializationException;
 
-        public string DeletedMessage 
+        public string DeletedMessage
         {
             get
             {
-                return $"The .NET {typeof(T)} {name} no longer exists. Cause: " + deserializationException?.Message ;
+                return $"The .NET {typeof(T)} {name} no longer exists. Cause: " + deserializationException?.Message;
             }
         }
 

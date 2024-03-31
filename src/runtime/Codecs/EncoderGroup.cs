@@ -8,7 +8,7 @@ namespace Python.Runtime.Codecs
     /// <summary>
     /// Represents a group of <see cref="IPyObjectDecoder"/>s. Useful to group them by priority.
     /// </summary>
-    public sealed class EncoderGroup: IPyObjectEncoder, IEnumerable<IPyObjectEncoder>, IDisposable
+    public sealed class EncoderGroup : IPyObjectEncoder, IEnumerable<IPyObjectEncoder>, IDisposable
     {
         readonly List<IPyObjectEncoder> encoders = new();
 
@@ -72,11 +72,12 @@ namespace Python.Runtime.Codecs
             if (decoder is IEnumerable<IPyObjectEncoder> composite)
             {
                 foreach (var nestedEncoder in composite)
-                foreach (var match in nestedEncoder.GetEncoders(type))
-                {
-                    yield return match;
-                }
-            } else if (decoder.CanEncode(type))
+                    foreach (var match in nestedEncoder.GetEncoders(type))
+                    {
+                        yield return match;
+                    }
+            }
+            else if (decoder.CanEncode(type))
             {
                 yield return decoder;
             }

@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using NUnit.Framework;
+
 using Python.Runtime;
 
 namespace Python.EmbeddingTest
@@ -62,7 +64,7 @@ a = MemberNamesTest()
         public void InvokeNull()
         {
             var list = PythonEngine.Eval("list");
-            Assert.Throws<ArgumentNullException>(() => list.Invoke(new PyObject[] {null}));
+            Assert.Throws<ArgumentNullException>(() => list.Invoke(new PyObject[] { null }));
         }
 
         [Test]

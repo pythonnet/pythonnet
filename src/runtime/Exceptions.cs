@@ -376,12 +376,12 @@ namespace Python.Runtime
         public static PyObject UnicodeTranslateError;
         public static PyObject ValueError;
         public static PyObject ZeroDivisionError;
-//#ifdef MS_WINDOWS
+        //#ifdef MS_WINDOWS
         //public static IntPtr WindowsError;
-//#endif
-//#ifdef __VMS
+        //#endif
+        //#ifdef __VMS
         //public static IntPtr VMSError;
-//#endif
+        //#endif
 
         //PyAPI_DATA(PyObject *) PyExc_BufferError;
 

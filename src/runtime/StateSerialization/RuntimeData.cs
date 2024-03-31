@@ -36,7 +36,7 @@ namespace Python.Runtime
         /// <summary>
         /// Clears the old "clr_data" entry if a previous one is present.
         /// </summary>
-        static void ClearCLRData ()
+        static void ClearCLRData()
         {
             BorrowedReference capsule = PySys_GetObject("clr_data");
             if (!capsule.IsNull)
@@ -123,7 +123,7 @@ namespace Python.Runtime
             PySys_SetObject("clr_data", default);
         }
 
-        static bool CheckSerializable (object o)
+        static bool CheckSerializable(object o)
         {
             Type type = o.GetType();
             do

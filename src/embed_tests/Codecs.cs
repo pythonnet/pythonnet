@@ -1,8 +1,11 @@
-namespace Python.EmbeddingTest {
+namespace Python.EmbeddingTest
+{
     using System;
     using System.Collections.Generic;
     using System.Linq;
+
     using NUnit.Framework;
+
     using Python.Runtime;
     using Python.Runtime.Codecs;
 
@@ -169,7 +172,8 @@ namespace Python.EmbeddingTest {
             ICollection<string> stringCollection = null;
             Assert.DoesNotThrow(() => { codec.TryDecode(pyList, out stringCollection); });
             Assert.AreEqual(3, stringCollection.Count());
-            Assert.Throws(typeof(InvalidCastException), () => {
+            Assert.Throws(typeof(InvalidCastException), () =>
+            {
                 string[] array = new string[3];
                 stringCollection.CopyTo(array, 0);
             });
@@ -206,7 +210,8 @@ namespace Python.EmbeddingTest {
             ICollection<string> stringCollection2 = null;
             Assert.DoesNotThrow(() => { codec.TryDecode(pyTuple, out stringCollection2); });
             Assert.AreEqual(3, stringCollection2.Count());
-            Assert.Throws(typeof(InvalidCastException), () => {
+            Assert.Throws(typeof(InvalidCastException), () =>
+            {
                 string[] array = new string[3];
                 stringCollection2.CopyTo(array, 0);
             });
@@ -255,13 +260,15 @@ namespace Python.EmbeddingTest {
             IEnumerable<string> stringEnumerable = null;
             Assert.DoesNotThrow(() => { codec.TryDecode(pyList, out stringEnumerable); });
 
-            Assert.Throws(typeof(InvalidCastException), () => {
+            Assert.Throws(typeof(InvalidCastException), () =>
+            {
                 foreach (string item in stringEnumerable)
                 {
                     var x = item;
                 }
             });
-            Assert.Throws(typeof(InvalidCastException), () => {
+            Assert.Throws(typeof(InvalidCastException), () =>
+            {
                 stringEnumerable.Count();
             });
 
@@ -390,7 +397,7 @@ DateTimeDecoder.Setup()
             }
         }
 
-        public static void AcceptsDateTime(DateTime v) {}
+        public static void AcceptsDateTime(DateTime v) { }
 
         [Test]
         public void As_Object_AffectedByDecoders()

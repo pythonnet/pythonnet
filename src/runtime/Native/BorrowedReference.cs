@@ -42,7 +42,8 @@ namespace Python.Runtime
         public static bool operator !=(NullOnly? @null, BorrowedReference reference)
             => !reference.IsNull;
 
-        public override bool Equals(object obj) {
+        public override bool Equals(object obj)
+        {
             if (obj is IntPtr ptr)
                 return ptr == pointer;
 

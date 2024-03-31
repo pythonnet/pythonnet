@@ -40,7 +40,7 @@ namespace Python.Runtime
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal unsafe static T* ReadPtr<T>(BorrowedReference ob, int offset)
-            where T: unmanaged
+            where T : unmanaged
         {
             Debug.Assert(offset >= 0);
             IntPtr ptr = Marshal.ReadIntPtr(ob.DangerousGetAddress(), offset);
@@ -151,7 +151,7 @@ namespace Python.Runtime
         public static IEnumerator<T> GetEnumerator<T>(this IEnumerator<T> enumerator) => enumerator;
 
         public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> source)
-            where T: class
+            where T : class
         {
             foreach (var item in source)
             {

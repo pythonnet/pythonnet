@@ -122,9 +122,11 @@ namespace Python.Runtime
         /// <summary>
         /// Creates <see cref="NewReference"/> from a raw pointer
         /// </summary>
+#pragma warning disable NoCopy05, NoCopy06
         [Pure]
         public static NewReference DangerousFromPointer(IntPtr pointer)
-            => new() { pointer = pointer};
+            => new() { pointer = pointer };
+#pragma warning restore
 
         [Pure]
         internal static IntPtr DangerousGetAddressOrNull(in NewReference reference) => reference.pointer;

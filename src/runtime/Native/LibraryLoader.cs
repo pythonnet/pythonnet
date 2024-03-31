@@ -120,7 +120,7 @@ namespace Python.Runtime.Platform
         {
             if (hModule == IntPtr.Zero)
             {
-                foreach(var module in GetAllModules())
+                foreach (var module in GetAllModules())
                 {
                     var func = GetProcAddress(module, procedureName);
                     if (func != IntPtr.Zero) return func;

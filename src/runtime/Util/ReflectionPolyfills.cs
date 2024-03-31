@@ -17,14 +17,14 @@ namespace Python.Runtime
             return typeBuilder.CreateTypeInfo();
         }
 
-        public static T GetCustomAttribute<T>(this Type type) where T: Attribute
+        public static T GetCustomAttribute<T>(this Type type) where T : Attribute
         {
             return type.GetCustomAttributes(typeof(T), inherit: false)
                 .Cast<T>()
                 .SingleOrDefault();
         }
 
-        public static T GetCustomAttribute<T>(this Assembly assembly) where T: Attribute
+        public static T GetCustomAttribute<T>(this Assembly assembly) where T : Attribute
         {
             return assembly.GetCustomAttributes(typeof(T), inherit: false)
                 .Cast<T>()

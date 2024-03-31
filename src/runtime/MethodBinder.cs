@@ -1,10 +1,10 @@
 using System;
 using System.Collections;
-using System.Reflection;
-using System.Text;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Reflection;
+using System.Text;
 
 namespace Python.Runtime
 {
@@ -621,7 +621,7 @@ namespace Python.Runtime
                 }
                 else
                 {
-                    if(arrayStart == paramIndex)
+                    if (arrayStart == paramIndex)
                     {
                         op = HandleParamsArray(args, arrayStart, pyArgCount, out tempObject);
                     }
@@ -794,7 +794,8 @@ namespace Python.Runtime
                         defaultArgList.Add(parameters[v].GetDefaultValue());
                         defaultsNeeded++;
                     }
-                    else if (parameters[v].IsOut) {
+                    else if (parameters[v].IsOut)
+                    {
                         defaultArgList.Add(null);
                     }
                     else if (!paramsArray)

@@ -44,7 +44,7 @@ namespace Python.Runtime
 
         // "borrowed" references
         internal static readonly HashSet<IntPtr> loadedExtensions = new();
-        void SetupGc (BorrowedReference ob, BorrowedReference tp)
+        void SetupGc(BorrowedReference ob, BorrowedReference tp)
         {
             GCHandle gc = GCHandle.Alloc(this);
             InitGCHandle(ob, tp, gc);

@@ -103,5 +103,10 @@ namespace Python.Runtime
         public double ToDouble() => Runtime.PyFloat_AsDouble(obj);
 
         public override TypeCode GetTypeCode() => TypeCode.Double;
+
+        public override int GetHashCode()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

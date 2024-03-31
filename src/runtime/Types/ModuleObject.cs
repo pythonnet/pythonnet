@@ -18,12 +18,12 @@ namespace Python.Runtime
         internal string moduleName;
         internal PyDict dict;
         protected string _namespace;
-        private readonly PyList __all__ = new ();
+        private readonly PyList __all__ = new();
 
         // Attributes to be set on the module according to PEP302 and 451
         // by the import machinery.
         static readonly HashSet<string?> settableAttributes =
-            new () {"__spec__", "__file__", "__name__", "__path__", "__loader__", "__package__"};
+            new() { "__spec__", "__file__", "__name__", "__path__", "__loader__", "__package__" };
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         /// <remarks><seealso cref="dict"/> is initialized in <seealso cref="Create(string)"/></remarks>
@@ -364,7 +364,7 @@ namespace Python.Runtime
         {
             var managedKey = Runtime.GetManagedString(key);
             if ((settableAttributes.Contains(managedKey)) ||
-                (ManagedType.GetManagedObject(val) is ModuleObject) )
+                (ManagedType.GetManagedObject(val) is ModuleObject))
             {
                 var self = (ModuleObject)ManagedType.GetManagedObject(ob)!;
                 return Runtime.PyDict_SetItem(self.dict, key, val);

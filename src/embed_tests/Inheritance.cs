@@ -206,9 +206,9 @@ namespace Python.EmbeddingTest
         public virtual string VirtualProp { get; set; }
     }
 
-    public class PropertyAccessorIntermediate: PropertyAccessorBase { }
+    public class PropertyAccessorIntermediate : PropertyAccessorBase { }
 
-    public class PropertyAccessorDerived: PropertyAccessorIntermediate
+    public class PropertyAccessorDerived : PropertyAccessorIntermediate
     {
         public override string VirtualProp { set => base.VirtualProp = value.ToUpperInvariant(); }
     }
@@ -217,7 +217,7 @@ namespace Python.EmbeddingTest
     {
         public void BaseMethod() { }
 
-        public class InnerClass: ContainerClass
+        public class InnerClass : ContainerClass
         {
 
         }

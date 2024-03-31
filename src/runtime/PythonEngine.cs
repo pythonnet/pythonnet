@@ -452,7 +452,7 @@ namespace Python.Runtime
         /// </summary>
         static void ExecuteShutdownHandlers()
         {
-            while(ShutdownHandlers.Count > 0)
+            while (ShutdownHandlers.Count > 0)
             {
                 var handler = ShutdownHandlers[ShutdownHandlers.Count - 1];
                 ShutdownHandlers.RemoveAt(ShutdownHandlers.Count - 1);

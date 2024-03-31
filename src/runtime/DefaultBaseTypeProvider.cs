@@ -28,7 +28,7 @@ namespace Python.Runtime
                 : Runtime.PyBaseObjectType;
         }
 
-        DefaultBaseTypeProvider(){}
+        DefaultBaseTypeProvider() { }
         public static DefaultBaseTypeProvider Instance { get; } = new DefaultBaseTypeProvider();
     }
 }

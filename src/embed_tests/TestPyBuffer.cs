@@ -1,11 +1,14 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Text;
+
 using NUnit.Framework;
+
 using Python.Runtime;
 using Python.Runtime.Codecs;
 
-namespace Python.EmbeddingTest {
+namespace Python.EmbeddingTest
+{
     class TestPyBuffer
     {
         [OneTimeSetUp]
@@ -64,11 +67,11 @@ namespace Python.EmbeddingTest {
         [Test]
         public void ArrayHasBuffer()
         {
-            var array = new[,] {{1, 2}, {3,4}};
+            var array = new[,] { { 1, 2 }, { 3, 4 } };
             var memoryView = PythonEngine.Eval("memoryview");
             var mem = memoryView.Invoke(array.ToPython());
             Assert.AreEqual(1, mem[(0, 0).ToPython()].As<int>());
-            Assert.AreEqual(array[1,0], mem[(1, 0).ToPython()].As<int>());
+            Assert.AreEqual(array[1, 0], mem[(1, 0).ToPython()].As<int>());
         }
 
         [Test]
@@ -113,7 +116,7 @@ namespace Python.EmbeddingTest {
         [Test]
         public void MultidimensionalNumPyArray()
         {
-            var ndarray = np.arange(24).reshape(1,2,3,4).T;
+            var ndarray = np.arange(24).reshape(1, 2, 3, 4).T;
             PyObject ndim = ndarray.ndim;
             PyObject shape = ndarray.shape;
             PyObject strides = ndarray.strides;

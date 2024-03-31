@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace Python.Runtime
 {
@@ -83,8 +83,8 @@ namespace Python.Runtime
 
             var freePtr = Util.ReadIntPtr(type, TypeOffset.tp_free);
             Debug.Assert(freePtr != IntPtr.Zero);
-            var free = (delegate* unmanaged[Cdecl]<StolenReference, void>)freePtr;
-            free(ob);
+            var free = (delegate* unmanaged[Cdecl]<IntPtr, void>)freePtr;
+            free(ob.DangerousGetAddress());
 
             Runtime.XDecref(StolenReference.DangerousFromPointer(type.DangerousGetAddress()));
         }
@@ -261,7 +261,7 @@ namespace Python.Runtime
                 tp_clr_inst = tp_clr_inst_offset + IntPtr.Size;
             }
             public static int tp_clr_inst_offset { get; }
-            public static int tp_clr_inst { get;  }
+            public static int tp_clr_inst { get; }
         }
     }
 }

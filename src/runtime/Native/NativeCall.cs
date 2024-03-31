@@ -14,13 +14,13 @@ namespace Python.Runtime
         public static void CallDealloc(IntPtr fp, StolenReference a1)
         {
             var d = (delegate* unmanaged[Cdecl]<StolenReference, void>)fp;
-            d(a1);
+            d(a1.AnalyzerWorkaround());
         }
 
         public static NewReference Call_3(IntPtr fp, BorrowedReference a1, BorrowedReference a2, BorrowedReference a3)
         {
             var d = (delegate* unmanaged[Cdecl]<BorrowedReference, BorrowedReference, BorrowedReference, NewReference>)fp;
-            return d(a1, a2, a3);
+            return d(a1, a2, a3).Move();
         }
 
 

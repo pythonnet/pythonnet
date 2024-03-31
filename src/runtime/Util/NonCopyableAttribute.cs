@@ -1,6 +1,6 @@
 namespace Python.Runtime
 {
-    using  System;
+    using System;
     [AttributeUsage(AttributeTargets.Struct)]
     class NonCopyableAttribute : Attribute { }
 }

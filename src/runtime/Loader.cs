@@ -33,7 +33,7 @@ namespace Python.Runtime
                 );
                 return 1;
             }
-            
+
             return 0;
         }
 

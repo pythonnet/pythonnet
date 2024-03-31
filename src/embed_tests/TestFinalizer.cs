@@ -1,11 +1,13 @@
-using NUnit.Framework;
-using Python.Runtime;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
+
+using NUnit.Framework;
+
+using Python.Runtime;
 
 namespace Python.EmbeddingTest
 {
@@ -237,7 +239,7 @@ namespace Python.EmbeddingTest
             PyString s1 = new PyString("test_string");
             // s2 steal a reference from s1
             IntPtr address = s1.Reference.DangerousGetAddress();
-            PyString s2 = new (StolenReference.DangerousFromPointer(address));
+            PyString s2 = new(StolenReference.DangerousFromPointer(address));
             return address;
         }
     }

@@ -7,7 +7,7 @@ namespace Python.Test
     /// </summary>
     public delegate void EventHandlerTest(object sender, EventArgsTest e);
 
-    #pragma warning disable 67 // Unused events, these are only accessed from Python
+#pragma warning disable 67 // Unused events, these are only accessed from Python
     public class EventTest
     {
         public static event EventHandlerTest PublicStaticEvent;
@@ -145,7 +145,7 @@ namespace Python.Test
             e.PrivateEvent += f;
         }
     }
-    #pragma warning restore 67
+#pragma warning restore 67
 
 
     public class EventArgsTest : EventArgs

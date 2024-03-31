@@ -37,7 +37,7 @@ namespace Python.Runtime
 
         // modified from event handlers below, potentially triggered from different .NET threads
         private static readonly ConcurrentQueue<Assembly> assemblies = new();
-        internal static readonly List<string> pypath = new (capacity: 16);
+        internal static readonly List<string> pypath = new(capacity: 16);
         private AssemblyManager()
         {
         }
@@ -337,7 +337,7 @@ namespace Python.Runtime
         /// Returns an enumerable collection containing the namepsaces exported
         /// by loaded assemblies in the current app domain.
         /// </summary>
-        public static IEnumerable<string> GetNamespaces ()
+        public static IEnumerable<string> GetNamespaces()
         {
             return namespaces.Keys;
         }

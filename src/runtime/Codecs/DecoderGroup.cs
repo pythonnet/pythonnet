@@ -8,7 +8,7 @@ namespace Python.Runtime.Codecs
     /// <summary>
     /// Represents a group of <see cref="IPyObjectDecoder"/>s. Useful to group them by priority.
     /// </summary>
-    public sealed class DecoderGroup: IPyObjectDecoder, IEnumerable<IPyObjectDecoder>, IDisposable
+    public sealed class DecoderGroup : IPyObjectDecoder, IEnumerable<IPyObjectDecoder>, IDisposable
     {
         readonly List<IPyObjectDecoder> decoders = new();
 

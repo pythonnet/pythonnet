@@ -142,7 +142,8 @@ namespace Python.Runtime
             if (OpMethodMap.ContainsKey(clrName))
             {
                 return OpMethodMap[clrName].MethodName;
-            } else
+            }
+            else
             {
                 return ComparisonOpMap[clrName];
             }

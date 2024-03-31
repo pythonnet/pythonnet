@@ -113,7 +113,8 @@ namespace Python.Runtime
         internal NewReference GetName()
         {
             var names = new HashSet<string>(binder.GetMethods().Select(m => m.Name));
-            if (names.Count != 1) {
+            if (names.Count != 1)
+            {
                 Exceptions.SetError(Exceptions.AttributeError, "a method has no name");
                 return default;
             }

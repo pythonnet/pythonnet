@@ -32,7 +32,8 @@ namespace Python.Runtime.Platform
                 // call dlerror to ensure library is resolved
                 libdl2.dlerror();
                 return libdl2;
-            } catch (DllNotFoundException)
+            }
+            catch (DllNotFoundException)
             {
                 return new LinuxLibDL();
             }

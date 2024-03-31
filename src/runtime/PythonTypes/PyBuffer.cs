@@ -29,12 +29,14 @@ namespace Python.Runtime
                 Shape = intPtrBuf.Select(x => (long)x).ToArray();
             }
 
-            if (_view.strides != IntPtr.Zero) {
+            if (_view.strides != IntPtr.Zero)
+            {
                 Marshal.Copy(_view.strides, intPtrBuf, 0, _view.ndim);
                 Strides = intPtrBuf.Select(x => (long)x).ToArray();
             }
 
-            if (_view.suboffsets != IntPtr.Zero) {
+            if (_view.suboffsets != IntPtr.Zero)
+            {
                 Marshal.Copy(_view.suboffsets, intPtrBuf, 0, _view.ndim);
                 SubOffsets = intPtrBuf.Select(x => (long)x).ToArray();
             }
@@ -87,7 +89,7 @@ namespace Python.Runtime
         /// </summary>
         public static long SizeFromFormat(string format)
         {
-            if (Runtime.PyVersion < new Version(3,9))
+            if (Runtime.PyVersion < new Version(3, 9))
                 throw new NotSupportedException("SizeFromFormat requires at least Python 3.9");
             nint result = Runtime.PyBuffer_SizeFromFormat(format);
             if (result == -1) throw PythonException.ThrowLastAsClrException();
@@ -206,7 +208,8 @@ namespace Python.Runtime
         /// <summary>
         /// Reads the buffer of a python object into a managed byte array. This can be used to pass data like images from python to managed.
         /// </summary>
-        public void Read(byte[] buffer, int destinationOffset, int count, nint sourceOffset) {
+        public void Read(byte[] buffer, int destinationOffset, int count, nint sourceOffset)
+        {
             if (disposedValue)
                 throw new ObjectDisposedException(nameof(PyBuffer));
             if (_view.ndim != 1)

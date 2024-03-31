@@ -46,7 +46,7 @@ namespace Python.EmbeddingTest
             var converted = Converter.ToManaged(pyFloat, typeof(float), out convertedValue, false);
 
             Assert.IsTrue(converted);
-            Assert.IsTrue(((float) convertedValue).Equals(testValue));
+            Assert.IsTrue(((float)convertedValue).Equals(testValue));
         }
 
         [Test]
@@ -60,7 +60,7 @@ namespace Python.EmbeddingTest
             var converted = Converter.ToManaged(pyFloat, typeof(double), out convertedValue, false);
 
             Assert.IsTrue(converted);
-            Assert.IsTrue(((double) convertedValue).Equals(testValue));
+            Assert.IsTrue(((double)convertedValue).Equals(testValue));
         }
 
         [Test]
@@ -164,7 +164,7 @@ namespace Python.EmbeddingTest
         [Test]
         public void RawListProxy()
         {
-            var list = new List<string> {"hello", "world"};
+            var list = new List<string> { "hello", "world" };
             var listProxy = PyObject.FromManagedObject(list);
             var clrObject = (CLRObject)ManagedType.GetManagedObject(listProxy);
             Assert.AreSame(list, clrObject.inst);

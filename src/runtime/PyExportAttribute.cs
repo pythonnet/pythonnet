@@ -1,4 +1,5 @@
-namespace Python.Runtime {
+namespace Python.Runtime
+{
     using System;
 
     /// <summary>

@@ -4,5 +4,5 @@ namespace Python.Runtime.Native;
 enum PyGILState
 {
     PyGILState_LOCKED,
-    PyGILState_UNLOCKED 
+    PyGILState_UNLOCKED
 }

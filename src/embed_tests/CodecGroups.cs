@@ -2,7 +2,9 @@ namespace Python.EmbeddingTest
 {
     using System;
     using System.Linq;
+
     using NUnit.Framework;
+
     using Python.Runtime;
     using Python.Runtime.Codecs;
 
@@ -20,7 +22,7 @@ namespace Python.EmbeddingTest
             };
 
             var got = group.GetEncoders(typeof(Uri)).ToArray();
-            CollectionAssert.AreEqual(new[]{encoder1, encoder2}, got);
+            CollectionAssert.AreEqual(new[] { encoder1, encoder2 }, got);
         }
 
         [Test]

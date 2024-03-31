@@ -165,7 +165,7 @@ namespace Python.Runtime
 
             Type baseClass = baseType;
             var interfaces = new HashSet<Type> { typeof(IPythonDerivedType) };
-            foreach(var interfaceType in typeInterfaces)
+            foreach (var interfaceType in typeInterfaces)
                 interfaces.Add(interfaceType);
 
             // if the base type is an interface then use System.Object as the base class

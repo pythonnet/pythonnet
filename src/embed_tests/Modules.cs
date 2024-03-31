@@ -1,6 +1,8 @@
 using System;
 using System.Threading;
+
 using NUnit.Framework;
+
 using Python.Runtime;
 
 namespace Python.EmbeddingTest
@@ -385,8 +387,8 @@ namespace Python.EmbeddingTest
                     //add function to the scope
                     //can be call many times, more efficient than ast
                     ps.Exec(
-                        "import threading\n"+
-                        "lock = threading.Lock()\n"+
+                        "import threading\n" +
+                        "lock = threading.Lock()\n" +
                         "def update():\n" +
                         "  global res, th_cnt\n" +
                         "  with lock:\n" +

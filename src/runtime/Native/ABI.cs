@@ -39,7 +39,7 @@ namespace Python.Runtime.Native
             using var tempObject = Runtime.PyList_New(0);
             IntPtr* tempPtr = (IntPtr*)tempObject.DangerousGetAddress();
             int offset = 0;
-            while(tempPtr[offset] != (IntPtr)1)
+            while (tempPtr[offset] != (IntPtr)1)
             {
                 offset++;
                 if (offset > 100)

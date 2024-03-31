@@ -3,7 +3,7 @@ using System;
 namespace Python.Runtime.Native;
 
 [Flags]
-enum PyMemberFlags: int
+enum PyMemberFlags : int
 {
     None = 0,
     ReadOnly = 1,
