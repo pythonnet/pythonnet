@@ -9,7 +9,7 @@ import sys
 import pytest
 
 try:
-    import System
+    import System  # noqa: F401
 except ImportError:
     print("Load clr import hook")
     import clr
@@ -31,8 +31,8 @@ def main(verbosity=1):
     pytest.main()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
-    if '--pause' in sys.argv:
+    if "--pause" in sys.argv:
         print("Press enter to continue")
         input()

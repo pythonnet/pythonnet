@@ -4,15 +4,16 @@
 import clr
 
 import System
-clr.AddReference("System.Windows.Forms")
-import System.Windows.Forms as WinForms
 
-from System.Drawing import Color, Size, Point
+clr.AddReference("System.Windows.Forms")
+import System.Windows.Forms as WinForms  # noqa
+
+from System.Drawing import Color  # noqa
 
 
 class Splitter(WinForms.Form):
     """A WinForms example transcribed to Python from the MSDN article:
-       'Creating a Multipane User Interface with Windows Forms'."""
+    'Creating a Multipane User Interface with Windows Forms'."""
 
     def __init__(self):
         super().__init__()
@@ -90,5 +91,5 @@ def main():
     app.Dispose()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

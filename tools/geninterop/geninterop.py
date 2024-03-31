@@ -231,7 +231,7 @@ def preprocess_python_headers(*, cc=None, include_py=None):
             "-D", "__ptr64=",
             "-D", "__declspec(x)=",
         ])
-    #fmt: on
+    # fmt: on
 
     if hasattr(sys, "abiflags"):
         if "d" in sys.abiflags:
@@ -333,12 +333,12 @@ def main(*, cc=None, include_py=None, version=None, out=None):
     writer = Writer()
 
     if include_py and not version:
-        raise RuntimeError("If the include path is overridden, version must be "
-                "defined"
-                )
+        raise RuntimeError(
+            "If the include path is overridden, version must be " "defined"
+        )
 
     if version:
-        version = version.split('.')
+        version = version.split(".")
     else:
         version = sys.version_info
 
@@ -369,9 +369,6 @@ if __name__ == "__main__":
     a.add_argument("--out", help="Output path", default="-")
     args = a.parse_args()
 
-    sys.exit(main(
-        cc=args.cc,
-        include_py=args.include_py,
-        out=args.out,
-        version=args.version
-        ))
+    sys.exit(
+        main(cc=args.cc, include_py=args.include_py, out=args.out, version=args.version)
+    )

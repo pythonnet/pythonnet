@@ -106,16 +106,16 @@ def test_property_descriptor_get_set():
     assert PropertyTest.PublicStaticProperty == 0
     assert ob.PublicStaticProperty == 0
 
-    descriptor = PropertyTest.__dict__['PublicStaticProperty']
-    assert type(descriptor) != int
+    descriptor = PropertyTest.__dict__["PublicStaticProperty"]
+    assert type(descriptor) != int  # noqa: E721
 
     ob.PublicStaticProperty = 0
-    descriptor = PropertyTest.__dict__['PublicStaticProperty']
-    assert type(descriptor) != int
+    descriptor = PropertyTest.__dict__["PublicStaticProperty"]
+    assert type(descriptor) != int  # noqa: E721
 
     PropertyTest.PublicStaticProperty = 0
-    descriptor = PropertyTest.__dict__['PublicStaticProperty']
-    assert type(descriptor) != int
+    descriptor = PropertyTest.__dict__["PublicStaticProperty"]
+    assert type(descriptor) != int  # noqa: E721
 
 
 def test_property_descriptor_wrong_type():
@@ -128,7 +128,7 @@ def test_property_descriptor_wrong_type():
 
 def test_property_descriptor_abuse():
     """Test property descriptor abuse."""
-    desc = PropertyTest.__dict__['PublicProperty']
+    desc = PropertyTest.__dict__["PublicProperty"]
 
     with pytest.raises(TypeError):
         desc.__get__(0, 0)
@@ -139,8 +139,8 @@ def test_property_descriptor_abuse():
 
 def test_interface_property():
     """Test properties of interfaces. Added after a bug report
-       that an IsAbstract check was inappropriate and prevented
-       use of properties when only the interface is known."""
+    that an IsAbstract check was inappropriate and prevented
+    use of properties when only the interface is known."""
     from System.Collections import Hashtable, ICollection
 
     mapping = Hashtable()

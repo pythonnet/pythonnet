@@ -3,7 +3,7 @@
 # FIXME: FAIL: testImplicitAssemblyLoad AssertionError: 0 != 1
 
 """Run all of the unit tests for this package over and over,
-   in order to provide for better profiling.
+in order to provide for better profiling.
 """
 
 from __future__ import print_function
@@ -25,16 +25,16 @@ def main():
     start = time.clock()
 
     for i in range(50):
-        print('iteration: {0:d}'.format(i))
+        print("iteration: {0:d}".format(i))
         runtests.main()
 
     stop = time.clock()
     took = str(stop - start)
-    print('Total Time: {0}'.format(took))
+    print("Total Time: {0}".format(took))
 
     for item in gc.get_objects():
         print(item, sys.getrefcount(item))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

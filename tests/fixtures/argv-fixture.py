@@ -7,6 +7,5 @@ For more details see GH#404 - argv not found"""
 from __future__ import print_function
 
 import sys
-import clr
 
 print(sys.argv)

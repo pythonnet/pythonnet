@@ -8,8 +8,16 @@
 
 import System
 import pytest
-from Python.Test import (IInterfaceTest, SubClassTest, EventArgsTest,
-                         FunctionsTest, IGenericInterface, GenericVirtualMethodTest, SimpleClass, ISayHello1)
+from Python.Test import (
+    IInterfaceTest,
+    SubClassTest,
+    EventArgsTest,
+    FunctionsTest,
+    IGenericInterface,
+    GenericVirtualMethodTest,
+    SimpleClass,
+    ISayHello1,
+)
 from System.Collections.Generic import List
 
 
@@ -18,6 +26,7 @@ def interface_test_class_fixture(subnamespace):
 
     class InterfaceTestClass(IInterfaceTest):
         """class that implements the test interface"""
+
         __namespace__ = "Python.Test." + subnamespace
 
         def foo(self):
@@ -30,7 +39,6 @@ def interface_test_class_fixture(subnamespace):
 
 
 def interface_generic_class_fixture(subnamespace):
-
     class GenericInterfaceImpl(IGenericInterface[int]):
         __namespace__ = "Python.Test." + subnamespace
 
@@ -45,6 +53,7 @@ def derived_class_fixture(subnamespace):
 
     class DerivedClass(SubClassTest):
         """class that derives from a class deriving from IInterfaceTest"""
+
         __namespace__ = "Python.Test." + subnamespace
 
         def foo(self):
@@ -60,28 +69,32 @@ def derived_class_fixture(subnamespace):
             return "_".join([x] * i)
 
         def return_list(self):
-            l = List[str]()
-            l.Add("A")
-            l.Add("B")
-            l.Add("C")
-            return l
+            lst = List[str]()
+            lst.Add("A")
+            lst.Add("B")
+            lst.Add("C")
+            return lst
 
     return DerivedClass
+
 
 def broken_derived_class_fixture(subnamespace):
     """Delay creation of class until test starts."""
 
     class DerivedClass(SubClassTest):
         """class that derives from a class deriving from IInterfaceTest"""
+
         __namespace__ = 3
 
     return DerivedClass
+
 
 def derived_event_test_class_fixture(subnamespace):
     """Delay creation of class until test starts."""
 
     class DerivedEventTest(IInterfaceTest):
         """class that implements IInterfaceTest.TestEvent"""
+
         __namespace__ = "Python.Test." + subnamespace
 
         def __init__(self):
@@ -146,29 +159,36 @@ def test_derived_class():
     x = FunctionsTest.pass_through(ob)
     assert id(x) == id(ob)
 
+
 def test_broken_derived_class():
     """Test python class derived from managed type with invalid namespace"""
     with pytest.raises(TypeError):
         DerivedClass = broken_derived_class_fixture(test_derived_class.__name__)
-        ob = DerivedClass()
+        # ob will not be used as the constructor should raise
+        ob = DerivedClass()  # noqa: F841
+
 
 def test_derived_traceback():
     """Test python exception traceback in class derived from managed base"""
+
     class DerivedClass(SubClassTest):
         __namespace__ = "Python.Test.traceback"
 
         def foo(self):
-            print (xyzname)
+            # Intentional use of undefined variable
+            print(xyzname)  # noqa: F821
             return None
 
-    import sys,traceback
+    import sys
+    import traceback
+
     ob = DerivedClass()
 
     # direct call
     try:
         ob.foo()
         assert False
-    except:
+    except Exception:
         e = sys.exc_info()
     assert "xyzname" in str(e[1])
     location = traceback.extract_tb(e[2])[-1]
@@ -178,7 +198,7 @@ def test_derived_traceback():
     try:
         FunctionsTest.test_foo(ob)
         assert False
-    except:
+    except Exception:
         e = sys.exc_info()
     assert "xyzname" in str(e[1])
     location = traceback.extract_tb(e[2])[-1]
@@ -246,40 +266,55 @@ def test_isinstance_check():
         assert isinstance(x, System.Object)
         assert isinstance(x, System.String)
 
+
 def test_namespace_and_init():
     calls = []
+
     class TestX(System.Object):
         __namespace__ = "test_clr_subclass_with_init_args"
+
         def __init__(self, *args, **kwargs):
             calls.append((args, kwargs))
-    t = TestX(1,2,3,foo="bar")
+
+    t = TestX(1, 2, 3, foo="bar")
+    assert t is not None
     assert len(calls) == 1
-    assert calls[0][0] == (1,2,3)
-    assert calls[0][1] == {"foo":"bar"}
+    assert calls[0][0] == (1, 2, 3)
+    assert calls[0][1] == {"foo": "bar"}
+
 
 def test_namespace_and_argless_init():
     calls = []
+
     class TestX(System.Object):
         __namespace__ = "test_clr_subclass_without_init_args"
+
         def __init__(self):
             calls.append(True)
+
     t = TestX()
+    assert t is not None
     assert len(calls) == 1
-    assert calls[0] == True
+    assert calls[0] == True  # noqa: E712
 
 
 def test_namespace_and_no_init():
     class TestX(System.Object):
         __namespace__ = "test_clr_subclass_without_init"
         q = 1
+
     t = TestX()
     assert t.q == 1
 
+
 def test_construction_from_clr():
     import clr
+
     calls = []
+
     class TestX(System.Object):
         __namespace__ = "test_clr_subclass_init_from_clr"
+
         @clr.clrmethod(None, [int, str])
         def __init__(self, i, s):
             calls.append((i, s))
@@ -302,12 +337,13 @@ def test_construction_from_clr():
     assert calls[0][0] == 1
     assert calls[0][1] == "foo"
 
+
 # regression test for https://github.com/pythonnet/pythonnet/issues/1565
 def test_can_be_collected_by_gc():
     from Python.Test import BaseClass
 
     class Derived(BaseClass):
-        __namespace__ = 'test_can_be_collected_by_gc'
+        __namespace__ = "test_can_be_collected_by_gc"
 
     inst = Derived()
     cycle = [inst]
@@ -316,31 +352,42 @@ def test_can_be_collected_by_gc():
     del cycle
 
     import gc
+
     gc.collect()
+
 
 def test_generic_interface():
     from System import Int32
     from Python.Test import GenericInterfaceUser, SpecificInterfaceUser
 
-    GenericInterfaceImpl = interface_generic_class_fixture(test_generic_interface.__name__)
+    GenericInterfaceImpl = interface_generic_class_fixture(
+        test_generic_interface.__name__
+    )
 
     obj = GenericInterfaceImpl()
     SpecificInterfaceUser(obj, Int32(0))
     GenericInterfaceUser[Int32](obj, Int32(0))
 
+
 def test_virtual_generic_method():
     class OverloadingSubclass(GenericVirtualMethodTest):
         __namespace__ = "test_virtual_generic_method_cls"
+
     class OverloadingSubclass2(OverloadingSubclass):
         __namespace__ = "test_virtual_generic_method_cls"
+
     obj = OverloadingSubclass()
     assert obj.VirtMethod[int](5) == 5
     obj = OverloadingSubclass2()
     assert obj.VirtMethod[int](5) == 5
 
+
 def test_implement_interface_and_class():
     class DualSubClass0(ISayHello1, SimpleClass):
         __namespace__ = "Test"
+
         def SayHello(self):
             return "hello"
+
     obj = DualSubClass0()
+    assert obj is not None

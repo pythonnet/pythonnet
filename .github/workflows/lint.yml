@@ -28,3 +28,23 @@ jobs:
         with:
           name: format-report
           path: format.json
+
+  lint-python:
+    name: Lint Python
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+
+      - name: Install Ruff
+        run: pip install ruff
+
+      - name: Check formatting
+        run: ruff format --check
+
+      - name: Check lints
+        run: ruff check

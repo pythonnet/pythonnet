@@ -222,11 +222,11 @@ def test_derived_from_open_generic_type():
     from Python.Test import DerivedFromOpenGeneric
 
     type_ = DerivedFromOpenGeneric[System.String, System.String]
-    inst = type_(1, 'two', 'three')
+    inst = type_(1, "two", "three")
 
     assert inst.value1 == 1
-    assert inst.value2 == 'two'
-    assert inst.value3 == 'three'
+    assert inst.value2 == "two"
+    assert inst.value3 == "three"
 
 
 def test_generic_type_name_resolution():
@@ -263,7 +263,7 @@ def test_generic_type_binding():
     assert_generic_wrapper_by_type(bool, True)
     assert_generic_wrapper_by_type(System.Byte, 255)
     assert_generic_wrapper_by_type(System.SByte, 127)
-    assert_generic_wrapper_by_type(System.Char, u'A')
+    assert_generic_wrapper_by_type(System.Char, "A")
     assert_generic_wrapper_by_type(System.Int16, 32767)
     assert_generic_wrapper_by_type(System.Int32, 2147483647)
     assert_generic_wrapper_by_type(int, 2147483647)
@@ -307,7 +307,7 @@ def test_generic_method_binding():
 
 def test_generic_method_type_handling():
     """Test argument conversion / binding for generic methods."""
-    from Python.Test import InterfaceTest, ISayHello1, ShortEnum
+    from Python.Test import InterfaceTest, ShortEnum
     import System
 
     # FIXME: Fails because Converter.GetTypeByAlias returns int32 for any integer, including ulong
@@ -316,7 +316,7 @@ def test_generic_method_type_handling():
     assert_generic_method_by_type(bool, True)
     assert_generic_method_by_type(System.Byte, 255)
     assert_generic_method_by_type(System.SByte, 127)
-    assert_generic_method_by_type(System.Char, u'A')
+    assert_generic_method_by_type(System.Char, "A")
     assert_generic_method_by_type(System.Int16, 32767)
     assert_generic_method_by_type(System.Int32, 2147483647)
     assert_generic_method_by_type(int, 2147483647)
@@ -334,33 +334,34 @@ def test_generic_method_type_handling():
 
 def test_correct_overload_selection():
     """Test correct overloading selection for common types."""
-    from System import (String, Double, Single,
-                        Int16, Int32, Int64)
+    from System import String, Double, Single, Int16, Int32, Int64
     from System import Math
 
     substr = String("substring")
-    assert substr.Substring(2) == substr.Substring.__overloads__[Int32](
-        Int32(2))
+    assert substr.Substring(2) == substr.Substring.__overloads__[Int32](Int32(2))
     assert substr.Substring(2, 3) == substr.Substring.__overloads__[Int32, Int32](
-        Int32(2), Int32(3))
+        Int32(2), Int32(3)
+    )
 
-    for atype, value1, value2 in zip([Double, Single, Int16, Int32, Int64],
-                                     [1.0, 1.0, 1, 1, 1],
-                                     [2.0, 0.5, 2, 0, -1]):
+    for atype, value1, value2 in zip(
+        [Double, Single, Int16, Int32, Int64], [1.0, 1.0, 1, 1, 1], [2.0, 0.5, 2, 0, -1]
+    ):
         assert Math.Abs(atype(value1)) == Math.Abs.__overloads__[atype](atype(value1))
         assert Math.Abs(value1) == Math.Abs.__overloads__[atype](atype(value1))
-        assert Math.Max(atype(value1),
-                        atype(value2)) == Math.Max.__overloads__[atype, atype](
-            atype(value1), atype(value2))
-        assert Math.Max(atype(value1),
-                        value2) == Math.Max.__overloads__[atype, atype](
-            atype(value1), atype(value2))
+        assert Math.Max(atype(value1), atype(value2)) == Math.Max.__overloads__[
+            atype, atype
+        ](atype(value1), atype(value2))
+        assert Math.Max(atype(value1), value2) == Math.Max.__overloads__[atype, atype](
+            atype(value1), atype(value2)
+        )
 
     clr.AddReference("System.Runtime.InteropServices")
     from System.Runtime.InteropServices import GCHandle, GCHandleType
     from System import Array, Byte
+
     cs_array = Array.CreateInstance(Byte, 1000)
     handler = GCHandle.Alloc(cs_array, GCHandleType.Pinned)
+    assert handler is not None
 
 
 def test_generic_method_overload_selection():
@@ -469,9 +470,9 @@ def test_method_overload_selection_with_generic_types():
     assert value.value == 127
 
     vtype = GenericWrapper[System.Char]
-    input_ = vtype(u'A')
+    input_ = vtype("A")
     value = MethodTest.Overloaded.__overloads__[vtype](input_)
-    assert value.value == u'A'
+    assert value.value == "A"
 
     vtype = GenericWrapper[System.Char]
     input_ = vtype(65535)
@@ -608,9 +609,9 @@ def test_overload_selection_with_arrays_of_generic_types():
 
     gtype = GenericWrapper[System.Char]
     vtype = System.Array[gtype]
-    input_ = vtype([gtype(u'A'), gtype(u'A')])
+    input_ = vtype([gtype("A"), gtype("A")])
     value = MethodTest.Overloaded.__overloads__[vtype](input_)
-    assert value[0].value == u'A'
+    assert value[0].value == "A"
     assert value.Length == 2
 
     gtype = GenericWrapper[System.Char]
@@ -643,8 +644,7 @@ def test_overload_selection_with_arrays_of_generic_types():
 
     gtype = GenericWrapper[System.Int64]
     vtype = System.Array[gtype]
-    input_ = vtype([gtype(9223372036854775807),
-                    gtype(9223372036854775807)])
+    input_ = vtype([gtype(9223372036854775807), gtype(9223372036854775807)])
     value = MethodTest.Overloaded.__overloads__[vtype](input_)
     assert value[0].value == 9223372036854775807
     assert value.Length == 2
@@ -665,8 +665,7 @@ def test_overload_selection_with_arrays_of_generic_types():
 
     gtype = GenericWrapper[System.UInt64]
     vtype = System.Array[gtype]
-    input_ = vtype([gtype(18446744073709551615),
-                    gtype(18446744073709551615)])
+    input_ = vtype([gtype(18446744073709551615), gtype(18446744073709551615)])
     value = MethodTest.Overloaded.__overloads__[vtype](input_)
     assert value[0].value == 18446744073709551615
     assert value.Length == 2
@@ -680,24 +679,21 @@ def test_overload_selection_with_arrays_of_generic_types():
 
     gtype = GenericWrapper[System.Double]
     vtype = System.Array[gtype]
-    input_ = vtype([gtype(1.7976931348623157e308),
-                    gtype(1.7976931348623157e308)])
+    input_ = vtype([gtype(1.7976931348623157e308), gtype(1.7976931348623157e308)])
     value = MethodTest.Overloaded.__overloads__[vtype](input_)
     assert value[0].value == 1.7976931348623157e308
     assert value.Length == 2
 
     gtype = GenericWrapper[float]
     vtype = System.Array[gtype]
-    input_ = vtype([gtype(1.7976931348623157e308),
-                    gtype(1.7976931348623157e308)])
+    input_ = vtype([gtype(1.7976931348623157e308), gtype(1.7976931348623157e308)])
     value = MethodTest.Overloaded.__overloads__[vtype](input_)
     assert value[0].value == 1.7976931348623157e308
     assert value.Length == 2
 
     gtype = GenericWrapper[System.Decimal]
     vtype = System.Array[gtype]
-    input_ = vtype([gtype(System.Decimal.One),
-                    gtype(System.Decimal.One)])
+    input_ = vtype([gtype(System.Decimal.One), gtype(System.Decimal.One)])
     value = MethodTest.Overloaded.__overloads__[vtype](input_)
     assert value[0].value == System.Decimal.One
     assert value.Length == 2
@@ -757,10 +753,13 @@ def test_nested_generic_class():
     # TODO NotImplemented
     pass
 
+
 def test_missing_generic_type():
     from System.Collections import IList
+
     with pytest.raises(TypeError):
         IList[bool]
+
 
 # https://github.com/pythonnet/pythonnet/issues/1522
 def test_overload_generic_parameter():
@@ -771,18 +770,23 @@ def test_overload_generic_parameter():
     inst.OverloadedConstrainedGeneric(generic)
     inst.OverloadedConstrainedGeneric[MethodTestSub](generic)
 
-    inst.OverloadedConstrainedGeneric[MethodTestSub](generic, '42')
-    inst.OverloadedConstrainedGeneric[MethodTestSub](generic, System.String('42'))
+    inst.OverloadedConstrainedGeneric[MethodTestSub](generic, "42")
+    inst.OverloadedConstrainedGeneric[MethodTestSub](generic, System.String("42"))
+
 
 def test_invalid_generic_type_parameter():
     from Python.Test import GenericTypeWithConstraint
+
     with pytest.raises(TypeError):
         GenericTypeWithConstraint[System.Object]
 
+
 def test_invalid_generic_method_type_parameter():
     from Python.Test import ConversionTest
+
     with pytest.raises(TypeError):
         ConversionTest.Echo[System.Object]
+
 
 def test_generic_list_array_conversion():
     """Test conversion of lists to generic array arguments."""

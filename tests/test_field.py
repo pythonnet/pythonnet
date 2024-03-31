@@ -158,16 +158,16 @@ def test_field_descriptor_get_set():
     assert FieldTest.PublicStaticField == 0
     assert ob.PublicStaticField == 0
 
-    descriptor = FieldTest.__dict__['PublicStaticField']
-    assert type(descriptor) != int
+    descriptor = FieldTest.__dict__["PublicStaticField"]
+    assert not isinstance(descriptor, int)
 
     ob.PublicStaticField = 0
-    descriptor = FieldTest.__dict__['PublicStaticField']
-    assert type(descriptor) != int
+    descriptor = FieldTest.__dict__["PublicStaticField"]
+    assert not isinstance(descriptor, int)
 
     FieldTest.PublicStaticField = 0
-    descriptor = FieldTest.__dict__['PublicStaticField']
-    assert type(descriptor) != int
+    descriptor = FieldTest.__dict__["PublicStaticField"]
+    assert not isinstance(descriptor, int)
 
 
 def test_field_descriptor_wrong_type():
@@ -179,7 +179,7 @@ def test_field_descriptor_wrong_type():
 
 def test_field_descriptor_abuse():
     """Test field descriptor abuse."""
-    desc = FieldTest.__dict__['PublicField']
+    desc = FieldTest.__dict__["PublicField"]
 
     with pytest.raises(TypeError):
         desc.__get__(0, 0)
@@ -228,16 +228,16 @@ def test_byte_field():
 def test_char_field():
     """Test char fields."""
     ob = FieldTest()
-    assert ob.CharField == u'A'
-    assert ob.CharField == 'A'
+    assert ob.CharField == "A"
+    assert ob.CharField == "A"
 
-    ob.CharField = 'B'
-    assert ob.CharField == u'B'
-    assert ob.CharField == 'B'
+    ob.CharField = "B"
+    assert ob.CharField == "B"
+    assert ob.CharField == "B"
 
-    ob.CharField = u'C'
-    assert ob.CharField == u'C'
-    assert ob.CharField == 'C'
+    ob.CharField = "C"
+    assert ob.CharField == "C"
+    assert ob.CharField == "C"
 
 
 def test_int16_field():

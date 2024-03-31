@@ -4,13 +4,13 @@
 import clr
 
 clr.AddReference("System.Windows.Forms")
-import System.Windows.Forms as WinForms
-from System.Drawing import Size, Point
+import System.Windows.Forms as WinForms  # noqa
+from System.Drawing import Size, Point  # noqa
 
 
 class HelloApp(WinForms.Form):
     """A simple hello world app that demonstrates the essentials of
-       winforms programming and event-based programming in Python."""
+    winforms programming and event-based programming in Python."""
 
     def __init__(self):
         super().__init__()
@@ -44,7 +44,7 @@ class HelloApp(WinForms.Form):
 
     def button_Click(self, sender, args):
         """Button click event handler"""
-        print ("Click")
+        print("Click")
         WinForms.MessageBox.Show("Please do not press this button again.")
 
     def run(self):
@@ -53,11 +53,11 @@ class HelloApp(WinForms.Form):
 
 def main():
     form = HelloApp()
-    print ("form created")
+    print("form created")
     app = WinForms.Application
-    print ("app referenced")
+    print("app referenced")
     app.Run(form)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

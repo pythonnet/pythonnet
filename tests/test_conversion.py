@@ -4,7 +4,12 @@ import operator
 import pytest
 
 import System
-from Python.Test import ConversionTest, MethodResolutionInt, UnicodeString, CodecResetter
+from Python.Test import (
+    ConversionTest,
+    MethodResolutionInt,
+    UnicodeString,
+    CodecResetter,
+)
 from Python.Runtime import PyObjectConversions
 from Python.Runtime.Codecs import RawProxyEncoder
 
@@ -33,7 +38,7 @@ def test_bool_conversion():
         ob.BooleanField = None
 
     with pytest.raises(TypeError):
-        ob.BooleanField = ''
+        ob.BooleanField = ""
 
     with pytest.raises(TypeError):
         ob.BooleanField = System.Boolean(0)
@@ -42,7 +47,7 @@ def test_bool_conversion():
         ob.BooleanField = System.Boolean(1)
 
     with pytest.raises(TypeError):
-        ob.BooleanField = System.Boolean('a')
+        ob.BooleanField = System.Boolean("a")
 
 
 def test_sbyte_conversion():
@@ -129,16 +134,16 @@ def test_char_conversion():
     assert System.Char.MinValue == chr(0)
 
     ob = ConversionTest()
-    assert ob.CharField == u'A'
+    assert ob.CharField == "A"
 
-    ob.CharField = 'B'
-    assert ob.CharField == u'B'
+    ob.CharField = "B"
+    assert ob.CharField == "B"
 
-    ob.CharField = u'B'
-    assert ob.CharField == u'B'
+    ob.CharField = "B"
+    assert ob.CharField == "B"
 
     ob.CharField = 67
-    assert ob.CharField == u'C'
+    assert ob.CharField == "C"
 
     with pytest.raises(OverflowError):
         ConversionTest().CharField = 65536
@@ -447,7 +452,6 @@ def test_double_conversion():
         ConversionTest().DoubleField = None
 
 
-
 def test_decimal_conversion():
     """Test decimal conversion."""
     from System import Decimal
@@ -490,25 +494,25 @@ def test_string_conversion():
     ob = ConversionTest()
 
     assert ob.StringField == "spam"
-    assert ob.StringField == u"spam"
+    assert ob.StringField == "spam"
 
     ob.StringField = "eggs"
     assert ob.StringField == "eggs"
-    assert ob.StringField == u"eggs"
+    assert ob.StringField == "eggs"
 
-    ob.StringField = u"spam"
+    ob.StringField = "spam"
     assert ob.StringField == "spam"
-    assert ob.StringField == u"spam"
+    assert ob.StringField == "spam"
 
-    ob.StringField = u'\uffff\uffff'
-    assert ob.StringField == u'\uffff\uffff'
+    ob.StringField = "\uffff\uffff"
+    assert ob.StringField == "\uffff\uffff"
 
     ob.StringField = System.String("spam")
     assert ob.StringField == "spam"
-    assert ob.StringField == u"spam"
+    assert ob.StringField == "spam"
 
-    ob.StringField = System.String(u'\uffff\uffff')
-    assert ob.StringField == u'\uffff\uffff'
+    ob.StringField = System.String("\uffff\uffff")
+    assert ob.StringField == "\uffff\uffff"
 
     ob.StringField = None
     assert ob.StringField is None
@@ -517,7 +521,7 @@ def test_string_conversion():
         ConversionTest().StringField = 1
 
     world = UnicodeString()
-    test_unicode_str = u"안녕"
+    test_unicode_str = "안녕"
     assert test_unicode_str == str(world.value)
     assert test_unicode_str == str(world.GetString())
     assert test_unicode_str == str(world)
@@ -574,12 +578,13 @@ def test_object_conversion():
 
     class Foo(object):
         pass
+
     ob.ObjectField = Foo
     assert ob.ObjectField == Foo
 
     class PseudoSeq:
         def __getitem__(self, idx):
-           return 0
+            return 0
 
     ob.ObjectField = PseudoSeq()
     assert ob.ObjectField.__class__.__name__ == "PseudoSeq"
@@ -600,7 +605,7 @@ def test_null_conversion():
     ob.SpamField = None
     assert ob.SpamField is None
 
-    pi = 22/7
+    pi = 22 / 7
     assert ob.Echo[System.Double](pi) == pi
     assert ob.Echo[System.DateTime](None) is None
 
@@ -650,23 +655,30 @@ def test_sbyte_array_conversion():
     for i, _ in enumerate(value):
         assert array[i] == operator.getitem(value, i)
 
+
 def test_codecs():
     """Test codec registration from Python"""
+
     class ListAsRawEncoder(RawProxyEncoder):
         __namespace__ = "Python.Test"
+
         def CanEncode(self, clr_type):
-            return clr_type.Name == "List`1" and clr_type.Namespace == "System.Collections.Generic"
+            return (
+                clr_type.Name == "List`1"
+                and clr_type.Namespace == "System.Collections.Generic"
+            )
 
     list_raw_encoder = ListAsRawEncoder()
     PyObjectConversions.RegisterEncoder(list_raw_encoder)
 
     ob = ConversionTest()
 
-    l = ob.ListField
-    l.Add(42)
+    lst = ob.ListField
+    lst.Add(42)
     assert ob.ListField.Count == 1
 
     CodecResetter.Reset()
+
 
 def test_int_param_resolution_required():
     """Test resolution of `int` parameters when resolution is needed"""
@@ -680,12 +692,14 @@ def test_int_param_resolution_required():
     assert len(data) == 10
     assert data[0] == 0
 
+
 def test_iconvertible_conversion():
     change_type = System.Convert.ChangeType
 
     assert 1024 == change_type(1024, System.Int32)
     assert 1024 == change_type(1024, System.Int64)
     assert 1024 == change_type(1024, System.Int16)
+
 
 def test_intptr_construction():
     from System import IntPtr, UIntPtr, Int64, UInt64
@@ -720,11 +734,10 @@ def test_intptr_construction():
         with pytest.raises(OverflowError):
             UIntPtr(v)
 
+
 def test_explicit_conversion():
     from operator import index
-    from System import (
-        Int64, UInt64, Int32, UInt32, Int16, UInt16, Byte, SByte, Boolean
-    )
+    from System import Int64, UInt64, Int32, UInt32, Int16, UInt16, Byte, SByte, Boolean
     from System import Double, Single
 
     assert int(Boolean(False)) == 0
@@ -744,7 +757,7 @@ def test_explicit_conversion():
         assert float(t(-127)) == -127.0
 
     assert int(Int64(Int64.MaxValue)) == 2**63 - 1
-    assert int(Int64(Int64.MinValue)) == -2**63
+    assert int(Int64(Int64.MinValue)) == -(2**63)
     assert int(UInt64(UInt64.MaxValue)) == 2**64 - 1
 
     for t in [Single, Double]:

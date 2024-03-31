@@ -15,7 +15,7 @@ def dprint(msg):
 
 
 def is_clr_module(ob):
-    return type(ob).__name__ == 'ModuleObject'
+    return type(ob).__name__ == "ModuleObject"
 
 
 def is_clr_root_module(ob):
@@ -24,7 +24,9 @@ def is_clr_root_module(ob):
 
 
 def is_clr_class(ob):
-    return type(ob).__name__ == 'CLRMetatype' and type(ob).__module__ == 'clr._internal'  # for now
+    return (
+        type(ob).__name__ == "CLRMetatype" and type(ob).__module__ == "clr._internal"
+    )  # for now
 
 
 class ClassicClass:
@@ -112,7 +114,7 @@ class MultipleHandler(object):
 
     def count(self):
         self.value += 1
-        return 'ok'
+        return "ok"
 
 
 class HelloClass(object):

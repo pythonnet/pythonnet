@@ -50,6 +50,8 @@ def test_run_string():
 
     PythonEngine.ReleaseLock()
 
+
 def test_leak_type():
     import clr
+
     sys._leaked_intptr = clr.GetClrType(System.IntPtr)

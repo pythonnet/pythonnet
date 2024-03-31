@@ -80,6 +80,7 @@ def pytest_configure(config):
     )
 
     import os
+
     os.environ["PYTHONNET_RUNTIME"] = runtime_opt
     for k, v in runtime_params.items():
         os.environ[f"PYTHONNET_{runtime_opt.upper()}_{k.upper()}"] = v

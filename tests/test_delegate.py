@@ -14,8 +14,8 @@ def test_delegate_standard_attrs():
     """Test standard delegate attributes."""
     from Python.Test import PublicDelegate
 
-    assert PublicDelegate.__name__ == 'PublicDelegate'
-    assert PublicDelegate.__module__ == 'Python.Test'
+    assert PublicDelegate.__name__ == "PublicDelegate"
+    assert PublicDelegate.__module__ == "Python.Test"
     assert isinstance(PublicDelegate.__dict__, DictProxyType)
     assert PublicDelegate.__doc__ is None
 
@@ -24,11 +24,12 @@ def test_global_delegate_visibility():
     """Test visibility of module-level delegates."""
     from Python.Test import PublicDelegate
 
-    assert PublicDelegate.__name__ == 'PublicDelegate'
-    assert Test.PublicDelegate.__name__ == 'PublicDelegate'
+    assert PublicDelegate.__name__ == "PublicDelegate"
+    assert Test.PublicDelegate.__name__ == "PublicDelegate"
 
     with pytest.raises(ImportError):
         from Python.Test import InternalDelegate
+
         _ = InternalDelegate
 
     with pytest.raises(AttributeError):
@@ -38,10 +39,10 @@ def test_global_delegate_visibility():
 def test_nested_delegate_visibility():
     """Test visibility of nested delegates."""
     ob = DelegateTest.PublicDelegate
-    assert ob.__name__ == 'PublicDelegate'
+    assert ob.__name__ == "PublicDelegate"
 
     ob = DelegateTest.ProtectedDelegate
-    assert ob.__name__ == 'ProtectedDelegate'
+    assert ob.__name__ == "ProtectedDelegate"
 
     with pytest.raises(AttributeError):
         _ = DelegateTest.InternalDelegate
@@ -227,6 +228,7 @@ def test_subclass_delegate_fails():
     from Python.Test import PublicDelegate
 
     with pytest.raises(TypeError):
+
         class Boom(PublicDelegate):
             pass
 
@@ -258,9 +260,11 @@ def test_bool_delegate():
 
     def always_so_positive():
         return 1
+
     bad = BoolDelegate(always_so_positive)
     with pytest.raises(TypeError):
         ob.CallBoolDelegate(bad)
+
 
 def test_object_delegate():
     """Test object delegate."""
@@ -273,6 +277,7 @@ def test_object_delegate():
     ob = DelegateTest()
     ob.CallObjectDelegate(d)
 
+
 def test_invalid_object_delegate():
     """Test invalid object delegate with mismatched return type."""
     from Python.Test import ObjectDelegate
@@ -282,9 +287,11 @@ def test_invalid_object_delegate():
     with pytest.raises(TypeError):
         ob.CallObjectDelegate(d)
 
+
 def test_out_int_delegate():
     """Test delegate with an out int parameter."""
     from Python.Test import OutIntDelegate
+
     value = 7
 
     def out_hello_func(ignored):
@@ -299,31 +306,35 @@ def test_out_int_delegate():
     assert result == 5
 
     def invalid_handler(ignored):
-        return '5'
+        return "5"
 
     d = OutIntDelegate(invalid_handler)
     with pytest.raises(TypeError):
         result = d(value)
 
+
 def test_out_string_delegate():
     """Test delegate with an out string parameter."""
     from Python.Test import OutStringDelegate
-    value = 'goodbye'
+
+    value = "goodbye"
 
     def out_hello_func(ignored):
-        return 'hello'
+        return "hello"
 
     d = OutStringDelegate(out_hello_func)
     result = d(value)
-    assert result == 'hello'
+    assert result == "hello"
 
     ob = DelegateTest()
     result = ob.CallOutStringDelegate(d, value)
-    assert result == 'hello'
+    assert result == "hello"
+
 
 def test_ref_int_delegate():
     """Test delegate with a ref string parameter."""
     from Python.Test import RefIntDelegate
+
     value = 7
 
     def ref_hello_func(data):
@@ -338,44 +349,48 @@ def test_ref_int_delegate():
     result = ob.CallRefIntDelegate(d, value)
     assert result == value + 1
 
+
 def test_ref_string_delegate():
     """Test delegate with a ref string parameter."""
     from Python.Test import RefStringDelegate
-    value = 'goodbye'
+
+    value = "goodbye"
 
     def ref_hello_func(data):
         assert data == value
-        return 'hello'
+        return "hello"
 
     d = RefStringDelegate(ref_hello_func)
     result = d(value)
-    assert result == 'hello'
+    assert result == "hello"
 
     ob = DelegateTest()
     result = ob.CallRefStringDelegate(d, value)
-    assert result == 'hello'
+    assert result == "hello"
+
 
 def test_ref_int_ref_string_delegate():
     """Test delegate with a ref int and ref string parameter."""
     from Python.Test import RefIntRefStringDelegate
+
     intData = 7
-    stringData = 'goodbye'
+    stringData = "goodbye"
 
     def ref_hello_func(intValue, stringValue):
         assert intData == intValue
         assert stringData == stringValue
-        return (intValue + 1, stringValue + '!')
+        return (intValue + 1, stringValue + "!")
 
     d = RefIntRefStringDelegate(ref_hello_func)
     result = d(intData, stringData)
-    assert result == (intData + 1, stringData + '!')
+    assert result == (intData + 1, stringData + "!")
 
     ob = DelegateTest()
     result = ob.CallRefIntRefStringDelegate(d, intData, stringData)
-    assert result == (intData + 1, stringData + '!')
+    assert result == (intData + 1, stringData + "!")
 
     def not_a_tuple(intValue, stringValue):
-        return 'a'
+        return "a"
 
     d = RefIntRefStringDelegate(not_a_tuple)
     with pytest.raises(TypeError):
@@ -389,40 +404,42 @@ def test_ref_int_ref_string_delegate():
         result = d(intData, stringData)
 
     def long_tuple(intValue, stringValue):
-        return (5, 'a', 'b')
+        return (5, "a", "b")
 
     d = RefIntRefStringDelegate(long_tuple)
     with pytest.raises(TypeError):
         result = d(intData, stringData)
 
     def wrong_tuple_item(intValue, stringValue):
-        return ('a', 'b')
+        return ("a", "b")
 
     d = RefIntRefStringDelegate(wrong_tuple_item)
     with pytest.raises(TypeError):
         result = d(intData, stringData)
 
+
 def test_int_ref_int_ref_string_delegate():
     """Test delegate with a ref int and ref string parameter."""
     from Python.Test import IntRefIntRefStringDelegate
+
     intData = 7
-    stringData = 'goodbye'
+    stringData = "goodbye"
 
     def ref_hello_func(intValue, stringValue):
         assert intData == intValue
         assert stringData == stringValue
-        return (intValue + len(stringValue), intValue + 1, stringValue + '!')
+        return (intValue + len(stringValue), intValue + 1, stringValue + "!")
 
     d = IntRefIntRefStringDelegate(ref_hello_func)
     result = d(intData, stringData)
-    assert result == (intData + len(stringData), intData + 1, stringData + '!')
+    assert result == (intData + len(stringData), intData + 1, stringData + "!")
 
     ob = DelegateTest()
     result = ob.CallIntRefIntRefStringDelegate(d, intData, stringData)
-    assert result == (intData + len(stringData), intData + 1, stringData + '!')
+    assert result == (intData + len(stringData), intData + 1, stringData + "!")
 
     def not_a_tuple(intValue, stringValue):
-        return 'a'
+        return "a"
 
     d = IntRefIntRefStringDelegate(not_a_tuple)
     with pytest.raises(TypeError):
@@ -436,7 +453,7 @@ def test_int_ref_int_ref_string_delegate():
         result = d(intData, stringData)
 
     def wrong_return_type(intValue, stringValue):
-        return ('a', 7, 'b')
+        return ("a", 7, "b")
 
     d = IntRefIntRefStringDelegate(wrong_return_type)
     with pytest.raises(TypeError):
