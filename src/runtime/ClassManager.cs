@@ -448,21 +448,21 @@ namespace Python.Runtime
                         if (name == "__init__" && !impl.HasCustomNew())
                             continue;
 
-                        List<MethodBase> methodList;
-                        var names = new List<string> { name };
+                        if (!methods.TryGetValue(name, out var methodList))
+                        {
+                            methodList = methods[name] = new List<MethodBase>();
+                        }
+                        methodList.Add(meth);
+
                         if (!meth.IsSpecialName && !OperatorMethod.IsOperatorMethod(meth))
                         {
-                            names.Add(name.ToSnakeCase());
-                        }
-                        foreach (var currentName in names.Distinct())
-                        {
-                            if (!methods.TryGetValue(currentName, out methodList))
+                            name = name.ToSnakeCase();
+                            if (!methods.TryGetValue(name, out methodList))
                             {
-                                methodList = methods[currentName] = new List<MethodBase>();
+                                methodList = methods[name] = new List<MethodBase>();
                             }
                             methodList.Add(meth);
                         }
-
                         continue;
 
                     case MemberTypes.Constructor when !impl.HasCustomNew():
@@ -514,6 +514,7 @@ namespace Python.Runtime
                         }
                         ob = new FieldObject(fi);
                         ci.members[mi.Name] = ob.AllocObject();
+                        ci.members[mi.Name.ToSnakeCase()] = ob.AllocObject();
                         continue;
 
                     case MemberTypes.Event:
