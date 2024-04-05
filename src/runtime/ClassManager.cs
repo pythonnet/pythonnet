@@ -448,11 +448,21 @@ namespace Python.Runtime
                         if (name == "__init__" && !impl.HasCustomNew())
                             continue;
 
-                        if (!methods.TryGetValue(name, out var methodList))
+                        List<MethodBase> methodList;
+                        var names = new List<string> { name };
+                        if (!meth.IsSpecialName && !OperatorMethod.IsOperatorMethod(meth))
                         {
-                            methodList = methods[name] = new List<MethodBase>();
+                            names.Add(name.ToSnakeCase());
                         }
-                        methodList.Add(meth);
+                        foreach (var currentName in names.Distinct())
+                        {
+                            if (!methods.TryGetValue(currentName, out methodList))
+                            {
+                                methodList = methods[currentName] = new List<MethodBase>();
+                            }
+                            methodList.Add(meth);
+                        }
+
                         continue;
 
                     case MemberTypes.Constructor when !impl.HasCustomNew():
