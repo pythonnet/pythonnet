@@ -41,6 +41,10 @@ namespace Python.EmbeddingTest
 
             public static string SettablePublicStaticStringField = "settable_public_static_string_field";
 
+            public string PublicStringProperty { get; set; } = "public_string_property";
+            public static string PublicStaticStringProperty { get; set; } = "public_static_string_property";
+
+
             public int AddNumbersAndGetHalf(int a, int b)
             {
                 return (a + b) / 2;
@@ -142,6 +146,77 @@ def SetSnakeCaseStaticProperty(value):
                 using var pyNewValue2 = newValue2.ToPython();
                 module.InvokeMethod("SetSnakeCaseStaticProperty", pyNewValue2);
                 Assert.AreEqual(newValue2, SnakeCaseNamesTesClass.PublicStaticStringField);
+            }
+        }
+
+        [TestCase("PublicStringProperty", "public_string_property")]
+        [TestCase("PublicStaticStringProperty", "public_static_string_property")]
+        public void BindsSnakeCaseClassProperties(string originalPropertyName, string snakeCasePropertyName)
+        {
+            using var obj = new SnakeCaseNamesTesClass().ToPython();
+            var expectedValue = originalPropertyName switch
+            {
+                "PublicStringProperty" => "public_string_property",
+                "PublicStaticStringProperty" => "public_static_string_property",
+                _ => throw new ArgumentException("Invalid property name")
+            };
+
+            var originalPropertyValue = obj.GetAttr(originalPropertyName).As<string>();
+            var snakeCasePropertyValue = obj.GetAttr(snakeCasePropertyName).As<string>();
+
+            Assert.AreEqual(expectedValue, originalPropertyValue);
+            Assert.AreEqual(expectedValue, snakeCasePropertyValue);
+        }
+
+        [Test]
+        public void CanSetPropertyUsingSnakeCaseName()
+        {
+            var obj = new SnakeCaseNamesTesClass();
+            using var pyObj = obj.ToPython();
+
+            // Try with the original property name
+            var newValue1 = "new value 1";
+            using var pyNewValue1 = newValue1.ToPython();
+            pyObj.SetAttr("PublicStringProperty", pyNewValue1);
+            Assert.AreEqual(newValue1, obj.PublicStringProperty);
+
+            // Try with the snake case property name
+            var newValue2 = "new value 2";
+            using var pyNewValue2 = newValue2.ToPython();
+            pyObj.SetAttr("public_string_property", pyNewValue2);
+            Assert.AreEqual(newValue2, obj.PublicStringProperty);
+        }
+
+        [Test]
+        public void CanSetStaticPropertyUsingSnakeCaseName()
+        {
+            using (Py.GIL())
+            {
+                var module = PyModule.FromString("module", $@"
+from clr import AddReference
+AddReference(""Python.EmbeddingTest"")
+AddReference(""System"")
+
+from Python.EmbeddingTest import *
+
+def SetCamelCaseStaticProperty(value):
+    ClassManagerTests.SnakeCaseNamesTesClass.PublicStaticStringProperty = value
+
+def SetSnakeCaseStaticProperty(value):
+    ClassManagerTests.SnakeCaseNamesTesClass.public_static_string_property = value
+                    ");
+
+                // Try with the original property name
+                var newValue1 = "new value 1";
+                using var pyNewValue1 = newValue1.ToPython();
+                module.InvokeMethod("SetCamelCaseStaticProperty", pyNewValue1);
+                Assert.AreEqual(newValue1, SnakeCaseNamesTesClass.PublicStaticStringProperty);
+
+                // Try with the snake case property name
+                var newValue2 = "new value 2";
+                using var pyNewValue2 = newValue2.ToPython();
+                module.InvokeMethod("SetSnakeCaseStaticProperty", pyNewValue2);
+                Assert.AreEqual(newValue2, SnakeCaseNamesTesClass.PublicStaticStringProperty);
             }
         }
 

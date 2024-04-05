@@ -504,6 +504,7 @@ namespace Python.Runtime
 
                         ob = new PropertyObject(pi);
                         ci.members[pi.Name] = ob.AllocObject();
+                        ci.members[pi.Name.ToSnakeCase()] = ob.AllocObject();
                         continue;
 
                     case MemberTypes.Field:
@@ -514,6 +515,7 @@ namespace Python.Runtime
                         }
                         ob = new FieldObject(fi);
                         ci.members[mi.Name] = ob.AllocObject();
+                        // TODO: Upper-case constants?
                         ci.members[mi.Name.ToSnakeCase()] = ob.AllocObject();
                         continue;
 
