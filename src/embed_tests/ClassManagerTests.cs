@@ -44,6 +44,18 @@ namespace Python.EmbeddingTest
             public string PublicStringProperty { get; set; } = "public_string_property";
             public static string PublicStaticStringProperty { get; set; } = "public_static_string_property";
 
+            public event EventHandler<string> PublicStringEvent;
+            public static event EventHandler<string> PublicStaticStringEvent;
+
+            public void InvokePublicStringEvent(string value)
+            {
+                PublicStringEvent?.Invoke(this, value);
+            }
+
+            public static void InvokePublicStaticStringEvent(string value)
+            {
+                PublicStaticStringEvent?.Invoke(null, value);
+            }
 
             public int AddNumbersAndGetHalf(int a, int b)
             {
@@ -124,7 +136,6 @@ namespace Python.EmbeddingTest
                 var module = PyModule.FromString("module", $@"
 from clr import AddReference
 AddReference(""Python.EmbeddingTest"")
-AddReference(""System"")
 
 from Python.EmbeddingTest import *
 
@@ -195,7 +206,6 @@ def SetSnakeCaseStaticProperty(value):
                 var module = PyModule.FromString("module", $@"
 from clr import AddReference
 AddReference(""Python.EmbeddingTest"")
-AddReference(""System"")
 
 from Python.EmbeddingTest import *
 
@@ -217,6 +227,74 @@ def SetSnakeCaseStaticProperty(value):
                 using var pyNewValue2 = newValue2.ToPython();
                 module.InvokeMethod("SetSnakeCaseStaticProperty", pyNewValue2);
                 Assert.AreEqual(newValue2, SnakeCaseNamesTesClass.PublicStaticStringProperty);
+            }
+        }
+
+        [TestCase("PublicStringEvent")]
+        [TestCase("public_string_event")]
+        public void BindsSnakeCaseEvents(string eventName)
+        {
+            var obj = new SnakeCaseNamesTesClass();
+            using var pyObj = obj.ToPython();
+
+            var value = "";
+            var eventHandler = new EventHandler<string>((sender, arg) => { value = arg; });
+
+            // Try with the original event name
+            using (Py.GIL())
+            {
+                var module = PyModule.FromString("module", $@"
+def AddEventHandler(obj, handler):
+    obj.{eventName} += handler
+
+def RemoveEventHandler(obj, handler):
+    obj.{eventName} -= handler
+                    ");
+
+                using var pyEventHandler = eventHandler.ToPython();
+
+                module.InvokeMethod("AddEventHandler", pyObj, pyEventHandler);
+                obj.InvokePublicStringEvent("new value 1");
+                Assert.AreEqual("new value 1", value);
+
+                module.InvokeMethod("RemoveEventHandler", pyObj, pyEventHandler);
+                obj.InvokePublicStringEvent("new value 2");
+                Assert.AreEqual("new value 1", value); // Should not have changed
+            }
+        }
+
+        [TestCase("PublicStaticStringEvent")]
+        [TestCase("public_static_string_event")]
+        public void BindsSnakeCaseStaticEvents(string eventName)
+        {
+            var value = "";
+            var eventHandler = new EventHandler<string>((sender, arg) => { value = arg; });
+
+            // Try with the original event name
+            using (Py.GIL())
+            {
+                var module = PyModule.FromString("module", $@"
+from clr import AddReference
+AddReference(""Python.EmbeddingTest"")
+
+from Python.EmbeddingTest import *
+
+def AddEventHandler(handler):
+    ClassManagerTests.SnakeCaseNamesTesClass.{eventName} += handler
+
+def RemoveEventHandler(handler):
+    ClassManagerTests.SnakeCaseNamesTesClass.{eventName} -= handler
+                    ");
+
+                using var pyEventHandler = eventHandler.ToPython();
+
+                module.InvokeMethod("AddEventHandler", pyEventHandler);
+                SnakeCaseNamesTesClass.InvokePublicStaticStringEvent("new value 1");
+                Assert.AreEqual("new value 1", value);
+
+                module.InvokeMethod("RemoveEventHandler", pyEventHandler);
+                SnakeCaseNamesTesClass.InvokePublicStaticStringEvent("new value 2");
+                Assert.AreEqual("new value 1", value); // Should not have changed
             }
         }
 

@@ -529,6 +529,7 @@ namespace Python.Runtime
                             ? new EventBinding(ei)
                             : new EventObject(ei);
                         ci.members[ei.Name] = ob.AllocObject();
+                        ci.members[ei.Name.ToSnakeCase()] = ob.AllocObject();
                         continue;
 
                     case MemberTypes.NestedType:
