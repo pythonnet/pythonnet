@@ -515,8 +515,13 @@ namespace Python.Runtime
                         }
                         ob = new FieldObject(fi);
                         ci.members[mi.Name] = ob.AllocObject();
-                        // TODO: Upper-case constants?
-                        ci.members[mi.Name.ToSnakeCase()] = ob.AllocObject();
+
+                        var pepName = fi.Name.ToSnakeCase();
+                        if (fi.IsLiteral || fi.IsInitOnly)
+                        {
+                            pepName = pepName.ToUpper();
+                        }
+                        ci.members[pepName] = ob.AllocObject();
                         continue;
 
                     case MemberTypes.Event:

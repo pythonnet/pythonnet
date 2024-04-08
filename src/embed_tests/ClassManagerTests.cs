@@ -31,6 +31,13 @@ namespace Python.EmbeddingTest
 
         #region Snake case naming tests
 
+        public enum SnakeCaseEnum
+        {
+            EnumValue1,
+            EnumValue2,
+            EnumValue3
+        }
+
         public class SnakeCaseNamesTesClass
         {
             // Purposely long names to test snake case conversion
@@ -48,6 +55,8 @@ namespace Python.EmbeddingTest
 
             public event EventHandler<string> PublicStringEvent;
             public static event EventHandler<string> PublicStaticStringEvent;
+
+            public SnakeCaseEnum EnumValue = SnakeCaseEnum.EnumValue2;
 
             public void InvokePublicStringEvent(string value)
             {
@@ -100,10 +109,11 @@ namespace Python.EmbeddingTest
         }
 
         [TestCase("PublicStringField", "public_string_field")]
-        [TestCase("PublicConstStringField", "public_const_string_field")]
-        [TestCase("PublicReadonlyStringField", "public_readonly_string_field")]
         [TestCase("PublicStaticStringField", "public_static_string_field")]
-        [TestCase("PublicStaticReadonlyStringField", "public_static_readonly_string_field")]
+        // Constants
+        [TestCase("PublicConstStringField", "PUBLIC_CONST_STRING_FIELD")]
+        [TestCase("PublicReadonlyStringField", "PUBLIC_READONLY_STRING_FIELD")]
+        [TestCase("PublicStaticReadonlyStringField", "PUBLIC_STATIC_READONLY_STRING_FIELD")]
         public void BindsSnakeCaseClassFields(string originalFieldName, string snakeCaseFieldName)
         {
             using var obj = new SnakeCaseNamesTesClass().ToPython();
@@ -398,6 +408,59 @@ def RemoveEventHandler(handler):
             var result = obj.InvokeMethod(methodName, pyArgs, pyNamedArgs).As<string>();
 
             Assert.AreEqual("string-c-1-2-3-4.0-True-01052013", result);
+        }
+
+        [Test]
+        public void BindsEnumValuesWithPEPStyleNaming([Values] bool useSnakeCased)
+        {
+            using (Py.GIL())
+            {
+                var module = PyModule.FromString("module", $@"
+from clr import AddReference
+AddReference(""Python.EmbeddingTest"")
+
+from Python.EmbeddingTest import *
+
+def SetEnumValue1(obj):
+    obj.EnumValue = ClassManagerTests.SnakeCaseEnum.EnumValue1
+
+def SetEnumValue2(obj):
+    obj.EnumValue = ClassManagerTests.SnakeCaseEnum.EnumValue2
+
+def SetEnumValue3(obj):
+    obj.EnumValue = ClassManagerTests.SnakeCaseEnum.EnumValue3
+
+def SetEnumValue1SnakeCase(obj):
+    obj.enum_value = ClassManagerTests.SnakeCaseEnum.ENUM_VALUE1
+
+def SetEnumValue2SnakeCase(obj):
+    obj.enum_value = ClassManagerTests.SnakeCaseEnum.ENUM_VALUE2
+
+def SetEnumValue3SnakeCase(obj):
+    obj.enum_value = ClassManagerTests.SnakeCaseEnum.ENUM_VALUE3
+                    ");
+
+                using var obj = new SnakeCaseNamesTesClass().ToPython();
+
+                if (useSnakeCased)
+                {
+                    module.InvokeMethod("SetEnumValue1SnakeCase", obj);
+                    Assert.AreEqual(SnakeCaseEnum.EnumValue1, obj.GetAttr("enum_value").As<SnakeCaseEnum>());
+                    module.InvokeMethod("SetEnumValue2SnakeCase", obj);
+                    Assert.AreEqual(SnakeCaseEnum.EnumValue2, obj.GetAttr("enum_value").As<SnakeCaseEnum>());
+                    module.InvokeMethod("SetEnumValue3SnakeCase", obj);
+                    Assert.AreEqual(SnakeCaseEnum.EnumValue3, obj.GetAttr("enum_value").As<SnakeCaseEnum>());
+                }
+                else
+                {
+                    module.InvokeMethod("SetEnumValue1", obj);
+                    Assert.AreEqual(SnakeCaseEnum.EnumValue1, obj.GetAttr("EnumValue").As<SnakeCaseEnum>());
+                    module.InvokeMethod("SetEnumValue2", obj);
+                    Assert.AreEqual(SnakeCaseEnum.EnumValue2, obj.GetAttr("EnumValue").As<SnakeCaseEnum>());
+                    module.InvokeMethod("SetEnumValue3", obj);
+                    Assert.AreEqual(SnakeCaseEnum.EnumValue3, obj.GetAttr("EnumValue").As<SnakeCaseEnum>());
+                }
+            }
         }
 
         #endregion

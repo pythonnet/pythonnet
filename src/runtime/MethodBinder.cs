@@ -452,8 +452,8 @@ namespace Python.Runtime
                 // Relevant method variables
                 var mi = methodInformation.MethodBase;
                 var pi = methodInformation.ParameterInfo;
+                var paramNames = methodInformation.ParametersNames;
                 int pyArgCount = (int)Runtime.PyTuple_Size(args);
-
 
                 // Special case for operators
                 bool isOperator = OperatorMethod.IsOperatorMethod(mi);
@@ -479,15 +479,12 @@ namespace Python.Runtime
 
                 // Must be done after IsOperator section
                 int clrArgCount = pi.Length;
-                var parametersSnakeCasedNames = kwArgDict == null || methodInformation.IsOriginal
-                    ? null
-                    : pi.Select(p => p.Name.ToSnakeCase()).ToArray();
 
                 if (CheckMethodArgumentsMatch(clrArgCount,
                     pyArgCount,
                     kwArgDict,
                     pi,
-                    parametersSnakeCasedNames,
+                    paramNames,
                     out bool paramsArray,
                     out ArrayList defaultArgList))
                 {
@@ -506,13 +503,8 @@ namespace Python.Runtime
                         object arg;                         // Python -> Clr argument
 
                         // Check our KWargs for this parameter
-                        var hasNamedParam = false;
-                        if (kwArgDict != null)
-                        {
-                            var paramName = methodInformation.IsOriginal ? parameter.Name : parametersSnakeCasedNames[paramIndex];
-                            hasNamedParam = kwArgDict.TryGetValue(paramName, out tempPyObject);
-                        }
-                        if(tempPyObject != null)
+                        bool hasNamedParam = kwArgDict == null ? false : kwArgDict.TryGetValue(paramNames[paramIndex], out tempPyObject);
+                        if (tempPyObject != null)
                         {
                             op = tempPyObject;
                         }
@@ -776,11 +768,16 @@ namespace Python.Runtime
         /// This helper method will perform an initial check to determine if we found a matching
         /// method based on its parameters count and type <see cref="Bind(IntPtr,IntPtr,IntPtr,MethodBase,MethodInfo[])"/>
         /// </summary>
+        /// <remarks>
+        /// We required both the parameters info and the parameters names to perform this check.
+        /// The CLR method parameters info is required to match the parameters count and type.
+        /// The names are required to perform an accurate match, since the method can be the snake-cased version.
+        /// </remarks>
         private bool CheckMethodArgumentsMatch(int clrArgCount,
             int pyArgCount,
             Dictionary<string, PyObject> kwargDict,
             ParameterInfo[] parameterInfo,
-            string[] parametersSnakeCasedNames,
+            string[] parameterNames,
             out bool paramsArray,
             out ArrayList defaultArgList)
         {
@@ -803,9 +800,7 @@ namespace Python.Runtime
             {
                 // If the method doesn't have all of these kw args, it is not a match
                 // Otherwise just continue on to see if it is a match
-                if (!kwargDict.All(x => parametersSnakeCasedNames == null
-                        ? parameterInfo.Any(pi => x.Key == pi.Name)
-                        : parametersSnakeCasedNames.Any(paramName => x.Key == paramName)))
+                if (!kwargDict.All(x => parameterNames.Any(paramName => x.Key == paramName)))
                 {
                     return false;
                 }
@@ -825,7 +820,7 @@ namespace Python.Runtime
                 defaultArgList = new ArrayList();
                 for (var v = pyArgCount; v < clrArgCount && match; v++)
                 {
-                    if (kwargDict != null && kwargDict.ContainsKey(parametersSnakeCasedNames == null ? parameterInfo[v].Name : parametersSnakeCasedNames[v]))
+                    if (kwargDict != null && kwargDict.ContainsKey(parameterNames[v]))
                     {
                         // we have a keyword argument for this parameter,
                         // no need to check for a default parameter, but put a null
@@ -996,6 +991,8 @@ namespace Python.Runtime
 
             public bool IsOriginal { get; }
 
+            public string[] ParametersNames { get; }
+
             public MethodInformation(MethodBase methodBase, ParameterInfo[] parameterInfo)
                 : this(methodBase, parameterInfo, true)
             {
@@ -1006,6 +1003,15 @@ namespace Python.Runtime
                 MethodBase = methodBase;
                 ParameterInfo = parameterInfo;
                 IsOriginal = isOriginal;
+
+                if (isOriginal)
+                {
+                    ParametersNames = ParameterInfo.Select(pi => pi.Name).ToArray();
+                }
+                else
+                {
+                    ParametersNames = ParameterInfo.Select(pi => pi.Name.ToSnakeCase()).ToArray();
+                }
             }
 
             public override string ToString()
