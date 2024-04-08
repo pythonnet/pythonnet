@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 using NUnit.Framework;
 
@@ -65,6 +67,20 @@ namespace Python.EmbeddingTest
             public static int AddNumbersAndGetHalf_Static(int a, int b)
             {
                 return (a + b) / 2;
+            }
+
+            public string JoinToString(string thisIsAStringParameter,
+                char thisIsACharParameter,
+                int thisIsAnIntParameter,
+                float thisIsAFloatParameter,
+                double thisIsADoubleParameter,
+                decimal thisIsADecimalParameter,
+                bool thisIsABoolParameter,
+                DateTime thisIsADateTimeParameter)
+            {
+                // Join all parameters into a single string separated by "-"
+                return string.Join("-", thisIsAStringParameter, thisIsACharParameter, thisIsAnIntParameter, thisIsAFloatParameter,
+                    thisIsADoubleParameter, thisIsADecimalParameter, thisIsABoolParameter, string.Format("{0:MMddyyyy}", thisIsADateTimeParameter));
             }
         }
 
@@ -296,6 +312,92 @@ def RemoveEventHandler(handler):
                 SnakeCaseNamesTesClass.InvokePublicStaticStringEvent("new value 2");
                 Assert.AreEqual("new value 1", value); // Should not have changed
             }
+        }
+
+        private static IEnumerable<TestCaseData> SnakeCasedNamedArgsTestCases
+        {
+            get
+            {
+                var stringParam = "string";
+                var charParam = 'c';
+                var intParam = 1;
+                var floatParam = 2.0f;
+                var doubleParam = 3.0;
+                var decimalParam = 4.0m;
+                var boolParam = true;
+                var dateTimeParam = new DateTime(2013, 01, 05);
+
+                // 1. All kwargs:
+
+                // 1.1. Original method name:
+                var args = Array.Empty<object>();
+                var namedArgs = new Dictionary<string, object>()
+            {
+                { "thisIsAStringParameter", stringParam },
+                { "thisIsACharParameter", charParam },
+                { "thisIsAnIntParameter", intParam },
+                { "thisIsAFloatParameter", floatParam },
+                { "thisIsADoubleParameter", doubleParam },
+                { "thisIsADecimalParameter", decimalParam },
+                { "thisIsABoolParameter", boolParam },
+                { "thisIsADateTimeParameter", dateTimeParam }
+            };
+                yield return new TestCaseData("JoinToString", args, namedArgs);
+
+                // 1.2. Snake-cased method name:
+                namedArgs = new Dictionary<string, object>()
+            {
+                { "this_is_a_string_parameter", stringParam },
+                { "this_is_a_char_parameter", charParam },
+                { "this_is_an_int_parameter", intParam },
+                { "this_is_a_float_parameter", floatParam },
+                { "this_is_a_double_parameter", doubleParam },
+                { "this_is_a_decimal_parameter", decimalParam },
+                { "this_is_a_bool_parameter", boolParam },
+                { "this_is_a_date_time_parameter", dateTimeParam }
+            };
+                yield return new TestCaseData("join_to_string", args, namedArgs);
+
+                // 2. Some args and some kwargs:
+
+                // 2.1. Original method name:
+                args = new object[] { stringParam, charParam, intParam, floatParam };
+                namedArgs = new Dictionary<string, object>()
+            {
+                { "thisIsADoubleParameter", doubleParam },
+                { "thisIsADecimalParameter", decimalParam },
+                { "thisIsABoolParameter", boolParam },
+                { "thisIsADateTimeParameter", dateTimeParam }
+            };
+                yield return new TestCaseData("JoinToString", args, namedArgs);
+
+                // 2.2. Snake-cased method name:
+                namedArgs = new Dictionary<string, object>()
+            {
+                { "this_is_a_double_parameter", doubleParam },
+                { "this_is_a_decimal_parameter", decimalParam },
+                { "this_is_a_bool_parameter", boolParam },
+                { "this_is_a_date_time_parameter", dateTimeParam }
+            };
+                yield return new TestCaseData("join_to_string", args, namedArgs);
+            }
+        }
+
+        [TestCaseSource(nameof(SnakeCasedNamedArgsTestCases))]
+        public void CanCallSnakeCasedMethodWithSnakeCasedNamedArguments(string methodName, object[] args, Dictionary<string, object> namedArgs)
+        {
+            using var obj = new SnakeCaseNamesTesClass().ToPython();
+
+            var pyArgs = args.Select(a => a.ToPython()).ToArray();
+            using var pyNamedArgs = new PyDict();
+            foreach (var (key, value) in namedArgs)
+            {
+                pyNamedArgs[key] = value.ToPython();
+            }
+
+            var result = obj.InvokeMethod(methodName, pyArgs, pyNamedArgs).As<string>();
+
+            Assert.AreEqual("string-c-1-2-3-4.0-True-01052013", result);
         }
 
         #endregion

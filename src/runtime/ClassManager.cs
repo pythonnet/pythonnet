@@ -336,7 +336,7 @@ namespace Python.Runtime
         private static ClassInfo GetClassInfo(Type type, ClassBase impl)
         {
             var ci = new ClassInfo();
-            var methods = new Dictionary<string, List<MethodBase>>();
+            var methods = new Dictionary<string, MethodOverloads>();
             MethodInfo meth;
             ExtensionType ob;
             string name;
@@ -450,7 +450,7 @@ namespace Python.Runtime
 
                         if (!methods.TryGetValue(name, out var methodList))
                         {
-                            methodList = methods[name] = new List<MethodBase>();
+                            methodList = methods[name] = new MethodOverloads(true);
                         }
                         methodList.Add(meth);
 
@@ -459,7 +459,7 @@ namespace Python.Runtime
                             name = name.ToSnakeCase();
                             if (!methods.TryGetValue(name, out methodList))
                             {
-                                methodList = methods[name] = new List<MethodBase>();
+                                methodList = methods[name] = new MethodOverloads(false);
                             }
                             methodList.Add(meth);
                         }
@@ -475,7 +475,7 @@ namespace Python.Runtime
                         name = "__init__";
                         if (!methods.TryGetValue(name, out methodList))
                         {
-                            methodList = methods[name] = new List<MethodBase>();
+                            methodList = methods[name] = new MethodOverloads(true);
                         }
                         methodList.Add(ctor);
                         continue;
@@ -550,9 +550,9 @@ namespace Python.Runtime
             foreach (var iter in methods)
             {
                 name = iter.Key;
-                var mlist = iter.Value.ToArray();
+                var mlist = iter.Value.Methods.ToArray();
 
-                ob = new MethodObject(type, name, mlist);
+                ob = new MethodObject(type, name, mlist, isOriginal: iter.Value.IsOriginal);
                 ci.members[name] = ob.AllocObject();
                 if (mlist.Any(OperatorMethod.IsOperatorMethod))
                 {
@@ -602,6 +602,24 @@ namespace Python.Runtime
             internal ClassInfo()
             {
                 indexer = null;
+            }
+        }
+
+        private class MethodOverloads
+        {
+            public List<MethodBase> Methods { get; }
+
+            public bool IsOriginal { get; }
+
+            public MethodOverloads(bool original = true)
+            {
+                Methods = new List<MethodBase>();
+                IsOriginal = original;
+            }
+
+            public void Add(MethodBase method)
+            {
+                Methods.Add(method);
             }
         }
     }

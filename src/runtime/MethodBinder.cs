@@ -41,9 +41,14 @@ namespace Python.Runtime
 
         internal void AddMethod(MethodBase m)
         {
+            AddMethod(m, true);
+        }
+
+        internal void AddMethod(MethodBase m, bool isOriginal)
+        {
             // we added a new method so we have to re sort the method list
             init = false;
-            list.Add(new MethodInformation(m, m.GetParameters()));
+            list.Add(new MethodInformation(m, m.GetParameters(), isOriginal));
         }
 
         /// <summary>
@@ -118,7 +123,7 @@ namespace Python.Runtime
             return result.ToArray();
         }
 
-        // Given a generic method and the argsTypes previously matched with it, 
+        // Given a generic method and the argsTypes previously matched with it,
         // generate the matching method
         internal static MethodInfo ResolveGenericMethod(MethodInfo method, Object[] args)
         {
@@ -474,11 +479,15 @@ namespace Python.Runtime
 
                 // Must be done after IsOperator section
                 int clrArgCount = pi.Length;
+                var parametersSnakeCasedNames = kwArgDict == null || methodInformation.IsOriginal
+                    ? null
+                    : pi.Select(p => p.Name.ToSnakeCase()).ToArray();
 
                 if (CheckMethodArgumentsMatch(clrArgCount,
                     pyArgCount,
                     kwArgDict,
                     pi,
+                    parametersSnakeCasedNames,
                     out bool paramsArray,
                     out ArrayList defaultArgList))
                 {
@@ -497,7 +506,12 @@ namespace Python.Runtime
                         object arg;                         // Python -> Clr argument
 
                         // Check our KWargs for this parameter
-                        bool hasNamedParam = kwArgDict == null ? false : kwArgDict.TryGetValue(parameter.Name, out tempPyObject);
+                        var hasNamedParam = false;
+                        if (kwArgDict != null)
+                        {
+                            var paramName = methodInformation.IsOriginal ? parameter.Name : parametersSnakeCasedNames[paramIndex];
+                            hasNamedParam = kwArgDict.TryGetValue(paramName, out tempPyObject);
+                        }
                         if(tempPyObject != null)
                         {
                             op = tempPyObject;
@@ -766,6 +780,7 @@ namespace Python.Runtime
             int pyArgCount,
             Dictionary<string, PyObject> kwargDict,
             ParameterInfo[] parameterInfo,
+            string[] parametersSnakeCasedNames,
             out bool paramsArray,
             out ArrayList defaultArgList)
         {
@@ -788,7 +803,9 @@ namespace Python.Runtime
             {
                 // If the method doesn't have all of these kw args, it is not a match
                 // Otherwise just continue on to see if it is a match
-                if (!kwargDict.All(x => parameterInfo.Any(pi => x.Key == pi.Name)))
+                if (!kwargDict.All(x => parametersSnakeCasedNames == null
+                        ? parameterInfo.Any(pi => x.Key == pi.Name)
+                        : parametersSnakeCasedNames.Any(paramName => x.Key == paramName)))
                 {
                     return false;
                 }
@@ -808,7 +825,7 @@ namespace Python.Runtime
                 defaultArgList = new ArrayList();
                 for (var v = pyArgCount; v < clrArgCount && match; v++)
                 {
-                    if (kwargDict != null && kwargDict.ContainsKey(parameterInfo[v].Name))
+                    if (kwargDict != null && kwargDict.ContainsKey(parametersSnakeCasedNames == null ? parameterInfo[v].Name : parametersSnakeCasedNames[v]))
                     {
                         // we have a keyword argument for this parameter,
                         // no need to check for a default parameter, but put a null
@@ -977,10 +994,18 @@ namespace Python.Runtime
 
             public ParameterInfo[] ParameterInfo { get; }
 
+            public bool IsOriginal { get; }
+
             public MethodInformation(MethodBase methodBase, ParameterInfo[] parameterInfo)
+                : this(methodBase, parameterInfo, true)
+            {
+            }
+
+            public MethodInformation(MethodBase methodBase, ParameterInfo[] parameterInfo, bool isOriginal)
             {
                 MethodBase = methodBase;
                 ParameterInfo = parameterInfo;
+                IsOriginal = isOriginal;
             }
 
             public override string ToString()
