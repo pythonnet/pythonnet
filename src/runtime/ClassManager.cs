@@ -517,7 +517,7 @@ namespace Python.Runtime
                         ci.members[mi.Name] = ob.AllocObject();
 
                         var pepName = fi.Name.ToSnakeCase();
-                        if (fi.IsLiteral || fi.IsInitOnly)
+                        if (fi.IsLiteral)
                         {
                             pepName = pepName.ToUpper();
                         }

@@ -110,10 +110,10 @@ namespace Python.EmbeddingTest
 
         [TestCase("PublicStringField", "public_string_field")]
         [TestCase("PublicStaticStringField", "public_static_string_field")]
+        [TestCase("PublicReadonlyStringField", "public_readonly_string_field")]
+        [TestCase("PublicStaticReadonlyStringField", "public_static_readonly_string_field")]
         // Constants
         [TestCase("PublicConstStringField", "PUBLIC_CONST_STRING_FIELD")]
-        [TestCase("PublicReadonlyStringField", "PUBLIC_READONLY_STRING_FIELD")]
-        [TestCase("PublicStaticReadonlyStringField", "PUBLIC_STATIC_READONLY_STRING_FIELD")]
         public void BindsSnakeCaseClassFields(string originalFieldName, string snakeCaseFieldName)
         {
             using var obj = new SnakeCaseNamesTesClass().ToPython();
