@@ -83,13 +83,13 @@ namespace Python.EmbeddingTest
                 int thisIsAnIntParameter,
                 float thisIsAFloatParameter,
                 double thisIsADoubleParameter,
-                decimal thisIsADecimalParameter,
+                decimal? thisIsADecimalParameter,
                 bool thisIsABoolParameter,
-                DateTime thisIsADateTimeParameter)
+                DateTime thisIsADateTimeParameter = default)
             {
                 // Join all parameters into a single string separated by "-"
                 return string.Join("-", thisIsAStringParameter, thisIsACharParameter, thisIsAnIntParameter, thisIsAFloatParameter,
-                    thisIsADoubleParameter, thisIsADecimalParameter, thisIsABoolParameter, string.Format("{0:MMddyyyy}", thisIsADateTimeParameter));
+                    thisIsADoubleParameter, thisIsADecimalParameter ?? 123.456m, thisIsABoolParameter, string.Format("{0:MMddyyyy}", thisIsADateTimeParameter));
             }
         }
 
@@ -342,59 +342,83 @@ def RemoveEventHandler(handler):
                 // 1.1. Original method name:
                 var args = Array.Empty<object>();
                 var namedArgs = new Dictionary<string, object>()
-            {
-                { "thisIsAStringParameter", stringParam },
-                { "thisIsACharParameter", charParam },
-                { "thisIsAnIntParameter", intParam },
-                { "thisIsAFloatParameter", floatParam },
-                { "thisIsADoubleParameter", doubleParam },
-                { "thisIsADecimalParameter", decimalParam },
-                { "thisIsABoolParameter", boolParam },
-                { "thisIsADateTimeParameter", dateTimeParam }
-            };
-                yield return new TestCaseData("JoinToString", args, namedArgs);
+                {
+                    { "thisIsAStringParameter", stringParam },
+                    { "thisIsACharParameter", charParam },
+                    { "thisIsAnIntParameter", intParam },
+                    { "thisIsAFloatParameter", floatParam },
+                    { "thisIsADoubleParameter", doubleParam },
+                    { "thisIsADecimalParameter", decimalParam },
+                    { "thisIsABoolParameter", boolParam },
+                    { "thisIsADateTimeParameter", dateTimeParam }
+                };
+                var expectedResult = "string-c-1-2-3-4.0-True-01052013";
+                yield return new TestCaseData("JoinToString", args, namedArgs, expectedResult);
 
                 // 1.2. Snake-cased method name:
                 namedArgs = new Dictionary<string, object>()
-            {
-                { "this_is_a_string_parameter", stringParam },
-                { "this_is_a_char_parameter", charParam },
-                { "this_is_an_int_parameter", intParam },
-                { "this_is_a_float_parameter", floatParam },
-                { "this_is_a_double_parameter", doubleParam },
-                { "this_is_a_decimal_parameter", decimalParam },
-                { "this_is_a_bool_parameter", boolParam },
-                { "this_is_a_date_time_parameter", dateTimeParam }
-            };
-                yield return new TestCaseData("join_to_string", args, namedArgs);
+                {
+                    { "this_is_a_string_parameter", stringParam },
+                    { "this_is_a_char_parameter", charParam },
+                    { "this_is_an_int_parameter", intParam },
+                    { "this_is_a_float_parameter", floatParam },
+                    { "this_is_a_double_parameter", doubleParam },
+                    { "this_is_a_decimal_parameter", decimalParam },
+                    { "this_is_a_bool_parameter", boolParam },
+                    { "this_is_a_date_time_parameter", dateTimeParam }
+                };
+                yield return new TestCaseData("join_to_string", args, namedArgs, expectedResult);
 
                 // 2. Some args and some kwargs:
 
                 // 2.1. Original method name:
                 args = new object[] { stringParam, charParam, intParam, floatParam };
                 namedArgs = new Dictionary<string, object>()
-            {
-                { "thisIsADoubleParameter", doubleParam },
-                { "thisIsADecimalParameter", decimalParam },
-                { "thisIsABoolParameter", boolParam },
-                { "thisIsADateTimeParameter", dateTimeParam }
-            };
-                yield return new TestCaseData("JoinToString", args, namedArgs);
+                {
+                    { "thisIsADoubleParameter", doubleParam },
+                    { "thisIsADecimalParameter", decimalParam },
+                    { "thisIsABoolParameter", boolParam },
+                    { "thisIsADateTimeParameter", dateTimeParam }
+                };
+                yield return new TestCaseData("JoinToString", args, namedArgs, expectedResult);
 
                 // 2.2. Snake-cased method name:
                 namedArgs = new Dictionary<string, object>()
-            {
-                { "this_is_a_double_parameter", doubleParam },
-                { "this_is_a_decimal_parameter", decimalParam },
-                { "this_is_a_bool_parameter", boolParam },
-                { "this_is_a_date_time_parameter", dateTimeParam }
-            };
-                yield return new TestCaseData("join_to_string", args, namedArgs);
+                {
+                    { "this_is_a_double_parameter", doubleParam },
+                    { "this_is_a_decimal_parameter", decimalParam },
+                    { "this_is_a_bool_parameter", boolParam },
+                    { "this_is_a_date_time_parameter", dateTimeParam }
+                };
+                yield return new TestCaseData("join_to_string", args, namedArgs, expectedResult);
+
+                // 3. Nullable args:
+                namedArgs = new Dictionary<string, object>()
+                {
+                    { "thisIsADoubleParameter", doubleParam },
+                    { "thisIsADecimalParameter", null },
+                    { "thisIsABoolParameter", boolParam },
+                    { "thisIsADateTimeParameter", dateTimeParam }
+                };
+                expectedResult = "string-c-1-2-3-123.456-True-01052013";
+                yield return new TestCaseData("JoinToString", args, namedArgs, expectedResult);
+
+                // 4. Parameters with default values:
+                namedArgs = new Dictionary<string, object>()
+                {
+                    { "this_is_a_double_parameter", doubleParam },
+                    { "this_is_a_decimal_parameter", decimalParam },
+                    { "this_is_a_bool_parameter", boolParam },
+                    // Purposefully omitting the DateTime parameter so the default value is used
+                };
+                expectedResult = "string-c-1-2-3-4.0-True-01010001";
+                yield return new TestCaseData("join_to_string", args, namedArgs, expectedResult);
             }
         }
 
         [TestCaseSource(nameof(SnakeCasedNamedArgsTestCases))]
-        public void CanCallSnakeCasedMethodWithSnakeCasedNamedArguments(string methodName, object[] args, Dictionary<string, object> namedArgs)
+        public void CanCallSnakeCasedMethodWithSnakeCasedNamedArguments(string methodName, object[] args, Dictionary<string, object> namedArgs,
+            string expectedResult)
         {
             using var obj = new SnakeCaseNamesTesClass().ToPython();
 
@@ -407,7 +431,7 @@ def RemoveEventHandler(handler):
 
             var result = obj.InvokeMethod(methodName, pyArgs, pyNamedArgs).As<string>();
 
-            Assert.AreEqual("string-c-1-2-3-4.0-True-01052013", result);
+            Assert.AreEqual(expectedResult, result);
         }
 
         [Test]
