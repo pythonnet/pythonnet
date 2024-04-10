@@ -456,12 +456,15 @@ namespace Python.Runtime
 
                         if (!meth.IsSpecialName && !OperatorMethod.IsOperatorMethod(meth))
                         {
-                            name = name.ToSnakeCase();
-                            if (!methods.TryGetValue(name, out methodList))
+                            var snakeCasedName = name.ToSnakeCase();
+                            if (snakeCasedName != name)
                             {
-                                methodList = methods[name] = new MethodOverloads(false);
+                                if (!methods.TryGetValue(snakeCasedName, out methodList))
+                            {
+                                    methodList = methods[snakeCasedName] = new MethodOverloads(false);
                             }
                             methodList.Add(meth);
+                        }
                         }
                         continue;
 
