@@ -9,7 +9,7 @@ using System.Text;
 
 namespace Python.Runtime
 {
-    internal static class Util
+    public static class Util
     {
         internal const string UnstableApiMessage =
             "This API is unstable, and might be changed or removed in the next minor release";

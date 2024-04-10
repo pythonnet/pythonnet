@@ -985,13 +985,15 @@ namespace Python.Runtime
         [Serializable]
         internal class MethodInformation
         {
+            private Lazy<string[]> _parametersNames;
+
             public MethodBase MethodBase { get; }
 
             public ParameterInfo[] ParameterInfo { get; }
 
             public bool IsOriginal { get; }
 
-            public string[] ParametersNames { get; }
+            public string[] ParametersNames { get { return _parametersNames.Value; } }
 
             public MethodInformation(MethodBase methodBase, ParameterInfo[] parameterInfo)
                 : this(methodBase, parameterInfo, true)
@@ -1004,14 +1006,9 @@ namespace Python.Runtime
                 ParameterInfo = parameterInfo;
                 IsOriginal = isOriginal;
 
-                if (isOriginal)
-                {
-                    ParametersNames = ParameterInfo.Select(pi => pi.Name).ToArray();
-                }
-                else
-                {
-                    ParametersNames = ParameterInfo.Select(pi => pi.Name.ToSnakeCase()).ToArray();
-                }
+                _parametersNames = new Lazy<string[]>(() => IsOriginal
+                    ? ParameterInfo.Select(pi => pi.Name).ToArray()
+                    : ParameterInfo.Select(pi => pi.Name.ToSnakeCase()).ToArray());
             }
 
             public override string ToString()
