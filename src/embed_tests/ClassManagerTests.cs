@@ -91,7 +91,7 @@ namespace Python.EmbeddingTest
                 return string.Join("-", thisIsAStringParameter, thisIsACharParameter, thisIsAnIntParameter, thisIsAFloatParameter,
                     thisIsADoubleParameter, thisIsADecimalParameter ?? 123.456m, thisIsABoolParameter, string.Format("{0:MMddyyyy}", thisIsADateTimeParameter));
             }
-        }
+            }
 
         [TestCase("AddNumbersAndGetHalf", "add_numbers_and_get_half")]
         [TestCase("AddNumbersAndGetHalf_Static", "add_numbers_and_get_half_static")]
@@ -485,6 +485,121 @@ def SetEnumValue3SnakeCase(obj):
                     Assert.AreEqual(SnakeCaseEnum.EnumValue3, obj.GetAttr("EnumValue").As<SnakeCaseEnum>());
                 }
             }
+        }
+
+        private class AlreadyDefinedSnakeCaseMemberTestBaseClass
+        {
+            public virtual int SomeIntProperty { get; set; } = 123;
+
+            public int some_int_property { get; set; } = 321;
+
+            public virtual int AnotherIntProperty { get; set; } = 456;
+
+            public int another_int_property()
+            {
+                return 654;
+            }
+        }
+
+        [Test]
+        public void DoesntBindSnakeCasedMemberIfAlreadyOriginallyDefinedAsProperty()
+        {
+            var obj = new AlreadyDefinedSnakeCaseMemberTestBaseClass();
+            using var pyObj = obj.ToPython();
+
+            Assert.AreEqual(123, pyObj.GetAttr("SomeIntProperty").As<int>());
+            Assert.AreEqual(321, pyObj.GetAttr("some_int_property").As<int>());
+        }
+
+        [Test]
+        public void DoesntBindSnakeCasedMemberIfAlreadyOriginallyDefinedAsMethod()
+        {
+            var obj = new AlreadyDefinedSnakeCaseMemberTestBaseClass();
+            using var pyObj = obj.ToPython();
+
+            Assert.AreEqual(456, pyObj.GetAttr("AnotherIntProperty").As<int>());
+
+            using var method = pyObj.GetAttr("another_int_property");
+            Assert.IsTrue(method.IsCallable());
+            Assert.AreEqual(654, method.Invoke().As<int>());
+        }
+
+        private class AlreadyDefinedSnakeCaseMemberTestDerivedClass : AlreadyDefinedSnakeCaseMemberTestBaseClass
+        {
+            public int SomeIntProperty { get; set; } = 111;
+
+            public int AnotherIntProperty { get; set; } = 222;
+        }
+
+        [Test]
+        public void DoesntBindSnakeCasedMemberIfAlreadyOriginallyDefinedAsPropertyInBaseClass()
+        {
+            var obj = new AlreadyDefinedSnakeCaseMemberTestDerivedClass();
+            using var pyObj = obj.ToPython();
+
+            Assert.AreEqual(111, pyObj.GetAttr("SomeIntProperty").As<int>());
+            Assert.AreEqual(321, pyObj.GetAttr("some_int_property").As<int>());
+        }
+
+        [Test]
+        public void DoesntBindSnakeCasedMemberIfAlreadyOriginallyDefinedAsMethodInBaseClass()
+        {
+            var obj = new AlreadyDefinedSnakeCaseMemberTestDerivedClass();
+            using var pyObj = obj.ToPython();
+
+            Assert.AreEqual(222, pyObj.GetAttr("AnotherIntProperty").As<int>());
+
+            using var method = pyObj.GetAttr("another_int_property");
+            Assert.IsTrue(method.IsCallable());
+            Assert.AreEqual(654, method.Invoke().As<int>());
+        }
+
+        private abstract class AlreadyDefinedSnakeCaseMemberTestBaseAbstractClass
+        {
+            public abstract int AbstractProperty { get; }
+
+            public virtual int SomeIntProperty { get; set; } = 123;
+
+            public int some_int_property { get; set; } = 321;
+
+            public virtual int AnotherIntProperty { get; set; } = 456;
+
+            public int another_int_property()
+            {
+                return 654;
+            }
+        }
+
+        private class AlreadyDefinedSnakeCaseMemberTestDerivedFromAbstractClass : AlreadyDefinedSnakeCaseMemberTestBaseAbstractClass
+        {
+            public override int AbstractProperty => 0;
+
+            public int SomeIntProperty { get; set; } = 333;
+
+            public int AnotherIntProperty { get; set; } = 444;
+        }
+
+        [Test]
+        public void DoesntBindSnakeCasedMemberIfAlreadyOriginallyDefinedAsPropertyInBaseAbstractClass()
+        {
+            var obj = new AlreadyDefinedSnakeCaseMemberTestDerivedFromAbstractClass();
+            using var pyObj = obj.ToPython();
+
+            Assert.AreEqual(333, pyObj.GetAttr("SomeIntProperty").As<int>());
+            Assert.AreEqual(321, pyObj.GetAttr("some_int_property").As<int>());
+        }
+
+        [Test]
+        public void DoesntBindSnakeCasedMemberIfAlreadyOriginallyDefinedAsMethodInBaseAbstractClass()
+        {
+            var obj = new AlreadyDefinedSnakeCaseMemberTestDerivedFromAbstractClass();
+            using var pyObj = obj.ToPython();
+
+            Assert.AreEqual(444, pyObj.GetAttr("AnotherIntProperty").As<int>());
+
+            using var method = pyObj.GetAttr("another_int_property");
+            Assert.IsTrue(method.IsCallable());
+            Assert.AreEqual(654, method.Invoke().As<int>());
         }
 
         #endregion
