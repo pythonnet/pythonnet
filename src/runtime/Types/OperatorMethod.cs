@@ -27,6 +27,7 @@ namespace Python.Runtime
             public int TypeOffset { get; }
 
         }
+        private static HashSet<string> _operatorNames;
         private static PyObject? _opType;
 
         static OperatorMethod()
@@ -63,6 +64,7 @@ namespace Python.Runtime
                 ["op_LessThan"] = "__lt__",
                 ["op_GreaterThan"] = "__gt__",
             };
+            _operatorNames = new HashSet<string>(OpMethodMap.Keys.Concat(ComparisonOpMap.Keys));
         }
 
         public static void Initialize()
@@ -85,7 +87,7 @@ namespace Python.Runtime
             {
                 return false;
             }
-            return OpMethodMap.ContainsKey(method.Name) || ComparisonOpMap.ContainsKey(method.Name);
+            return _operatorNames.Contains(method.Name);
         }
 
         public static bool IsComparisonOp(MethodBase method)

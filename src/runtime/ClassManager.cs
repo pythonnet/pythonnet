@@ -454,17 +454,17 @@ namespace Python.Runtime
                         }
                         methodList.Add(meth);
 
-                        if (!meth.IsSpecialName && !OperatorMethod.IsOperatorMethod(meth))
+                        if (!OperatorMethod.IsOperatorMethod(meth))
                         {
                             var snakeCasedName = name.ToSnakeCase();
                             if (snakeCasedName != name)
                             {
                                 if (!methods.TryGetValue(snakeCasedName, out methodList))
-                            {
+                                {
                                     methodList = methods[snakeCasedName] = new MethodOverloads(false);
+                                }
+                                methodList.Add(meth);
                             }
-                            methodList.Add(meth);
-                        }
                         }
                         continue;
 
@@ -506,8 +506,9 @@ namespace Python.Runtime
                         }
 
                         ob = new PropertyObject(pi);
+                        var allocatedOb = ob.AllocObject();
                         ci.members[pi.Name] = ob.AllocObject();
-                        ci.members[pi.Name.ToSnakeCase()] = ob.AllocObject();
+                        ci.members[pi.Name.ToSnakeCase()] = allocatedOb;
                         continue;
 
                     case MemberTypes.Field:
@@ -517,14 +518,15 @@ namespace Python.Runtime
                             continue;
                         }
                         ob = new FieldObject(fi);
-                        ci.members[mi.Name] = ob.AllocObject();
+                        allocatedOb = ob.AllocObject();
+                        ci.members[mi.Name] = allocatedOb;
 
                         var pepName = fi.Name.ToSnakeCase();
                         if (fi.IsLiteral)
                         {
                             pepName = pepName.ToUpper();
                         }
-                        ci.members[pepName] = ob.AllocObject();
+                        ci.members[pepName] = allocatedOb;
                         continue;
 
                     case MemberTypes.Event:
@@ -536,8 +538,9 @@ namespace Python.Runtime
                         ob = ei.AddMethod.IsStatic
                             ? new EventBinding(ei)
                             : new EventObject(ei);
-                        ci.members[ei.Name] = ob.AllocObject();
-                        ci.members[ei.Name.ToSnakeCase()] = ob.AllocObject();
+                        allocatedOb = ob.AllocObject();
+                        ci.members[ei.Name] = allocatedOb;
+                        ci.members[ei.Name.ToSnakeCase()] = allocatedOb;
                         continue;
 
                     case MemberTypes.NestedType:

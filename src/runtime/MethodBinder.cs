@@ -441,6 +441,7 @@ namespace Python.Runtime
                     kwArgDict[keyStr!] = new PyObject(value);
                 }
             }
+            var hasNamedArgs = kwArgDict != null && kwArgDict.Count > 0;
 
             // Fetch our methods we are going to attempt to match and bind too.
             var methods = info == null ? GetMethods()
@@ -452,7 +453,8 @@ namespace Python.Runtime
                 // Relevant method variables
                 var mi = methodInformation.MethodBase;
                 var pi = methodInformation.ParameterInfo;
-                var paramNames = methodInformation.ParametersNames;
+                // Avoid accessing the parameter names property unless necessary
+                var paramNames = hasNamedArgs ? methodInformation.ParameterNames : Array.Empty<string>();
                 int pyArgCount = (int)Runtime.PyTuple_Size(args);
 
                 // Special case for operators
@@ -993,7 +995,7 @@ namespace Python.Runtime
 
             public bool IsOriginal { get; }
 
-            public string[] ParametersNames { get { return _parametersNames.Value; } }
+            public string[] ParameterNames { get { return _parametersNames.Value; } }
 
             public MethodInformation(MethodBase methodBase, ParameterInfo[] parameterInfo)
                 : this(methodBase, parameterInfo, true)
