@@ -336,17 +336,20 @@ namespace Python.Runtime
         private static ClassInfo GetClassInfo(Type type, ClassBase impl)
         {
             var ci = new ClassInfo();
-            var methods = new Dictionary<string, List<MethodBase>>();
+            var methods = new Dictionary<string, MethodOverloads>();
             MethodInfo meth;
             ExtensionType ob;
             string name;
             Type tp;
             int i, n;
 
-            MemberInfo[] info = type.GetMembers(BindingFlags);
+            MemberInfo[] info = type.GetMembers(BindingFlags | BindingFlags.FlattenHierarchy);
             var local = new HashSet<string>();
             var items = new List<MemberInfo>();
             MemberInfo m;
+
+            var snakeCasedAttributes = new HashSet<string>();
+            var originalMemberNames = info.Select(mi => mi.Name).ToHashSet();
 
             // Loop through once to find out which names are declared
             for (i = 0; i < info.Length; i++)
@@ -430,6 +433,28 @@ namespace Python.Runtime
                 }
             }
 
+            void CheckForSnakeCasedAttribute(string name)
+            {
+                if (snakeCasedAttributes.Remove(name))
+                {
+                    // If the snake cased attribute is a method, we remove it from the list of methods so that it is not added to the class
+                    methods.Remove(name);
+                }
+            }
+
+            void AddMember(string name, string snakeCasedName, PyObject obj)
+            {
+                CheckForSnakeCasedAttribute(name);
+
+                ci.members[name] = obj;
+
+                if (!originalMemberNames.Contains(snakeCasedName))
+                {
+                    ci.members[snakeCasedName] = obj;
+                    snakeCasedAttributes.Add(snakeCasedName);
+                }
+            }
+
             for (i = 0; i < items.Count; i++)
             {
                 var mi = (MemberInfo)items[i];
@@ -448,11 +473,26 @@ namespace Python.Runtime
                         if (name == "__init__" && !impl.HasCustomNew())
                             continue;
 
+                        CheckForSnakeCasedAttribute(name);
                         if (!methods.TryGetValue(name, out var methodList))
                         {
-                            methodList = methods[name] = new List<MethodBase>();
+                            methodList = methods[name] = new MethodOverloads(true);
                         }
                         methodList.Add(meth);
+
+                        if (!OperatorMethod.IsOperatorMethod(meth))
+                        {
+                            var snakeCasedMethodName = name.ToSnakeCase();
+                            if (snakeCasedMethodName != name && !originalMemberNames.Contains(snakeCasedMethodName))
+                            {
+                                if (!methods.TryGetValue(snakeCasedMethodName, out methodList))
+                                {
+                                    methodList = methods[snakeCasedMethodName] = new MethodOverloads(false);
+                                }
+                                methodList.Add(meth);
+                                snakeCasedAttributes.Add(snakeCasedMethodName);
+                            }
+                        }
                         continue;
 
                     case MemberTypes.Constructor when !impl.HasCustomNew():
@@ -465,7 +505,7 @@ namespace Python.Runtime
                         name = "__init__";
                         if (!methods.TryGetValue(name, out methodList))
                         {
-                            methodList = methods[name] = new List<MethodBase>();
+                            methodList = methods[name] = new MethodOverloads(true);
                         }
                         methodList.Add(ctor);
                         continue;
@@ -493,7 +533,7 @@ namespace Python.Runtime
                         }
 
                         ob = new PropertyObject(pi);
-                        ci.members[pi.Name] = ob.AllocObject();
+                        AddMember(pi.Name, pi.Name.ToSnakeCase(), ob.AllocObject());
                         continue;
 
                     case MemberTypes.Field:
@@ -503,7 +543,14 @@ namespace Python.Runtime
                             continue;
                         }
                         ob = new FieldObject(fi);
-                        ci.members[mi.Name] = ob.AllocObject();
+
+                        var pepName = fi.Name.ToSnakeCase();
+                        if (fi.IsLiteral)
+                        {
+                            pepName = pepName.ToUpper();
+                        }
+
+                        AddMember(fi.Name, pepName, ob.AllocObject());
                         continue;
 
                     case MemberTypes.Event:
@@ -515,7 +562,7 @@ namespace Python.Runtime
                         ob = ei.AddMethod.IsStatic
                             ? new EventBinding(ei)
                             : new EventObject(ei);
-                        ci.members[ei.Name] = ob.AllocObject();
+                        AddMember(ei.Name, ei.Name.ToSnakeCase(), ob.AllocObject());
                         continue;
 
                     case MemberTypes.NestedType:
@@ -527,6 +574,7 @@ namespace Python.Runtime
                         }
                         // Note the given instance might be uninitialized
                         var pyType = GetClass(tp);
+                        CheckForSnakeCasedAttribute(mi.Name);
                         // make a copy, that could be disposed later
                         ci.members[mi.Name] = new ReflectedClrType(pyType);
                         continue;
@@ -536,9 +584,9 @@ namespace Python.Runtime
             foreach (var iter in methods)
             {
                 name = iter.Key;
-                var mlist = iter.Value.ToArray();
+                var mlist = iter.Value.Methods.ToArray();
 
-                ob = new MethodObject(type, name, mlist);
+                ob = new MethodObject(type, name, mlist, isOriginal: iter.Value.IsOriginal);
                 ci.members[name] = ob.AllocObject();
                 if (mlist.Any(OperatorMethod.IsOperatorMethod))
                 {
@@ -588,6 +636,24 @@ namespace Python.Runtime
             internal ClassInfo()
             {
                 indexer = null;
+            }
+        }
+
+        private class MethodOverloads
+        {
+            public List<MethodBase> Methods { get; }
+
+            public bool IsOriginal { get; }
+
+            public MethodOverloads(bool original = true)
+            {
+                Methods = new List<MethodBase>();
+                IsOriginal = original;
+            }
+
+            public void Add(MethodBase method)
+            {
+                Methods.Add(method);
             }
         }
     }

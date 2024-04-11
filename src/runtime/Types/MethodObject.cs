@@ -28,7 +28,8 @@ namespace Python.Runtime
         internal PyString? doc;
         internal MaybeType type;
 
-        public MethodObject(MaybeType type, string name, MethodBase[] info, bool allow_threads = MethodBinder.DefaultAllowThreads)
+        public MethodObject(MaybeType type, string name, MethodBase[] info, bool allow_threads = MethodBinder.DefaultAllowThreads,
+            bool isOriginal = true)
         {
             this.type = type;
             this.name = name;
@@ -37,7 +38,7 @@ namespace Python.Runtime
             foreach (MethodBase item in info)
             {
                 this.infoList.Add(item);
-                binder.AddMethod(item);
+                binder.AddMethod(item, isOriginal);
                 if (item.IsStatic)
                 {
                     this.is_static = true;
