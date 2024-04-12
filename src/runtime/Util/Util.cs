@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -41,7 +42,7 @@ namespace Python.Runtime
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal unsafe static T* ReadPtr<T>(BorrowedReference ob, int offset)
-            where T: unmanaged
+            where T : unmanaged
         {
             Debug.Assert(offset >= 0);
             IntPtr ptr = Marshal.ReadIntPtr(ob.DangerousGetAddress(), offset);
@@ -152,7 +153,7 @@ namespace Python.Runtime
         public static IEnumerator<T> GetEnumerator<T>(this IEnumerator<T> enumerator) => enumerator;
 
         public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> source)
-            where T: class
+            where T : class
         {
             foreach (var item in source)
             {
@@ -166,7 +167,7 @@ namespace Python.Runtime
         /// <remarks>
         /// Reference: https://github.com/efcore/EFCore.NamingConventions/blob/main/EFCore.NamingConventions/Internal/SnakeCaseNameRewriter.cs
         /// </remarks>
-        public static string ToSnakeCase(this string name)
+        public static string ToSnakeCase(this string name, bool constant = false)
         {
             var builder = new StringBuilder(name.Length + Math.Min(2, name.Length / 5));
             var previousCategory = default(UnicodeCategory?);
@@ -196,8 +197,10 @@ namespace Python.Runtime
                         {
                             builder.Append('_');
                         }
-
-                        currentChar = char.ToLower(currentChar, CultureInfo.InvariantCulture);
+                        if (!constant)
+                        {
+                            currentChar = char.ToLower(currentChar, CultureInfo.InvariantCulture);
+                        }
                         break;
 
                     case UnicodeCategory.LowercaseLetter:
@@ -205,6 +208,10 @@ namespace Python.Runtime
                         if (previousCategory == UnicodeCategory.SpaceSeparator)
                         {
                             builder.Append('_');
+                        }
+                        if (constant)
+                        {
+                            currentChar = char.ToUpper(currentChar, CultureInfo.InvariantCulture);
                         }
                         break;
 
@@ -221,6 +228,26 @@ namespace Python.Runtime
             }
 
             return builder.ToString();
+        }
+
+        /// <summary>
+        /// Converts the specified field name to snake case.
+        /// const and static readonly fields are considered as constants and are converted to uppercase.
+        /// </summary>
+        public static string ToSnakeCase(this FieldInfo fieldInfo)
+        {
+            return fieldInfo.Name.ToSnakeCase(fieldInfo.IsLiteral || (fieldInfo.IsStatic && fieldInfo.IsInitOnly));
+        }
+
+        /// <summary>
+        /// Converts the specified property name to snake case.
+        /// Static properties without a setter are considered as constants and are converted to uppercase.
+        /// </summary>
+        public static string ToSnakeCase(this PropertyInfo propertyInfo)
+        {
+            var constant = propertyInfo.CanRead && !propertyInfo.CanWrite &&
+                (propertyInfo.GetGetMethod()?.IsStatic ?? propertyInfo.GetGetMethod(nonPublic: true)?.IsStatic ?? false);
+            return propertyInfo.Name.ToSnakeCase(constant);
         }
     }
 }

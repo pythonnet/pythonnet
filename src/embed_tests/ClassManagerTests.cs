@@ -51,7 +51,20 @@ namespace Python.EmbeddingTest
             public static string SettablePublicStaticStringField = "settable_public_static_string_field";
 
             public string PublicStringProperty { get; set; } = "public_string_property";
+            public string PublicStringGetOnlyProperty { get; } = "public_string_get_only_property";
             public static string PublicStaticStringProperty { get; set; } = "public_static_string_property";
+            public static string PublicStaticReadonlyStringGetterOnlyProperty { get; } = "public_static_readonly_string_getter_only_property";
+            public static string PublicStaticReadonlyStringPrivateSetterProperty { get; private set; } = "public_static_readonly_string_private_setter_property";
+            public static string PublicStaticReadonlyStringProtectedSetterProperty { get; protected set; } = "public_static_readonly_string_protected_setter_property";
+            public static string PublicStaticReadonlyStringInternalSetterProperty { get; internal set; } = "public_static_readonly_string_internal_setter_property";
+            public static string PublicStaticReadonlyStringProtectedInternalSetterProperty { get; protected internal set; } = "public_static_readonly_string_protected_internal_setter_property";
+            public static string PublicStaticReadonlyStringExpressionBodiedProperty => "public_static_readonly_string_expression_bodied_property";
+
+            protected string ProtectedStringGetOnlyProperty { get; } = "protected_string_get_only_property";
+            protected static string ProtectedStaticStringProperty { get; set; } = "protected_static_string_property";
+            protected static string ProtectedStaticReadonlyStringGetterOnlyProperty { get; } = "protected_static_readonly_string_getter_only_property";
+            protected static string ProtectedStaticReadonlyStringPrivateSetterProperty { get; private set; } = "protected_static_readonly_string_private_setter_property";
+            protected static string ProtectedStaticReadonlyStringExpressionBodiedProperty => "protected_static_readonly_string_expression_bodied_property";
 
             public event EventHandler<string> PublicStringEvent;
             public static event EventHandler<string> PublicStaticStringEvent;
@@ -111,9 +124,9 @@ namespace Python.EmbeddingTest
         [TestCase("PublicStringField", "public_string_field")]
         [TestCase("PublicStaticStringField", "public_static_string_field")]
         [TestCase("PublicReadonlyStringField", "public_readonly_string_field")]
-        [TestCase("PublicStaticReadonlyStringField", "public_static_readonly_string_field")]
         // Constants
         [TestCase("PublicConstStringField", "PUBLIC_CONST_STRING_FIELD")]
+        [TestCase("PublicStaticReadonlyStringField", "PUBLIC_STATIC_READONLY_STRING_FIELD")]
         public void BindsSnakeCaseClassFields(string originalFieldName, string snakeCaseFieldName)
         {
             using var obj = new SnakeCaseNamesTesClass().ToPython();
@@ -187,14 +200,40 @@ def SetSnakeCaseStaticProperty(value):
         }
 
         [TestCase("PublicStringProperty", "public_string_property")]
+        [TestCase("PublicStringGetOnlyProperty", "public_string_get_only_property")]
         [TestCase("PublicStaticStringProperty", "public_static_string_property")]
+        [TestCase("PublicStaticReadonlyStringPrivateSetterProperty", "public_static_readonly_string_private_setter_property")]
+        [TestCase("PublicStaticReadonlyStringProtectedSetterProperty", "public_static_readonly_string_protected_setter_property")]
+        [TestCase("PublicStaticReadonlyStringInternalSetterProperty", "public_static_readonly_string_internal_setter_property")]
+        [TestCase("PublicStaticReadonlyStringProtectedInternalSetterProperty", "public_static_readonly_string_protected_internal_setter_property")]
+        [TestCase("ProtectedStringGetOnlyProperty", "protected_string_get_only_property")]
+        [TestCase("ProtectedStaticStringProperty", "protected_static_string_property")]
+        [TestCase("ProtectedStaticReadonlyStringPrivateSetterProperty", "protected_static_readonly_string_private_setter_property")]
+        // Constants
+        [TestCase("PublicStaticReadonlyStringGetterOnlyProperty", "PUBLIC_STATIC_READONLY_STRING_GETTER_ONLY_PROPERTY")]
+        [TestCase("PublicStaticReadonlyStringExpressionBodiedProperty", "PUBLIC_STATIC_READONLY_STRING_EXPRESSION_BODIED_PROPERTY")]
+        [TestCase("ProtectedStaticReadonlyStringGetterOnlyProperty", "PROTECTED_STATIC_READONLY_STRING_GETTER_ONLY_PROPERTY")]
+        [TestCase("ProtectedStaticReadonlyStringExpressionBodiedProperty", "PROTECTED_STATIC_READONLY_STRING_EXPRESSION_BODIED_PROPERTY")]
+
         public void BindsSnakeCaseClassProperties(string originalPropertyName, string snakeCasePropertyName)
         {
             using var obj = new SnakeCaseNamesTesClass().ToPython();
             var expectedValue = originalPropertyName switch
             {
                 "PublicStringProperty" => "public_string_property",
+                "PublicStringGetOnlyProperty" => "public_string_get_only_property",
                 "PublicStaticStringProperty" => "public_static_string_property",
+                "PublicStaticReadonlyStringPrivateSetterProperty" => "public_static_readonly_string_private_setter_property",
+                "PublicStaticReadonlyStringProtectedSetterProperty" => "public_static_readonly_string_protected_setter_property",
+                "PublicStaticReadonlyStringInternalSetterProperty" => "public_static_readonly_string_internal_setter_property",
+                "PublicStaticReadonlyStringProtectedInternalSetterProperty" => "public_static_readonly_string_protected_internal_setter_property",
+                "PublicStaticReadonlyStringGetterOnlyProperty" => "public_static_readonly_string_getter_only_property",
+                "PublicStaticReadonlyStringExpressionBodiedProperty" => "public_static_readonly_string_expression_bodied_property",
+                "ProtectedStringGetOnlyProperty" => "protected_string_get_only_property",
+                "ProtectedStaticStringProperty" => "protected_static_string_property",
+                "ProtectedStaticReadonlyStringGetterOnlyProperty" => "protected_static_readonly_string_getter_only_property",
+                "ProtectedStaticReadonlyStringPrivateSetterProperty" => "protected_static_readonly_string_private_setter_property",
+                "ProtectedStaticReadonlyStringExpressionBodiedProperty" => "protected_static_readonly_string_expression_bodied_property",
                 _ => throw new ArgumentException("Invalid property name")
             };
 

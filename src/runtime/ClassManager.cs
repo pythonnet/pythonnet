@@ -533,7 +533,7 @@ namespace Python.Runtime
                         }
 
                         ob = new PropertyObject(pi);
-                        AddMember(pi.Name, pi.Name.ToSnakeCase(), ob.AllocObject());
+                        AddMember(pi.Name, pi.ToSnakeCase(), ob.AllocObject());
                         continue;
 
                     case MemberTypes.Field:
@@ -543,14 +543,7 @@ namespace Python.Runtime
                             continue;
                         }
                         ob = new FieldObject(fi);
-
-                        var pepName = fi.Name.ToSnakeCase();
-                        if (fi.IsLiteral)
-                        {
-                            pepName = pepName.ToUpper();
-                        }
-
-                        AddMember(fi.Name, pepName, ob.AllocObject());
+                        AddMember(fi.Name, fi.ToSnakeCase(), ob.AllocObject());
                         continue;
 
                     case MemberTypes.Event:
