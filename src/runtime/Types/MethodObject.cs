@@ -34,23 +34,26 @@ namespace Python.Runtime
             this.type = type;
             this.name = name;
             this.infoList = new List<MaybeMethodInfo>();
-            binder = new MethodBinder();
+            binder = new MethodBinder
+            {
+                isOriginal = isOriginal,
+                allow_threads = allow_threads
+            };
             foreach (MethodBase item in info)
             {
                 this.infoList.Add(item);
-                binder.AddMethod(item, isOriginal);
+                binder.AddMethod(item);
                 if (item.IsStatic)
                 {
                     this.is_static = true;
                 }
             }
-            binder.allow_threads = allow_threads;
         }
 
         public bool IsInstanceConstructor => name == "__init__";
 
         public MethodObject WithOverloads(MethodBase[] overloads)
-            => new(type, name, overloads, allow_threads: binder.allow_threads);
+            => new(type, name, overloads, allow_threads: binder.allow_threads, isOriginal: binder.isOriginal);
 
         internal MethodBase[] info
         {

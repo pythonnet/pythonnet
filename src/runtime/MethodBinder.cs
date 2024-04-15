@@ -23,6 +23,7 @@ namespace Python.Runtime
         public const bool DefaultAllowThreads = true;
         public bool allow_threads = DefaultAllowThreads;
         public bool init = false;
+        public bool isOriginal;
 
         internal MethodBinder()
         {
@@ -41,14 +42,9 @@ namespace Python.Runtime
 
         internal void AddMethod(MethodBase m)
         {
-            AddMethod(m, true);
-        }
-
-        internal void AddMethod(MethodBase m, bool isOriginal)
-        {
             // we added a new method so we have to re sort the method list
             init = false;
-            list.Add(new MethodInformation(m, m.GetParameters(), isOriginal));
+            list.Add(new MethodInformation(m, m.GetParameters()));
         }
 
         /// <summary>
@@ -454,7 +450,7 @@ namespace Python.Runtime
                 var mi = methodInformation.MethodBase;
                 var pi = methodInformation.ParameterInfo;
                 // Avoid accessing the parameter names property unless necessary
-                var paramNames = hasNamedArgs ? methodInformation.ParameterNames : Array.Empty<string>();
+                var paramNames = hasNamedArgs ? methodInformation.ParameterNames(isOriginal) : Array.Empty<string>();
                 int pyArgCount = (int)Runtime.PyTuple_Size(args);
 
                 // Special case for operators
@@ -987,30 +983,32 @@ namespace Python.Runtime
         [Serializable]
         internal class MethodInformation
         {
-            private Lazy<string[]> _parametersNames;
+            private string[] _parametersNames = null;
 
             public MethodBase MethodBase { get; }
 
             public ParameterInfo[] ParameterInfo { get; }
 
-            public bool IsOriginal { get; }
-
-            public string[] ParameterNames { get { return _parametersNames.Value; } }
-
-            public MethodInformation(MethodBase methodBase, ParameterInfo[] parameterInfo)
-                : this(methodBase, parameterInfo, true)
+            public string[] ParameterNames(bool isOriginal)
             {
+                if (_parametersNames == null)
+                {
+                    if (isOriginal)
+                    {
+                        _parametersNames = ParameterInfo.Select(pi => pi.Name).ToArray();
+                    }
+                    else
+                    {
+                        _parametersNames = ParameterInfo.Select(pi => pi.Name.ToSnakeCase()).ToArray();
+                    }
+                }
+                return _parametersNames;
             }
 
-            public MethodInformation(MethodBase methodBase, ParameterInfo[] parameterInfo, bool isOriginal)
+            public MethodInformation(MethodBase methodBase, ParameterInfo[] parameterInfo)
             {
                 MethodBase = methodBase;
                 ParameterInfo = parameterInfo;
-                IsOriginal = isOriginal;
-
-                _parametersNames = new Lazy<string[]>(() => IsOriginal
-                    ? ParameterInfo.Select(pi => pi.Name).ToArray()
-                    : ParameterInfo.Select(pi => pi.Name.ToSnakeCase()).ToArray());
             }
 
             public override string ToString()

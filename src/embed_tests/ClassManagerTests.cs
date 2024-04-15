@@ -159,6 +159,50 @@ namespace Python.EmbeddingTest
             };
 
             private static void Throw() => throw new Exception("Pepe");
+
+            public static string GenericMethodBindingStatic<T>(int arg1, SnakeCaseEnum enumValue)
+            {
+                return "GenericMethodBindingStatic";
+            }
+
+            public string GenericMethodBinding<T>(int arg1, SnakeCaseEnum enumValue = SnakeCaseEnum.EnumValue3)
+            {
+                return "GenericMethodBinding" + arg1;
+            }
+        }
+
+        [TestCase("generic_method_binding_static", "GenericMethodBindingStatic")]
+        [TestCase("generic_method_binding", "GenericMethodBinding1")]
+        [TestCase("generic_method_binding2", "GenericMethodBinding2")]
+        [TestCase("generic_method_binding3", "GenericMethodBinding3")]
+        public void GenericMethodBinding(string targetMethod, string expectedReturn)
+        {
+            using (Py.GIL())
+            {
+                var module = PyModule.FromString("module", $@"
+from clr import AddReference
+AddReference(""Python.EmbeddingTest"")
+
+from Python.EmbeddingTest import *
+
+def generic_method_binding_static(value):
+    return ClassManagerTests.SnakeCaseNamesTesClass.generic_method_binding_static[bool](1, enum_value=ClassManagerTests.SnakeCaseEnum.EnumValue1)
+
+def generic_method_binding(value):
+    return value.generic_method_binding[bool](1, enum_value=ClassManagerTests.SnakeCaseEnum.EnumValue1)
+
+def generic_method_binding2(value):
+    return value.generic_method_binding[bool](2, ClassManagerTests.SnakeCaseEnum.EnumValue1)
+
+def generic_method_binding3(value):
+    return value.generic_method_binding[bool](3)
+                    ");
+
+                using var obj = new SnakeCaseNamesTesClass().ToPython();
+                var result = module.InvokeMethod(targetMethod, new[] { obj }).As<string>();
+
+                Assert.AreEqual(expectedReturn, result);
+            }
         }
 
         [TestCase("StaticReadonlyActionProperty", "static_readonly_action_property", new object[] { })]
@@ -618,13 +662,13 @@ def SetEnumValue3(obj):
     obj.EnumValue = ClassManagerTests.SnakeCaseEnum.EnumValue3
 
 def SetEnumValue1SnakeCase(obj):
-    obj.enum_value = ClassManagerTests.SnakeCaseEnum.ENUM_VALUE1
+    obj.enum_value = ClassManagerTests.SnakeCaseEnum.ENUM_VALUE_1
 
 def SetEnumValue2SnakeCase(obj):
-    obj.enum_value = ClassManagerTests.SnakeCaseEnum.ENUM_VALUE2
+    obj.enum_value = ClassManagerTests.SnakeCaseEnum.ENUM_VALUE_2
 
 def SetEnumValue3SnakeCase(obj):
-    obj.enum_value = ClassManagerTests.SnakeCaseEnum.ENUM_VALUE3
+    obj.enum_value = ClassManagerTests.SnakeCaseEnum.ENUM_VALUE_3
                     ");
 
                 using var obj = new SnakeCaseNamesTesClass().ToPython();
