@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Dynamic;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Security;
 
 using Python.Runtime.StateSerialization;
@@ -304,28 +303,28 @@ namespace Python.Runtime
 
         internal static bool ShouldBindProperty(PropertyInfo pi)
         {
-                MethodInfo? mm;
-                try
-                {
-                    mm = pi.GetGetMethod(true);
-                    if (mm == null)
-                    {
-                        mm = pi.GetSetMethod(true);
-                    }
-                }
-                catch (SecurityException)
-                {
-                    // GetGetMethod may try to get a method protected by
-                    // StrongNameIdentityPermission - effectively private.
-                    return false;
-                }
-
+            MethodInfo? mm;
+            try
+            {
+                mm = pi.GetGetMethod(true);
                 if (mm == null)
                 {
-                    return false;
+                    mm = pi.GetSetMethod(true);
                 }
+            }
+            catch (SecurityException)
+            {
+                // GetGetMethod may try to get a method protected by
+                // StrongNameIdentityPermission - effectively private.
+                return false;
+            }
 
-                return ShouldBindMethod(mm);
+            if (mm == null)
+            {
+                return false;
+            }
+
+            return ShouldBindMethod(mm);
         }
 
         internal static bool ShouldBindEvent(EventInfo ei)
@@ -349,7 +348,17 @@ namespace Python.Runtime
             MemberInfo m;
 
             var snakeCasedAttributes = new HashSet<string>();
-            var originalMemberNames = info.Select(mi => mi.Name).ToHashSet();
+            var originalMemberNames = info
+                .Where(mi => mi switch
+                {
+                    MethodInfo mei => ShouldBindMethod(mei),
+                    FieldInfo fi => ShouldBindField(fi),
+                    PropertyInfo pi => ShouldBindProperty(pi),
+                    EventInfo ei => ShouldBindEvent(ei),
+                    _ => false
+                })
+                .Select(mi => mi.Name)
+                .ToHashSet();
 
             // Loop through once to find out which names are declared
             for (i = 0; i < info.Length; i++)
@@ -442,16 +451,29 @@ namespace Python.Runtime
                 }
             }
 
-            void AddMember(string name, string snakeCasedName, PyObject obj)
+            void AddSnakeCasedMember(string snakeCasedName, PyObject obj)
             {
-                CheckForSnakeCasedAttribute(name);
-
-                ci.members[name] = obj;
-
                 if (!originalMemberNames.Contains(snakeCasedName))
                 {
                     ci.members[snakeCasedName] = obj;
                     snakeCasedAttributes.Add(snakeCasedName);
+                }
+            }
+
+            void AddMember(string name, string snakeCasedName, bool isStaticReadonlyCallable, ExtensionType obj)
+            {
+                CheckForSnakeCasedAttribute(name);
+
+                var allocatedObj = obj.AllocObject();
+                ci.members[name] = allocatedObj;
+
+                AddSnakeCasedMember(snakeCasedName, allocatedObj);
+
+                // static readonly callable fields and properties snake-case version will be available
+                // both upper-cased (as constants) and lower-cased (as regular fields)
+                if (isStaticReadonlyCallable)
+                {
+                    AddSnakeCasedMember(snakeCasedName.ToLowerInvariant(), allocatedObj);
                 }
             }
 
@@ -513,7 +535,7 @@ namespace Python.Runtime
                     case MemberTypes.Property:
                         var pi = (PropertyInfo)mi;
 
-                        if(!ShouldBindProperty(pi))
+                        if (!ShouldBindProperty(pi))
                         {
                             continue;
                         }
@@ -533,7 +555,7 @@ namespace Python.Runtime
                         }
 
                         ob = new PropertyObject(pi);
-                        AddMember(pi.Name, pi.ToSnakeCase(), ob.AllocObject());
+                        AddMember(pi.Name, pi.ToSnakeCase(), pi.IsStaticReadonlyCallable(), ob);
                         continue;
 
                     case MemberTypes.Field:
@@ -543,7 +565,7 @@ namespace Python.Runtime
                             continue;
                         }
                         ob = new FieldObject(fi);
-                        AddMember(fi.Name, fi.ToSnakeCase(), ob.AllocObject());
+                        AddMember(fi.Name, fi.ToSnakeCase(), fi.IsStaticReadonlyCallable(), ob);
                         continue;
 
                     case MemberTypes.Event:
@@ -555,7 +577,7 @@ namespace Python.Runtime
                         ob = ei.AddMethod.IsStatic
                             ? new EventBinding(ei)
                             : new EventObject(ei);
-                        AddMember(ei.Name, ei.Name.ToSnakeCase(), ob.AllocObject());
+                        AddMember(ei.Name, ei.Name.ToSnakeCase(), false, ob);
                         continue;
 
                     case MemberTypes.NestedType:
@@ -601,7 +623,8 @@ namespace Python.Runtime
                 var parent = type.BaseType;
                 while (parent != null && ci.indexer == null)
                 {
-                    foreach (var prop in parent.GetProperties()) {
+                    foreach (var prop in parent.GetProperties())
+                    {
                         var args = prop.GetIndexParameters();
                         if (args.GetLength(0) > 0)
                         {

@@ -13,12 +13,17 @@ namespace Python.EmbeddingTest
 
         [TestCase("TestCamelCaseString", "test_camel_case_string")]
         [TestCase("testCamelCaseString", "test_camel_case_string")]
-        [TestCase("TestCamelCaseString123 ", "test_camel_case_string123")]
-        [TestCase("_testCamelCaseString123", "_test_camel_case_string123")]
+        [TestCase("TestCamelCaseString123 ", "test_camel_case_string_123")]
+        [TestCase("_testCamelCaseString123", "_test_camel_case_string_123")]
+        [TestCase("_testCamelCaseString123WithSuffix", "_test_camel_case_string_123_with_suffix")]
+        [TestCase("_testCamelCaseString123withSuffix", "_test_camel_case_string_123_with_suffix")]
         [TestCase("TestCCS", "test_ccs")]
         [TestCase("testCCS", "test_ccs")]
         [TestCase("CCSTest", "ccs_test")]
         [TestCase("test_CamelCaseString", "test_camel_case_string")]
+        [TestCase("SP500EMini", "sp_500_e_mini")]
+        [TestCase("Sentiment30Days", "sentiment_30_days")]
+        [TestCase("PriceChange1m", "price_change_1m")] // A single digit followed by a lowercase letter
         public void ConvertsNameToSnakeCase(string name, string expected)
         {
             Assert.AreEqual(expected, name.ToSnakeCase());

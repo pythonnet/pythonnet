@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 using NUnit.Framework;
 
@@ -104,7 +105,130 @@ namespace Python.EmbeddingTest
                 return string.Join("-", thisIsAStringParameter, thisIsACharParameter, thisIsAnIntParameter, thisIsAFloatParameter,
                     thisIsADoubleParameter, thisIsADecimalParameter ?? 123.456m, thisIsABoolParameter, string.Format("{0:MMddyyyy}", thisIsADateTimeParameter));
             }
-            }
+
+            public static Action StaticReadonlyActionProperty { get; } = () => Throw();
+            public static Action<int> StaticReadonlyActionWithParamsProperty { get; } = (i) => Throw();
+            public static Func<int> StaticReadonlyFuncProperty { get; } = () =>
+            {
+                Throw();
+                return 42;
+            };
+            public static Func<int, int> StaticReadonlyFuncWithParamsProperty { get; } = (i) =>
+            {
+                Throw();
+                return i * 2;
+            };
+
+            public static Action StaticReadonlyExpressionBodiedActionProperty => () => Throw();
+            public static Action<int> StaticReadonlyExpressionBodiedActionWithParamsProperty => (i) => Throw();
+            public static Func<int> StaticReadonlyExpressionBodiedFuncProperty => () =>
+            {
+                Throw();
+                return 42;
+            };
+            public static Func<int, int> StaticReadonlyExpressionBodiedFuncWithParamsProperty => (i) =>
+            {
+                Throw();
+                return i * 2;
+            };
+
+            public static readonly Action StaticReadonlyActionField = () => Throw();
+            public static readonly Action<int> StaticReadonlyActionWithParamsField = (i) => Throw();
+            public static readonly Func<int> StaticReadonlyFuncField = () =>
+            {
+                Throw();
+                return 42;
+            };
+            public static readonly Func<int, int> StaticReadonlyFuncWithParamsField = (i) =>
+            {
+                Throw();
+                return i * 2;
+            };
+
+            public static readonly Action StaticReadonlyExpressionBodiedActionField = () => Throw();
+            public static readonly Action<int> StaticReadonlyExpressionBodiedActionWithParamsField = (i) => Throw();
+            public static readonly Func<int> StaticReadonlyExpressionBodiedFuncField = () =>
+            {
+                Throw();
+                return 42;
+            };
+            public static readonly Func<int, int> StaticReadonlyExpressionBodiedFuncWithParamsField = (i) =>
+            {
+                Throw();
+                return i * 2;
+            };
+
+            private static void Throw() => throw new Exception("Pepe");
+        }
+
+        [TestCase("StaticReadonlyActionProperty", "static_readonly_action_property", new object[] { })]
+        [TestCase("StaticReadonlyActionWithParamsProperty", "static_readonly_action_with_params_property", new object[] { 42 })]
+        [TestCase("StaticReadonlyFuncProperty", "static_readonly_func_property", new object[] { })]
+        [TestCase("StaticReadonlyFuncWithParamsProperty", "static_readonly_func_with_params_property", new object[] { 42 })]
+        [TestCase("StaticReadonlyExpressionBodiedActionProperty", "static_readonly_expression_bodied_action_property", new object[] { })]
+        [TestCase("StaticReadonlyExpressionBodiedActionWithParamsProperty", "static_readonly_expression_bodied_action_with_params_property", new object[] { 42 })]
+        [TestCase("StaticReadonlyExpressionBodiedFuncProperty", "static_readonly_expression_bodied_func_property", new object[] { })]
+        [TestCase("StaticReadonlyExpressionBodiedFuncWithParamsProperty", "static_readonly_expression_bodied_func_with_params_property", new object[] { 42 })]
+        [TestCase("StaticReadonlyActionField", "static_readonly_action_field", new object[] { })]
+        [TestCase("StaticReadonlyActionWithParamsField", "static_readonly_action_with_params_field", new object[] { 42 })]
+        [TestCase("StaticReadonlyFuncField", "static_readonly_func_field", new object[] { })]
+        [TestCase("StaticReadonlyFuncWithParamsField", "static_readonly_func_with_params_field", new object[] { 42 })]
+        [TestCase("StaticReadonlyExpressionBodiedActionField", "static_readonly_expression_bodied_action_field", new object[] { })]
+        [TestCase("StaticReadonlyExpressionBodiedActionWithParamsField", "static_readonly_expression_bodied_action_with_params_field", new object[] { 42 })]
+        [TestCase("StaticReadonlyExpressionBodiedFuncField", "static_readonly_expression_bodied_func_field", new object[] { })]
+        [TestCase("StaticReadonlyExpressionBodiedFuncWithParamsField", "static_readonly_expression_bodied_func_with_params_field", new object[] { 42 })]
+        public void StaticReadonlyCallableFieldsAndPropertiesAreBothUpperAndLowerCased(string propertyName, string snakeCasedName, object[] args)
+        {
+            using var obj = new SnakeCaseNamesTesClass().ToPython();
+
+            var lowerCasedName = snakeCasedName.ToLowerInvariant();
+            var upperCasedName = snakeCasedName.ToUpperInvariant();
+
+            var memberInfo = typeof(SnakeCaseNamesTesClass).GetMember(propertyName).First();
+            var callableType = memberInfo switch
+            {
+                PropertyInfo propertyInfo => propertyInfo.PropertyType,
+                FieldInfo fieldInfo => fieldInfo.FieldType,
+                _ => throw new InvalidOperationException()
+            };
+
+            var property = obj.GetAttr(propertyName).AsManagedObject(callableType);
+            var lowerCasedProperty = obj.GetAttr(lowerCasedName).AsManagedObject(callableType);
+            var upperCasedProperty = obj.GetAttr(upperCasedName).AsManagedObject(callableType);
+
+            Assert.IsNotNull(property);
+            Assert.IsNotNull(property as MulticastDelegate);
+            Assert.AreSame(property, lowerCasedProperty);
+            Assert.AreSame(property, upperCasedProperty);
+
+            var call = () =>
+            {
+                try
+                {
+                    (property as Delegate).DynamicInvoke(args);
+                }
+                catch (TargetInvocationException e)
+                {
+                    throw e.InnerException;
+                }
+            };
+
+            var exception = Assert.Throws<Exception>(() => call());
+            Assert.AreEqual("Pepe", exception.Message);
+        }
+
+        [TestCase("PublicStaticReadonlyStringField", "public_static_readonly_string_field")]
+        [TestCase("PublicStaticReadonlyStringGetterOnlyProperty", "public_static_readonly_string_getter_only_property")]
+        public void NonCallableStaticReadonlyFieldsAndPropertiesAreOnlyUpperCased(string propertyName, string snakeCasedName)
+        {
+            using var obj = new SnakeCaseNamesTesClass().ToPython();
+            var lowerCasedName = snakeCasedName.ToLowerInvariant();
+            var upperCasedName = snakeCasedName.ToUpperInvariant();
+
+            Assert.IsTrue(obj.HasAttr(propertyName));
+            Assert.IsTrue(obj.HasAttr(upperCasedName));
+            Assert.IsFalse(obj.HasAttr(lowerCasedName));
+        }
 
         [TestCase("AddNumbersAndGetHalf", "add_numbers_and_get_half")]
         [TestCase("AddNumbersAndGetHalf_Static", "add_numbers_and_get_half_static")]
@@ -528,6 +652,9 @@ def SetEnumValue3SnakeCase(obj):
 
         private class AlreadyDefinedSnakeCaseMemberTestBaseClass
         {
+            private int private_field = 123;
+            public int PrivateField = 333;
+
             public virtual int SomeIntProperty { get; set; } = 123;
 
             public int some_int_property { get; set; } = 321;
@@ -591,6 +718,14 @@ def SetEnumValue3SnakeCase(obj):
             using var method = pyObj.GetAttr("another_int_property");
             Assert.IsTrue(method.IsCallable());
             Assert.AreEqual(654, method.Invoke().As<int>());
+        }
+
+        [Test]
+        public void BindsMemberWithSnakeCasedNameMatchingExistingPrivateMember()
+        {
+            using var obj = new AlreadyDefinedSnakeCaseMemberTestBaseClass().ToPython();
+
+            Assert.AreEqual(333, obj.GetAttr("private_field").As<int>());
         }
 
         private abstract class AlreadyDefinedSnakeCaseMemberTestBaseAbstractClass

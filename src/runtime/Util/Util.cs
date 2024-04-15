@@ -189,6 +189,7 @@ namespace Python.Runtime
                     case UnicodeCategory.TitlecaseLetter:
                         if (previousCategory == UnicodeCategory.SpaceSeparator ||
                             previousCategory == UnicodeCategory.LowercaseLetter ||
+                            previousCategory == UnicodeCategory.DecimalDigitNumber ||
                             previousCategory != UnicodeCategory.DecimalDigitNumber &&
                             previousCategory != null &&
                             currentIndex > 0 &&
@@ -204,14 +205,26 @@ namespace Python.Runtime
                         break;
 
                     case UnicodeCategory.LowercaseLetter:
-                    case UnicodeCategory.DecimalDigitNumber:
-                        if (previousCategory == UnicodeCategory.SpaceSeparator)
+                        if (previousCategory == UnicodeCategory.SpaceSeparator ||
+                            // Underscore before this character if previous is a digit and followed by more than one lowercase letter
+                            previousCategory == UnicodeCategory.DecimalDigitNumber &&
+                            currentIndex + 1 < name.Length &&
+                            char.IsLetter(name[currentIndex + 1]))
                         {
                             builder.Append('_');
                         }
                         if (constant)
                         {
                             currentChar = char.ToUpper(currentChar, CultureInfo.InvariantCulture);
+                        }
+                        break;
+
+                    case UnicodeCategory.DecimalDigitNumber:
+                        if (previousCategory != null &&
+                            previousCategory != UnicodeCategory.DecimalDigitNumber &&
+                            previousCategory != UnicodeCategory.SpaceSeparator)
+                        {
+                            builder.Append('_');
                         }
                         break;
 
@@ -236,7 +249,7 @@ namespace Python.Runtime
         /// </summary>
         public static string ToSnakeCase(this FieldInfo fieldInfo)
         {
-            return fieldInfo.Name.ToSnakeCase(fieldInfo.IsLiteral || (fieldInfo.IsStatic && fieldInfo.IsInitOnly));
+            return fieldInfo.Name.ToSnakeCase(fieldInfo.IsLiteral || fieldInfo.IsStaticReadonly());
         }
 
         /// <summary>
@@ -245,9 +258,49 @@ namespace Python.Runtime
         /// </summary>
         public static string ToSnakeCase(this PropertyInfo propertyInfo)
         {
-            var constant = propertyInfo.CanRead && !propertyInfo.CanWrite &&
+            return propertyInfo.Name.ToSnakeCase(propertyInfo.IsStaticReadonly());
+        }
+
+        /// <summary>
+        /// Determines whether the specified field is static readonly.
+        /// </summary>
+        public static bool IsStaticReadonly(this FieldInfo fieldInfo)
+        {
+            return fieldInfo.IsStatic && fieldInfo.IsInitOnly;
+        }
+
+        /// <summary>
+        /// Determines whether the specified property is static readonly.
+        /// </summary>
+        public static bool IsStaticReadonly(this PropertyInfo propertyInfo)
+        {
+            return propertyInfo.CanRead && !propertyInfo.CanWrite &&
                 (propertyInfo.GetGetMethod()?.IsStatic ?? propertyInfo.GetGetMethod(nonPublic: true)?.IsStatic ?? false);
-            return propertyInfo.Name.ToSnakeCase(constant);
+        }
+
+        /// <summary>
+        /// Determines whether the specified field is static readonly and callable (Action, Func)
+        /// </summary>
+        public static bool IsStaticReadonlyCallable(this FieldInfo fieldInfo)
+        {
+            return fieldInfo.IsStaticReadonly() && fieldInfo.FieldType.IsDelegate();
+        }
+
+        /// <summary>
+        /// Determines whether the specified property is static readonly and callable (Action, Func)
+        /// </summary>
+        public static bool IsStaticReadonlyCallable(this PropertyInfo propertyInfo)
+        {
+            return propertyInfo.IsStaticReadonly() && propertyInfo.PropertyType.IsDelegate();
+        }
+
+        /// <summary>
+        /// Determines whether the specified type is a delegate.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsDelegate(this Type type)
+        {
+            return type.IsSubclassOf(typeof(Delegate));
         }
     }
 }
