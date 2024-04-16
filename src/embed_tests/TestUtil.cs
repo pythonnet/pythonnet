@@ -23,57 +23,67 @@ namespace Python.EmbeddingTest
         [TestCase("test_CamelCaseString", "test_camel_case_string")]
         [TestCase("SP500EMini", "sp_500_e_mini")]
         [TestCase("Sentiment30Days", "sentiment_30_days")]
-        [TestCase("PriceChange1m", "price_change_1m")] // A single digit followed by a lowercase letter
+        [TestCase("PriceChange1m", "price_change_1m")]
+        [TestCase("PriceChange1M", "price_change_1m")]
+        [TestCase("PriceChange1MY", "price_change_1_my")]
+        [TestCase("PriceChange1My", "price_change_1_my")]
+        [TestCase("PERatio", "pe_ratio")]
+        [TestCase("PERatio1YearGrowth", "pe_ratio_1_year_growth")]
+        [TestCase("HeadquarterAddressLine5", "headquarter_address_line_5")]
+        [TestCase("PERatio10YearAverage", "pe_ratio_10_year_average")]
+        [TestCase("CAPERatio", "cape_ratio")]
+        [TestCase("EVToEBITDA3YearGrowth", "ev_to_ebitda_3_year_growth")]
+        [TestCase("", "")]
         public void ConvertsNameToSnakeCase(string name, string expected)
         {
             Assert.AreEqual(expected, name.ToSnakeCase());
         }
 
-        [TestCase("TestNonConstField1", "test_non_const_field1")]
-        [TestCase("TestNonConstField2", "test_non_const_field2")]
-        [TestCase("TestNonConstField3", "test_non_const_field3")]
-        [TestCase("TestNonConstField4", "test_non_const_field4")]
+        [TestCase("TestNonConstField1", "test_non_const_field_1")]
+        [TestCase("TestNonConstField2", "test_non_const_field_2")]
+        [TestCase("TestNonConstField3", "test_non_const_field_3")]
+        [TestCase("TestNonConstField4", "test_non_const_field_4")]
         public void ConvertsNonConstantFieldsToSnakeCase(string fieldName, string expected)
         {
             var fi = typeof(TestClass).GetField(fieldName, _bindingFlags);
             Assert.AreEqual(expected, fi.ToSnakeCase());
         }
 
-        [TestCase("TestConstField1", "TEST_CONST_FIELD1")]
-        [TestCase("TestConstField2", "TEST_CONST_FIELD2")]
-        [TestCase("TestConstField3", "TEST_CONST_FIELD3")]
-        [TestCase("TestConstField4", "TEST_CONST_FIELD4")]
+        [TestCase("TestConstField1", "TEST_CONST_FIELD_1")]
+        [TestCase("TestConstField2", "TEST_CONST_FIELD_2")]
+        [TestCase("TestConstField3", "TEST_CONST_FIELD_3")]
+        [TestCase("TestConstField4", "TEST_CONST_FIELD_4")]
         public void ConvertsConstantFieldsToFullCapitalCase(string fieldName, string expected)
         {
             var fi = typeof(TestClass).GetField(fieldName, _bindingFlags);
             Assert.AreEqual(expected, fi.ToSnakeCase());
         }
 
-        [TestCase("TestNonConstProperty1", "test_non_const_property1")]
-        [TestCase("TestNonConstProperty2", "test_non_const_property2")]
-        [TestCase("TestNonConstProperty3", "test_non_const_property3")]
-        [TestCase("TestNonConstProperty4", "test_non_const_property4")]
-        [TestCase("TestNonConstProperty5", "test_non_const_property5")]
-        [TestCase("TestNonConstProperty6", "test_non_const_property6")]
-        [TestCase("TestNonConstProperty7", "test_non_const_property7")]
-        [TestCase("TestNonConstProperty8", "test_non_const_property8")]
-        [TestCase("TestNonConstProperty9", "test_non_const_property9")]
-        [TestCase("TestNonConstProperty10", "test_non_const_property10")]
-        [TestCase("TestNonConstProperty11", "test_non_const_property11")]
-        [TestCase("TestNonConstProperty12", "test_non_const_property12")]
-        [TestCase("TestNonConstProperty13", "test_non_const_property13")]
-        [TestCase("TestNonConstProperty14", "test_non_const_property14")]
-        [TestCase("TestNonConstProperty15", "test_non_const_property15")]
-        [TestCase("TestNonConstProperty16", "test_non_const_property16")]
+        [TestCase("TestNonConstProperty1", "test_non_const_property_1")]
+        [TestCase("TestNonConstProperty2", "test_non_const_property_2")]
+        [TestCase("TestNonConstProperty3", "test_non_const_property_3")]
+        [TestCase("TestNonConstProperty4", "test_non_const_property_4")]
+        [TestCase("TestNonConstProperty5", "test_non_const_property_5")]
+        [TestCase("TestNonConstProperty6", "test_non_const_property_6")]
+        [TestCase("TestNonConstProperty7", "test_non_const_property_7")]
+        [TestCase("TestNonConstProperty8", "test_non_const_property_8")]
+        [TestCase("TestNonConstProperty9", "test_non_const_property_9")]
+        [TestCase("TestNonConstProperty10", "test_non_const_property_10")]
+        [TestCase("TestNonConstProperty11", "test_non_const_property_11")]
+        [TestCase("TestNonConstProperty12", "test_non_const_property_12")]
+        [TestCase("TestNonConstProperty13", "test_non_const_property_13")]
+        [TestCase("TestNonConstProperty14", "test_non_const_property_14")]
+        [TestCase("TestNonConstProperty15", "test_non_const_property_15")]
+        [TestCase("TestNonConstProperty16", "test_non_const_property_16")]
         public void ConvertsNonConstantPropertiesToSnakeCase(string propertyName, string expected)
         {
             var pi = typeof(TestClass).GetProperty(propertyName, _bindingFlags);
             Assert.AreEqual(expected, pi.ToSnakeCase());
         }
 
-        [TestCase("TestConstProperty1", "TEST_CONST_PROPERTY1")]
-        [TestCase("TestConstProperty2", "TEST_CONST_PROPERTY2")]
-        [TestCase("TestConstProperty3", "TEST_CONST_PROPERTY3")]
+        [TestCase("TestConstProperty1", "TEST_CONST_PROPERTY_1")]
+        [TestCase("TestConstProperty2", "TEST_CONST_PROPERTY_2")]
+        [TestCase("TestConstProperty3", "TEST_CONST_PROPERTY_3")]
         public void ConvertsConstantPropertiesToFullCapitalCase(string propertyName, string expected)
         {
             var pi = typeof(TestClass).GetProperty(propertyName, _bindingFlags);

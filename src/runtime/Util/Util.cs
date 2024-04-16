@@ -189,7 +189,8 @@ namespace Python.Runtime
                     case UnicodeCategory.TitlecaseLetter:
                         if (previousCategory == UnicodeCategory.SpaceSeparator ||
                             previousCategory == UnicodeCategory.LowercaseLetter ||
-                            previousCategory == UnicodeCategory.DecimalDigitNumber ||
+                            previousCategory == UnicodeCategory.DecimalDigitNumber &&
+                            currentIndex + 1 < name.Length ||
                             previousCategory != UnicodeCategory.DecimalDigitNumber &&
                             previousCategory != null &&
                             currentIndex > 0 &&
