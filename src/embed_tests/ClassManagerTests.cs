@@ -709,6 +709,93 @@ def SetEnumValue3SnakeCase(obj):
             {
                 return 654;
             }
+
+            public virtual int get_value(int x)
+            {
+                throw new Exception("get_value(int x)");
+            }
+
+            public virtual int get_value_2(int x)
+            {
+                throw new Exception("get_value_2(int x)");
+            }
+
+            public int get_value_3(int x)
+            {
+                throw new Exception("get_value_3(int x)");
+            }
+
+            public int GetValue(int x)
+            {
+                throw new Exception("GetValue(int x)");
+            }
+
+            public virtual int GetValue(int x, int y)
+            {
+                throw new Exception("GetValue(int x, int y)");
+            }
+
+            public virtual int GetValue2(int x)
+            {
+                throw new Exception("GetValue2(int x)");
+            }
+
+            public int GetValue3(int x)
+            {
+                throw new Exception("GetValue3(int x)");
+            }
+        }
+
+        private class AlreadyDefinedSnakeCaseMemberTestDerivedClass : AlreadyDefinedSnakeCaseMemberTestBaseClass
+        {
+            public int SomeIntProperty { get; set; } = 111;
+
+            public override int AnotherIntProperty { get; set; } = 222;
+
+            public override int get_value(int x)
+            {
+                throw new Exception("override get_value(int x)");
+            }
+
+            public override int GetValue(int x, int y)
+            {
+                throw new Exception("override GetValue(int x, int y)");
+            }
+
+            public override int GetValue2(int x)
+            {
+                throw new Exception("override GetValue2(int x)");
+            }
+
+            public new int GetValue3(int x)
+            {
+                throw new Exception("new GetValue3(int x)");
+            }
+        }
+
+        [TestCase(typeof(AlreadyDefinedSnakeCaseMemberTestBaseClass), "get_value", new object[] { 2, 3 }, "GetValue(int x, int y)")]
+        // 1 int arg, binds to the original c# class get_value(int x)
+        [TestCase(typeof(AlreadyDefinedSnakeCaseMemberTestBaseClass), "get_value", new object[] { 2 }, "get_value(int x)")]
+        // 2 int args, binds to the snake-cased overriden GetValue(int x, int y)
+        [TestCase(typeof(AlreadyDefinedSnakeCaseMemberTestDerivedClass), "get_value", new object[] { 2, 3 }, "override GetValue(int x, int y)")]
+        [TestCase(typeof(AlreadyDefinedSnakeCaseMemberTestDerivedClass), "get_value", new object[] { 2 }, "override get_value(int x)")]
+        [TestCase(typeof(AlreadyDefinedSnakeCaseMemberTestDerivedClass), "get_value_2", new object[] { 2 }, "override GetValue2(int x)")]
+        [TestCase(typeof(AlreadyDefinedSnakeCaseMemberTestDerivedClass), "get_value_3", new object[] { 2 }, "new GetValue3(int x)")]
+        public void BindsSnakeCasedMethodAsOverload(Type type, string methodName, object[] args, string expectedMessage)
+        {
+            var obj = Activator.CreateInstance(type);
+            using var pyObj = obj.ToPython();
+
+            using var method = pyObj.GetAttr(methodName);
+            var pyArgs = args.Select(x => x.ToPython()).ToArray();
+
+            var exception = Assert.Throws<Exception>(() => method.Invoke(pyArgs));
+            Assert.AreEqual(expectedMessage, exception.Message);
+
+            foreach (var x in pyArgs)
+            {
+                x.Dispose();
+            }
         }
 
         [Test]
@@ -732,13 +819,6 @@ def SetEnumValue3SnakeCase(obj):
             using var method = pyObj.GetAttr("another_int_property");
             Assert.IsTrue(method.IsCallable());
             Assert.AreEqual(654, method.Invoke().As<int>());
-        }
-
-        private class AlreadyDefinedSnakeCaseMemberTestDerivedClass : AlreadyDefinedSnakeCaseMemberTestBaseClass
-        {
-            public int SomeIntProperty { get; set; } = 111;
-
-            public int AnotherIntProperty { get; set; } = 222;
         }
 
         [Test]

@@ -495,7 +495,6 @@ namespace Python.Runtime
                         if (name == "__init__" && !impl.HasCustomNew())
                             continue;
 
-                        CheckForSnakeCasedAttribute(name);
                         if (!methods.TryGetValue(name, out var methodList))
                         {
                             methodList = methods[name] = new MethodOverloads(true);
@@ -505,7 +504,7 @@ namespace Python.Runtime
                         if (!OperatorMethod.IsOperatorMethod(meth))
                         {
                             var snakeCasedMethodName = name.ToSnakeCase();
-                            if (snakeCasedMethodName != name && !originalMemberNames.Contains(snakeCasedMethodName))
+                            if (snakeCasedMethodName != name)
                             {
                                 if (!methods.TryGetValue(snakeCasedMethodName, out methodList))
                                 {
