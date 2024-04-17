@@ -2,6 +2,8 @@ using System;
 using System.Linq;
 using System.Reflection;
 
+using static Python.Runtime.MethodBinder;
+
 namespace Python.Runtime
 {
     /// <summary>
@@ -11,7 +13,7 @@ namespace Python.Runtime
     internal class ModuleFunctionObject : MethodObject
     {
         public ModuleFunctionObject(Type type, string name, MethodInfo[] info, bool allow_threads)
-            : base(type, name, info, allow_threads)
+            : base(type, name, info.Select(x => new MethodInformation(x, true)).ToList(), allow_threads)
         {
             if (info.Any(item => !item.IsStatic))
             {

@@ -6,6 +6,8 @@ using System.Reflection;
 
 namespace Python.Runtime
 {
+    using static Python.Runtime.MethodBinder;
+
     using MaybeMethodInfo = MaybeMethodBase<MethodBase>;
     /// <summary>
     /// Implements a Python binding type for CLR methods. These work much like
@@ -43,12 +45,20 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError("type(s) expected");
             }
 
-            MethodBase[] overloads = self.m.IsInstanceConstructor
-                ? self.m.type.Value.GetConstructor(types) is { } ctor
-                    ? new[] { ctor }
-                    : Array.Empty<MethodBase>()
-                : MethodBinder.MatchParameters(self.m.info, types);
-            if (overloads.Length == 0)
+            List<MethodInformation> overloads = null;
+            if (self.m.IsInstanceConstructor)
+            {
+                if (self.m.type.Value.GetConstructor(types) is { } ctor)
+                {
+                    overloads = new (){ new(ctor, true) };
+                }
+            }
+            else
+            {
+                overloads = MethodBinder.MatchParameters(self.m.binder, types);
+            }
+
+            if (overloads == null || overloads.Count == 0)
             {
                 return Exceptions.RaiseTypeError("No match found for given type params");
             }

@@ -5,6 +5,8 @@ using System.Reflection;
 
 namespace Python.Runtime
 {
+    using static Python.Runtime.MethodBinder;
+
     using MaybeMethodInfo = MaybeMethodBase<MethodBase>;
 
     /// <summary>
@@ -18,9 +20,9 @@ namespace Python.Runtime
     internal class MethodObject : ExtensionType
     {
         [NonSerialized]
-        private MethodBase[]? _info = null;
+        private MethodBase[] _info = null;
         [NonSerialized]
-        private readonly List<MaybeMethodInfo> infoList;
+        private readonly List<MethodInformation> _methodInfo;
         internal string name;
         internal readonly MethodBinder binder;
         internal bool is_static = false;
@@ -28,41 +30,28 @@ namespace Python.Runtime
         internal PyString? doc;
         internal MaybeType type;
 
-        public MethodObject(MaybeType type, string name, MethodBase[] info, bool allow_threads = MethodBinder.DefaultAllowThreads,
-            bool isOriginal = true)
+        public MethodObject(MaybeType type, string name, List<MethodInformation> info, bool allow_threads = MethodBinder.DefaultAllowThreads)
         {
             this.type = type;
             this.name = name;
-            this.infoList = new List<MaybeMethodInfo>();
-            binder = new MethodBinder
+            _methodInfo = info;
+            binder = new MethodBinder(info)
             {
-                isOriginal = isOriginal,
                 allow_threads = allow_threads
             };
-            foreach (MethodBase item in info)
-            {
-                this.infoList.Add(item);
-                binder.AddMethod(item);
-                if (item.IsStatic)
-                {
-                    this.is_static = true;
-                }
-            }
+            is_static = info.Any(x => x.MethodBase.IsStatic);
         }
 
         public bool IsInstanceConstructor => name == "__init__";
 
-        public MethodObject WithOverloads(MethodBase[] overloads)
-            => new(type, name, overloads, allow_threads: binder.allow_threads, isOriginal: binder.isOriginal);
+        public MethodObject WithOverloads(List<MethodInformation> overloads)
+            => new(type, name, overloads, allow_threads: binder.allow_threads);
 
         internal MethodBase[] info
         {
             get
             {
-                if (_info == null)
-                {
-                    _info = (from i in infoList where i.Valid select i.Value).ToArray();
-                }
+                _info ??= _methodInfo.Select(x => x.MethodBase).ToArray();
                 return _info;
             }
         }

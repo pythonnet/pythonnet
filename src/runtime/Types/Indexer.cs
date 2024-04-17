@@ -36,11 +36,11 @@ namespace Python.Runtime
             MethodInfo setter = pi.GetSetMethod(true);
             if (getter != null)
             {
-                GetterBinder.AddMethod(getter);
+                GetterBinder.AddMethod(getter, true);
             }
             if (setter != null)
             {
-                SetterBinder.AddMethod(setter);
+                SetterBinder.AddMethod(setter, true);
             }
         }
 

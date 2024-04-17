@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>net6.0</TargetFrameworks>
@@ -13,7 +13,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.*" />
-    <PackageReference Include="quantconnect.pythonnet" Version="2.0.33" GeneratePathProperty="true">
+    <PackageReference Include="quantconnect.pythonnet" Version="2.0.34" GeneratePathProperty="true">
       <IncludeAssets>compile</IncludeAssets>
     </PackageReference>
   </ItemGroup>
@@ -25,7 +25,7 @@
   </Target>
 
   <Target Name="CopyBaseline" AfterTargets="Build">
-    <Copy SourceFiles="$(NuGetPackageRoot)quantconnect.pythonnet\2.0.33\lib\net5.0\Python.Runtime.dll" DestinationFolder="$(OutDir)baseline" />
+    <Copy SourceFiles="$(NuGetPackageRoot)quantconnect.pythonnet\2.0.34\lib\net5.0\Python.Runtime.dll" DestinationFolder="$(OutDir)baseline" />
   </Target>
 
   <Target Name="CopyNewBuild" AfterTargets="Build">

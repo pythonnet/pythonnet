@@ -473,7 +473,7 @@ class GMT(tzinfo):
                 }
                 if (mt is ClassBase cb)
                 {
-                    if (!cb.type.Valid)
+                    if (!cb.type.Valid || !obType.IsInstanceOfType(cb.type.Value))
                     {
                         Exceptions.SetError(Exceptions.TypeError, cb.type.DeletedMessage);
                         return false;

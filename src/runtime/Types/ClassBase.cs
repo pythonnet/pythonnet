@@ -515,7 +515,7 @@ namespace Python.Runtime
             var callBinder = new MethodBinder();
             foreach (MethodInfo call in calls)
             {
-                callBinder.AddMethod(call);
+                callBinder.AddMethod(call, true);
             }
             return callBinder.Invoke(ob, args, kw);
         }

@@ -710,6 +710,21 @@ def SetEnumValue3SnakeCase(obj):
                 return 654;
             }
 
+            public dynamic a(AlreadyDefinedSnakeCaseMemberTestBaseClass a)
+            {
+                throw new Exception("a(AlreadyDefinedSnakeCaseMemberTestBaseClass)");
+            }
+
+            public int a()
+            {
+                throw new Exception("a()");
+            }
+
+            public int get_value()
+            {
+                throw new Exception("get_value()");
+            }
+
             public virtual int get_value(int x)
             {
                 throw new Exception("get_value(int x)");
@@ -752,6 +767,14 @@ def SetEnumValue3SnakeCase(obj):
 
             public override int AnotherIntProperty { get; set; } = 222;
 
+            public int A()
+            {
+                throw new Exception("A()");
+            }
+            public PyObject A(PyObject a)
+            {
+                throw new Exception("A(PyObject)");
+            }
             public override int get_value(int x)
             {
                 throw new Exception("override get_value(int x)");
@@ -779,10 +802,35 @@ def SetEnumValue3SnakeCase(obj):
         // 2 int args, binds to the snake-cased overriden GetValue(int x, int y)
         [TestCase(typeof(AlreadyDefinedSnakeCaseMemberTestDerivedClass), "get_value", new object[] { 2, 3 }, "override GetValue(int x, int y)")]
         [TestCase(typeof(AlreadyDefinedSnakeCaseMemberTestDerivedClass), "get_value", new object[] { 2 }, "override get_value(int x)")]
-        [TestCase(typeof(AlreadyDefinedSnakeCaseMemberTestDerivedClass), "get_value_2", new object[] { 2 }, "override GetValue2(int x)")]
-        [TestCase(typeof(AlreadyDefinedSnakeCaseMemberTestDerivedClass), "get_value_3", new object[] { 2 }, "new GetValue3(int x)")]
+        [TestCase(typeof(AlreadyDefinedSnakeCaseMemberTestDerivedClass), "get_value", new object[] { }, "get_value()")]
+        [TestCase(typeof(AlreadyDefinedSnakeCaseMemberTestDerivedClass), "A", new object[] { }, "A()")]
+        [TestCase(typeof(AlreadyDefinedSnakeCaseMemberTestDerivedClass), "a", new object[] { }, "a()")]
+        [TestCase(typeof(AlreadyDefinedSnakeCaseMemberTestDerivedClass), "GetValue2", new object[] { 2 }, "override GetValue2(int x)")]
+        [TestCase(typeof(AlreadyDefinedSnakeCaseMemberTestDerivedClass), "GetValue3", new object[] { 2 }, "new GetValue3(int x)")]
+        // original beats fake
+        [TestCase(typeof(AlreadyDefinedSnakeCaseMemberTestDerivedClass), "get_value_2", new object[] { 2 }, "get_value_2(int x)")]
+        [TestCase(typeof(AlreadyDefinedSnakeCaseMemberTestDerivedClass), "get_value_3", new object[] { 2 }, "get_value_3(int x)")]
+
+        [TestCase(typeof(AlreadyDefinedSnakeCaseMemberTestDerivedClass), "a", new object[] { "AlreadyDefinedSnakeCaseMemberTestBaseClass" }, "a(AlreadyDefinedSnakeCaseMemberTestBaseClass)")]
+        // A(PyObject) is real
+        [TestCase(typeof(AlreadyDefinedSnakeCaseMemberTestDerivedClass), "A", new object[] { "AlreadyDefinedSnakeCaseMemberTestBaseClass" }, "A(PyObject)")]
+        [TestCase(typeof(AlreadyDefinedSnakeCaseMemberTestDerivedClass), "a", new object[] { "Type" }, "A(PyObject)")]
+        [TestCase(typeof(AlreadyDefinedSnakeCaseMemberTestDerivedClass), "A", new object[] { "Type" }, "A(PyObject)")]
+        [TestCase(typeof(AlreadyDefinedSnakeCaseMemberTestDerivedClass), "A", new object[] { "Type" }, "A(PyObject)")]
         public void BindsSnakeCasedMethodAsOverload(Type type, string methodName, object[] args, string expectedMessage)
         {
+            if (args.Length == 1)
+            {
+                if (args[0] is "AlreadyDefinedSnakeCaseMemberTestBaseClass")
+                {
+                    args = new object[] { new AlreadyDefinedSnakeCaseMemberTestBaseClass() };
+                }
+                else if (args[0] is "Type")
+                {
+                    args = new object[] { typeof(string) };
+                }
+            }
+
             var obj = Activator.CreateInstance(type);
             using var pyObj = obj.ToPython();
 
@@ -898,6 +946,60 @@ def SetEnumValue3SnakeCase(obj):
             using var method = pyObj.GetAttr("another_int_property");
             Assert.IsTrue(method.IsCallable());
             Assert.AreEqual(654, method.Invoke().As<int>());
+        }
+
+        public class Class1
+        {
+        }
+
+        private class TestClass1
+        {
+            public dynamic get(Class1 s)
+            {
+                return "dynamic get(Class1 s)";
+            }
+        }
+
+        private class TestClass2 : TestClass1
+        {
+            public PyObject Get(PyObject o)
+            {
+                return "PyObject Get(PyObject o)".ToPython();
+            }
+
+            public dynamic Get(Type t)
+            {
+                return "dynamic Get(Type t)";
+            }
+        }
+
+        [Test]
+        public void BindsCorrectOverloadForClassName()
+        {
+            using var obj = new TestClass2().ToPython();
+
+            var result = obj.GetAttr("get").Invoke(new Class1().ToPython()).As<string>();
+            Assert.AreEqual("dynamic get(Class1 s)", result);
+
+            result = obj.GetAttr("get").Invoke(new TestClass1().ToPython()).As<string>();
+            Assert.AreEqual("PyObject Get(PyObject o)", result);
+
+            using (Py.GIL())
+            {
+                // Passing type name directly instead of typeof(Class1) from C#
+                var module = PyModule.FromString("module", $@"
+from clr import AddReference
+AddReference(""Python.EmbeddingTest"")
+
+from Python.EmbeddingTest import *
+
+def call(instance):
+    return instance.get(ClassManagerTests.Class1)
+                    ");
+
+                result = module.GetAttr("call").Invoke(obj).As<string>();
+                Assert.AreEqual("PyObject Get(PyObject o)", result);
+            }
         }
 
         #endregion

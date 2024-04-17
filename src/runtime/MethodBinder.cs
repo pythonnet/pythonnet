@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Reflection;
 using System.Text;
 
@@ -23,7 +24,11 @@ namespace Python.Runtime
         public const bool DefaultAllowThreads = true;
         public bool allow_threads = DefaultAllowThreads;
         public bool init = false;
-        public bool isOriginal;
+
+        internal MethodBinder(List<MethodInformation> list)
+        {
+            this.list = list;
+        }
 
         internal MethodBinder()
         {
@@ -32,7 +37,7 @@ namespace Python.Runtime
 
         internal MethodBinder(MethodInfo mi)
         {
-            list = new List<MethodInformation> { new MethodInformation(mi, mi.GetParameters()) };
+            list = new List<MethodInformation> { new MethodInformation(mi, true) };
         }
 
         public int Count
@@ -40,11 +45,11 @@ namespace Python.Runtime
             get { return list.Count; }
         }
 
-        internal void AddMethod(MethodBase m)
+        internal void AddMethod(MethodBase m, bool isOriginal)
         {
             // we added a new method so we have to re sort the method list
             init = false;
-            list.Add(new MethodInformation(m, m.GetParameters()));
+            list.Add(new MethodInformation(m, isOriginal));
         }
 
         /// <summary>
@@ -84,16 +89,17 @@ namespace Python.Runtime
         /// Given a sequence of MethodInfo and a sequence of type parameters,
         /// return the MethodInfo that represents the matching closed generic.
         /// </summary>
-        internal static MethodInfo[] MatchParameters(MethodBase[] mi, Type[] tp)
+        internal static List<MethodInformation> MatchParameters(MethodBinder binder, Type[] tp)
         {
             if (tp == null)
             {
-                return Array.Empty<MethodInfo>();
+                return null;
             }
             int count = tp.Length;
-            var result = new List<MethodInfo>(count);
-            foreach (MethodInfo t in mi)
+            var result = new List<MethodInformation>(count);
+            foreach (var methodInformation in binder.list)
             {
+                var t = methodInformation.MethodBase;
                 if (!t.IsGenericMethodDefinition)
                 {
                     continue;
@@ -106,9 +112,9 @@ namespace Python.Runtime
                 try
                 {
                     // MakeGenericMethod can throw ArgumentException if the type parameters do not obey the constraints.
-                    MethodInfo method = t.MakeGenericMethod(tp);
+                    MethodInfo method = ((MethodInfo)t).MakeGenericMethod(tp);
                     Exceptions.Clear();
-                    result.Add(method);
+                    result.Add(new MethodInformation(method, methodInformation.IsOriginal));
                 }
                 catch (ArgumentException e)
                 {
@@ -116,7 +122,7 @@ namespace Python.Runtime
                     // The error will remain set until cleared by a successful match.
                 }
             }
-            return result.ToArray();
+            return result;
         }
 
         // Given a generic method and the argsTypes previously matched with it,
@@ -330,7 +336,14 @@ namespace Python.Runtime
             if (info != null)
             {
                 val += ArgPrecedence(info.ReturnType, methodInformation);
-                val += mi.DeclaringType == mi.ReflectedType ? 0 : 3000;
+                if (mi.DeclaringType == mi.ReflectedType)
+                {
+                    val += methodInformation.IsOriginal ? 0 : 300000;
+                }
+                else
+                {
+                    val += methodInformation.IsOriginal ? 2000 : 400000;
+                }
             }
 
             return val;
@@ -441,7 +454,7 @@ namespace Python.Runtime
 
             // Fetch our methods we are going to attempt to match and bind too.
             var methods = info == null ? GetMethods()
-                : new List<MethodInformation>(1) { new MethodInformation(info, info.GetParameters()) };
+                : new List<MethodInformation>(1) { new MethodInformation(info, true) };
 
             for (var i = 0; i < methods.Count; i++)
             {
@@ -450,7 +463,7 @@ namespace Python.Runtime
                 var mi = methodInformation.MethodBase;
                 var pi = methodInformation.ParameterInfo;
                 // Avoid accessing the parameter names property unless necessary
-                var paramNames = hasNamedArgs ? methodInformation.ParameterNames(isOriginal) : Array.Empty<string>();
+                var paramNames = hasNamedArgs ? methodInformation.ParameterNames : Array.Empty<string>();
                 int pyArgCount = (int)Runtime.PyTuple_Size(args);
 
                 // Special case for operators
@@ -983,32 +996,45 @@ namespace Python.Runtime
         [Serializable]
         internal class MethodInformation
         {
-            private string[] _parametersNames = null;
+            private ParameterInfo[] _parameterInfo;
+            private string[] _parametersNames;
 
             public MethodBase MethodBase { get; }
 
-            public ParameterInfo[] ParameterInfo { get; }
+            public bool IsOriginal { get; set; }
 
-            public string[] ParameterNames(bool isOriginal)
+            public ParameterInfo[] ParameterInfo
             {
-                if (_parametersNames == null)
+                get
                 {
-                    if (isOriginal)
-                    {
-                        _parametersNames = ParameterInfo.Select(pi => pi.Name).ToArray();
-                    }
-                    else
-                    {
-                        _parametersNames = ParameterInfo.Select(pi => pi.Name.ToSnakeCase()).ToArray();
-                    }
+                    _parameterInfo ??= MethodBase.GetParameters();
+                    return _parameterInfo;
                 }
-                return _parametersNames;
             }
 
-            public MethodInformation(MethodBase methodBase, ParameterInfo[] parameterInfo)
+            public string[] ParameterNames
+            {
+                get
+                {
+                    if (_parametersNames == null)
+                    {
+                        if (IsOriginal)
+                        {
+                            _parametersNames = ParameterInfo.Select(pi => pi.Name).ToArray();
+                        }
+                        else
+                        {
+                            _parametersNames = ParameterInfo.Select(pi => pi.Name.ToSnakeCase()).ToArray();
+                        }
+                    }
+                    return _parametersNames;
+                }
+            }
+
+            public MethodInformation(MethodBase methodBase, bool isOriginal)
             {
                 MethodBase = methodBase;
-                ParameterInfo = parameterInfo;
+                IsOriginal = isOriginal;
             }
 
             public override string ToString()

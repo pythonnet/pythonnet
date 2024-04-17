@@ -5,6 +5,8 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
+using static Python.Runtime.MethodBinder;
+
 namespace Python.Runtime
 {
     internal static class OperatorMethod
@@ -192,23 +194,20 @@ namespace Python.Runtime
             return leftOperandType != primaryType;
         }
 
-        public static void FilterMethods(MethodBase[] methods, out MethodBase[] forwardMethods, out MethodBase[] reverseMethods)
+        public static void FilterMethods(List<MethodInformation> methods, out List<MethodInformation> forwardMethods, out List<MethodInformation> reverseMethods)
         {
-            var forwardMethodsList = new List<MethodBase>();
-            var reverseMethodsList = new List<MethodBase>();
+            forwardMethods = new List<MethodInformation>();
+            reverseMethods = new List<MethodInformation>();
             foreach (var method in methods)
             {
-                if (IsReverse(method))
+                if (IsReverse(method.MethodBase))
                 {
-                    reverseMethodsList.Add(method);
+                    reverseMethods.Add(method);
                 } else
                 {
-                    forwardMethodsList.Add(method);
+                    forwardMethods.Add(method);
                 }
-
             }
-            forwardMethods = forwardMethodsList.ToArray();
-            reverseMethods = reverseMethodsList.ToArray();
         }
     }
 }

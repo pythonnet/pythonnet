@@ -118,7 +118,7 @@ namespace Python.Runtime
                 var binder = new MethodBinder();
                 for (int i = 0; i < self.constructors.Length; i++)
                 {
-                    binder.AddMethod(self.constructors[i]);
+                    binder.AddMethod(self.constructors[i], true);
                 }
 
                 using var tuple = Runtime.PyTuple_New(0);

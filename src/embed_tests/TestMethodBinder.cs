@@ -4,7 +4,7 @@ using Python.Runtime;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Threading;
+using static Python.Runtime.Py;
 
 namespace Python.EmbeddingTest
 {
@@ -44,8 +44,6 @@ class PythonModel(TestMethodBinder.CSharpModel):
         self.NumericalArgumentMethod(1)
     def NumericalArgumentMethodDouble(self):
         self.NumericalArgumentMethod(0.1)
-    def NumericalArgumentMethodNumpyFloat(self):
-        self.NumericalArgumentMethod(TestMethodBinder.Numpy.float(0.1))
     def NumericalArgumentMethodNumpy64Float(self):
         self.NumericalArgumentMethod(TestMethodBinder.Numpy.float64(0.1))
     def ListKeyValuePairTest(self):
@@ -81,7 +79,11 @@ class PythonModel(TestMethodBinder.CSharpModel):
             catch (PythonException)
             {
             }
-            module = PyModule.FromString("module", testModule).GetAttr("PythonModel").Invoke();
+
+            using (Py.GIL())
+            {
+                module = PyModule.FromString("module", testModule).GetAttr("PythonModel").Invoke();
+            }
         }
 
         [OneTimeTearDown]
@@ -93,50 +95,61 @@ class PythonModel(TestMethodBinder.CSharpModel):
         [Test]
         public void MethodCalledList()
         {
-            module.TestList();
+            using (Py.GIL())
+                module.TestList();
             Assert.AreEqual("List(List<Type> collection)", CSharpModel.MethodCalled);
         }
 
         [Test]
         public void MethodCalledReadOnlyCollection()
         {
-            module.TestListReadOnlyCollection();
+            using (Py.GIL())
+                module.TestListReadOnlyCollection();
             Assert.AreEqual("List(IReadOnlyCollection<Type> collection)", CSharpModel.MethodCalled);
         }
 
         [Test]
         public void MethodCalledEnumerable()
         {
-            module.TestEnumerable();
+            using (Py.GIL())
+                module.TestEnumerable();
             Assert.AreEqual("List(IEnumerable<Type> collection)", CSharpModel.MethodCalled);
         }
 
         [Test]
         public void ListToEnumerableExpectingMethod()
         {
-            Assert.DoesNotThrow(() => module.TestF());
+            using (Py.GIL())
+                Assert.DoesNotThrow(() => module.TestF());
         }
 
         [Test]
         public void ListToListExpectingMethod()
         {
-            Assert.DoesNotThrow(() => module.TestG());
+            using (Py.GIL())
+                Assert.DoesNotThrow(() => module.TestG());
         }
 
         [Test]
         public void ImplicitConversionToString()
         {
-            var data = (string)module.TestA();
-            // we assert implicit conversion took place
-            Assert.AreEqual("OnlyString impl: implicit to string", data);
+            using (Py.GIL())
+            {
+                var data = (string)module.TestA();
+                // we assert implicit conversion took place
+                Assert.AreEqual("OnlyString impl: implicit to string", data);
+            }
         }
 
         [Test]
         public void ImplicitConversionToClass()
         {
-            var data = (string)module.TestB();
-            // we assert implicit conversion took place
-            Assert.AreEqual("OnlyClass impl", data);
+            using (Py.GIL())
+            {
+                var data = (string)module.TestB();
+                // we assert implicit conversion took place
+                Assert.AreEqual("OnlyClass impl", data);
+            }
         }
 
         // Reproduces a bug in which program explodes when implicit conversion fails
@@ -144,74 +157,86 @@ class PythonModel(TestMethodBinder.CSharpModel):
         [Test]
         public void ImplicitConversionErrorHandling()
         {
-            var errorCaught = false;
-            try
+            using (Py.GIL())
             {
-                var data = (string)module.TestH();
-            }
-            catch (Exception e)
-            {
-                errorCaught = true;
-                Assert.AreEqual("Failed to implicitly convert Python.EmbeddingTest.TestMethodBinder+ErroredImplicitConversion to System.String", e.Message);
-            }
+                var errorCaught = false;
+                try
+                {
+                    var data = (string)module.TestH();
+                }
+                catch (Exception e)
+                {
+                    errorCaught = true;
+                    Assert.AreEqual("Failed to implicitly convert Python.EmbeddingTest.TestMethodBinder+ErroredImplicitConversion to System.String", e.Message);
+                }
 
-            Assert.IsTrue(errorCaught);
+                Assert.IsTrue(errorCaught);
+            }
         }
 
         [Test]
         public void WillAvoidUsingImplicitConversionIfPossible_String()
         {
-            var data = (string)module.TestC();
-            // we assert no implicit conversion took place
-            Assert.AreEqual("string impl: input string", data);
+            using (Py.GIL())
+            {
+                var data = (string)module.TestC();
+                // we assert no implicit conversion took place
+                Assert.AreEqual("string impl: input string", data);
+            }
         }
 
         [Test]
         public void WillAvoidUsingImplicitConversionIfPossible_Class()
         {
-            var data = (string)module.TestD();
-            // we assert no implicit conversion took place
-            Assert.AreEqual("TestImplicitConversion impl", data);
+            using (Py.GIL())
+            {
+                var data = (string)module.TestD();
 
+                // we assert no implicit conversion took place
+                Assert.AreEqual("TestImplicitConversion impl", data);
+            }
         }
 
         [Test]
         public void ArrayLength()
         {
-            var array = new[] { "pepe", "pinocho" };
-            var data = (bool)module.TestE(array);
+            using (Py.GIL())
+            {
+                var array = new[] { "pepe", "pinocho" };
+                var data = (bool)module.TestE(array);
 
-            // Assert it is true
-            Assert.AreEqual(true, data);
+                // Assert it is true
+                Assert.AreEqual(true, data);
+            }
         }
 
         [Test]
         public void MethodDateTimeAndTimeSpan()
         {
-            Assert.DoesNotThrow(() => module.MethodTimeSpanTest());
+            using (Py.GIL())
+                Assert.DoesNotThrow(() => module.MethodTimeSpanTest());
         }
 
         [Test]
         public void NumericalArgumentMethod()
         {
-            CSharpModel.ProvidedArgument = 0;
+            using (Py.GIL())
+            {
+                CSharpModel.ProvidedArgument = 0;
 
-            module.NumericalArgumentMethodInteger();
-            Assert.AreEqual(typeof(int), CSharpModel.ProvidedArgument.GetType());
-            Assert.AreEqual(1, CSharpModel.ProvidedArgument);
+                module.NumericalArgumentMethodInteger();
+                Assert.AreEqual(typeof(int), CSharpModel.ProvidedArgument.GetType());
+                Assert.AreEqual(1, CSharpModel.ProvidedArgument);
 
-            // python float type has double precision
-            module.NumericalArgumentMethodDouble();
-            Assert.AreEqual(typeof(double), CSharpModel.ProvidedArgument.GetType());
-            Assert.AreEqual(0.1d, CSharpModel.ProvidedArgument);
+                // python float type has double precision
+                module.NumericalArgumentMethodDouble();
+                Assert.AreEqual(typeof(double), CSharpModel.ProvidedArgument.GetType());
+                Assert.AreEqual(0.1d, CSharpModel.ProvidedArgument);
 
-            module.NumericalArgumentMethodNumpyFloat();
-            Assert.AreEqual(typeof(double), CSharpModel.ProvidedArgument.GetType());
-            Assert.AreEqual(0.1d, CSharpModel.ProvidedArgument);
-
-            module.NumericalArgumentMethodNumpy64Float();
-            Assert.AreEqual(typeof(decimal), CSharpModel.ProvidedArgument.GetType());
-            Assert.AreEqual(0.1, CSharpModel.ProvidedArgument);
+                module.NumericalArgumentMethodNumpy64Float();
+                Assert.AreEqual(typeof(decimal), CSharpModel.ProvidedArgument.GetType());
+                Assert.AreEqual(0.1, CSharpModel.ProvidedArgument);
+            }
         }
 
         [Test]
@@ -219,100 +244,117 @@ class PythonModel(TestMethodBinder.CSharpModel):
         // so moving example test here so we import numpy once
         public void TestReadme()
         {
-            Assert.AreEqual("1.0", Numpy.cos(Numpy.pi * 2).ToString());
+            using (Py.GIL())
+            {
+                Assert.AreEqual("1.0", Numpy.cos(Numpy.pi * 2).ToString());
 
-            dynamic sin = Numpy.sin;
-            StringAssert.StartsWith("-0.95892", sin(5).ToString());
+                dynamic sin = Numpy.sin;
+                StringAssert.StartsWith("-0.95892", sin(5).ToString());
 
-            double c = Numpy.cos(5) + sin(5);
-            Assert.AreEqual(-0.675262, c, 0.01);
+                double c = Numpy.cos(5) + sin(5);
+                Assert.AreEqual(-0.675262, c, 0.01);
 
-            dynamic a = Numpy.array(new List<float> { 1, 2, 3 });
-            Assert.AreEqual("float64", a.dtype.ToString());
+                dynamic a = Numpy.array(new List<float> { 1, 2, 3 });
+                Assert.AreEqual("float64", a.dtype.ToString());
 
-            dynamic b = Numpy.array(new List<float> { 6, 5, 4 }, Py.kw("dtype", Numpy.int32));
-            Assert.AreEqual("int32", b.dtype.ToString());
+                dynamic b = Numpy.array(new List<float> { 6, 5, 4 }, Py.kw("dtype", Numpy.int32));
+                Assert.AreEqual("int32", b.dtype.ToString());
 
-            Assert.AreEqual("[ 6. 10. 12.]", (a * b).ToString().Replace("  ", " "));
+                Assert.AreEqual("[ 6. 10. 12.]", (a * b).ToString().Replace("  ", " "));
+            }
         }
 
         [Test]
         public void NumpyDateTime64()
         {
-            var number = 10;
-            var numpyDateTime = Numpy.datetime64("2011-02");
+            using (Py.GIL())
+            {
+                var number = 10;
+                var numpyDateTime = Numpy.datetime64("2011-02");
 
-            object result;
-            var converted = Converter.ToManaged(numpyDateTime, typeof(DateTime), out result, false);
+                object result;
+                var converted = Converter.ToManaged(numpyDateTime, typeof(DateTime), out result, false);
 
-            Assert.IsTrue(converted);
-            Assert.AreEqual(new DateTime(2011, 02, 1), result);
+                Assert.IsTrue(converted);
+                Assert.AreEqual(new DateTime(2011, 02, 1), result);
+            }
         }
 
         [Test]
         public void ListKeyValuePair()
         {
-            Assert.DoesNotThrow(() => module.ListKeyValuePairTest());
+            using (Py.GIL())
+                Assert.DoesNotThrow(() => module.ListKeyValuePairTest());
         }
 
         [Test]
         public void EnumerableKeyValuePair()
         {
-            Assert.DoesNotThrow(() => module.EnumerableKeyValuePairTest());
+            using (Py.GIL())
+                Assert.DoesNotThrow(() => module.EnumerableKeyValuePairTest());
         }
 
         [Test]
         public void MethodWithParamsPerformance()
         {
-            var stopwatch = new Stopwatch();
-            stopwatch.Start();
-            for (var i = 0; i < 100000; i++)
+            using (Py.GIL())
             {
-                module.MethodWithParamsTest();
-            }
-            stopwatch.Stop();
+                var stopwatch = new Stopwatch();
+                stopwatch.Start();
+                for (var i = 0; i < 100000; i++)
+                {
+                    module.MethodWithParamsTest();
+                }
+                stopwatch.Stop();
 
-            Console.WriteLine($"Took: {stopwatch.ElapsedMilliseconds}");
+                Console.WriteLine($"Took: {stopwatch.ElapsedMilliseconds}");
+            }
         }
 
         [Test]
         public void NumericalArgumentMethodNumpy64FloatPerformance()
         {
-            var stopwatch = new Stopwatch();
-            stopwatch.Start();
-            for (var i = 0; i < 100000; i++)
+            using (Py.GIL())
             {
-                module.NumericalArgumentMethodNumpy64Float();
-            }
-            stopwatch.Stop();
+                var stopwatch = new Stopwatch();
+                stopwatch.Start();
+                for (var i = 0; i < 100000; i++)
+                {
+                    module.NumericalArgumentMethodNumpy64Float();
+                }
+                stopwatch.Stop();
 
-            Console.WriteLine($"Took: {stopwatch.ElapsedMilliseconds}");
+                Console.WriteLine($"Took: {stopwatch.ElapsedMilliseconds}");
+            }
         }
 
         [Test]
         public void MethodWithParamsTest()
         {
-            Assert.DoesNotThrow(() => module.MethodWithParamsTest());
+            using (Py.GIL())
+                Assert.DoesNotThrow(() => module.MethodWithParamsTest());
         }
 
         [Test]
         public void TestNonStaticGenericMethodBinding()
         {
-            // Test matching generic on instance functions
-            // i.e. function signature is <T>(Generic<T> var1)
+            using (Py.GIL())
+            {
+                // Test matching generic on instance functions
+                // i.e. function signature is <T>(Generic<T> var1)
 
-            // Run in C#
-            var class1 = new TestGenericClass1();
-            var class2 = new TestGenericClass2();
+                // Run in C#
+                var class1 = new TestGenericClass1();
+                var class2 = new TestGenericClass2();
 
-            class1.TestNonStaticGenericMethod(class1);
-            class2.TestNonStaticGenericMethod(class2);
+                class1.TestNonStaticGenericMethod(class1);
+                class2.TestNonStaticGenericMethod(class2);
 
-            Assert.AreEqual(1, class1.Value);
-            Assert.AreEqual(1, class2.Value);
+                Assert.AreEqual(1, class1.Value);
+                Assert.AreEqual(1, class2.Value);
 
-            // Run in Python
-            Assert.DoesNotThrow(() => PyModule.FromString("test", @"
+                // Run in Python
+                Assert.DoesNotThrow(() => PyModule.FromString("test", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -325,27 +367,30 @@ class2.TestNonStaticGenericMethod(class2)
 
 if class1.Value != 1 or class2.Value != 1:
     raise AssertionError('Values were not updated')
-"));
+    "));
+            }
         }
 
         [Test]
         public void TestGenericMethodBinding()
         {
-            // Test matching generic
-            // i.e. function signature is <T>(Generic<T> var1)
+            using (Py.GIL())
+            {
+                // Test matching generic
+                // i.e. function signature is <T>(Generic<T> var1)
 
-            // Run in C#
-            var class1 = new TestGenericClass1();
-            var class2 = new TestGenericClass2();
+                // Run in C#
+                var class1 = new TestGenericClass1();
+                var class2 = new TestGenericClass2();
 
-            TestGenericMethod(class1);
-            TestGenericMethod(class2);
+                TestGenericMethod(class1);
+                TestGenericMethod(class2);
 
-            Assert.AreEqual(1, class1.Value);
-            Assert.AreEqual(1, class2.Value);
+                Assert.AreEqual(1, class1.Value);
+                Assert.AreEqual(1, class2.Value);
 
-            // Run in Python
-            Assert.DoesNotThrow(() => PyModule.FromString("test", @"
+                // Run in Python
+                Assert.DoesNotThrow(() => PyModule.FromString("test", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -359,26 +404,29 @@ TestMethodBinder.TestGenericMethod(class2)
 if class1.Value != 1 or class2.Value != 1:
     raise AssertionError('Values were not updated')
 "));
+            }
         }
 
         [Test]
         public void TestMultipleGenericMethodBinding()
         {
-            // Test matching multiple generics
-            // i.e. function signature is <T,K>(Generic<T,K> var1)
+            using (Py.GIL())
+            {
+                // Test matching multiple generics
+                // i.e. function signature is <T,K>(Generic<T,K> var1)
 
-            // Run in C#
-            var class1 = new TestMultipleGenericClass1();
-            var class2 = new TestMultipleGenericClass2();
+                // Run in C#
+                var class1 = new TestMultipleGenericClass1();
+                var class2 = new TestMultipleGenericClass2();
 
-            TestMultipleGenericMethod(class1);
-            TestMultipleGenericMethod(class2);
+                TestMultipleGenericMethod(class1);
+                TestMultipleGenericMethod(class2);
 
-            Assert.AreEqual(1, class1.Value);
-            Assert.AreEqual(1, class2.Value);
+                Assert.AreEqual(1, class1.Value);
+                Assert.AreEqual(1, class2.Value);
 
-            // Run in Python
-            Assert.DoesNotThrow(() => PyModule.FromString("test", @"
+                // Run in Python
+                Assert.DoesNotThrow(() => PyModule.FromString("test", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -392,34 +440,37 @@ TestMethodBinder.TestMultipleGenericMethod(class2)
 if class1.Value != 1 or class2.Value != 1:
     raise AssertionError('Values were not updated')
 "));
+            }
         }
 
         [Test]
         public void TestMultipleGenericParamMethodBinding()
         {
-            // Test multiple param generics matching
-            // i.e. function signature is <T,K>(Generic1<T> var1, Generic<T,K> var2)
+            using (Py.GIL())
+            {
+                // Test multiple param generics matching
+                // i.e. function signature is <T,K>(Generic1<T> var1, Generic<T,K> var2)
 
-            // Run in C#
-            var class1a = new TestGenericClass1();
-            var class1b = new TestMultipleGenericClass1();
+                // Run in C#
+                var class1a = new TestGenericClass1();
+                var class1b = new TestMultipleGenericClass1();
 
-            TestMultipleGenericParamsMethod(class1a, class1b);
+                TestMultipleGenericParamsMethod(class1a, class1b);
 
-            Assert.AreEqual(1, class1a.Value);
-            Assert.AreEqual(1, class1a.Value);
+                Assert.AreEqual(1, class1a.Value);
+                Assert.AreEqual(1, class1a.Value);
 
 
-            var class2a = new TestGenericClass2();
-            var class2b = new TestMultipleGenericClass2();
+                var class2a = new TestGenericClass2();
+                var class2b = new TestMultipleGenericClass2();
 
-            TestMultipleGenericParamsMethod(class2a, class2b);
+                TestMultipleGenericParamsMethod(class2a, class2b);
 
-            Assert.AreEqual(1, class2a.Value);
-            Assert.AreEqual(1, class2b.Value);
+                Assert.AreEqual(1, class2a.Value);
+                Assert.AreEqual(1, class2b.Value);
 
-            // Run in Python
-            Assert.DoesNotThrow(() => PyModule.FromString("test", @"
+                // Run in Python
+                Assert.DoesNotThrow(() => PyModule.FromString("test", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -440,33 +491,36 @@ TestMethodBinder.TestMultipleGenericParamsMethod(class2a, class2b)
 if class2a.Value != 1 or class2b.Value != 1:
     raise AssertionError('Values were not updated')
 "));
+            }
         }
 
         [Test]
         public void TestMultipleGenericParamMethodBinding_MixedOrder()
         {
-            // Test matching multiple param generics with mixed order
-            // i.e. function signature is <T,K>(Generic1<K> var1, Generic<T,K> var2)
+            using (Py.GIL())
+            {
+                // Test matching multiple param generics with mixed order
+                // i.e. function signature is <T,K>(Generic1<K> var1, Generic<T,K> var2)
 
-            // Run in C#
-            var class1a = new TestGenericClass2();
-            var class1b = new TestMultipleGenericClass1();
+                // Run in C#
+                var class1a = new TestGenericClass2();
+                var class1b = new TestMultipleGenericClass1();
 
-            TestMultipleGenericParamsMethod2(class1a, class1b);
+                TestMultipleGenericParamsMethod2(class1a, class1b);
 
-            Assert.AreEqual(1, class1a.Value);
-            Assert.AreEqual(1, class1a.Value);
+                Assert.AreEqual(1, class1a.Value);
+                Assert.AreEqual(1, class1a.Value);
 
-            var class2a = new TestGenericClass1();
-            var class2b = new TestMultipleGenericClass2();
+                var class2a = new TestGenericClass1();
+                var class2b = new TestMultipleGenericClass2();
 
-            TestMultipleGenericParamsMethod2(class2a, class2b);
+                TestMultipleGenericParamsMethod2(class2a, class2b);
 
-            Assert.AreEqual(1, class2a.Value);
-            Assert.AreEqual(1, class2b.Value);
+                Assert.AreEqual(1, class2a.Value);
+                Assert.AreEqual(1, class2b.Value);
 
-            // Run in Python
-            Assert.DoesNotThrow(() => PyModule.FromString("test", @"
+                // Run in Python
+                Assert.DoesNotThrow(() => PyModule.FromString("test", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -487,13 +541,15 @@ TestMethodBinder.TestMultipleGenericParamsMethod2(class2a, class2b)
 if class2a.Value != 1 or class2b.Value != 1:
     raise AssertionError('Values were not updated')
 "));
+            }
         }
 
         [Test]
         public void TestPyClassGenericBinding()
         {
-            // Overriding our generics in Python we should still match with the generic method
-            Assert.DoesNotThrow(() => PyModule.FromString("test", @"
+            using (Py.GIL())
+                // Overriding our generics in Python we should still match with the generic method
+                Assert.DoesNotThrow(() => PyModule.FromString("test", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -520,14 +576,15 @@ if singleGenericClass.Value != 1 or multiGenericClass.Value != 1:
         [Test]
         public void TestNonGenericIsUsedWhenAvailable()
         {
-            // Run in C#
-            var class1 = new TestGenericClass3();
-            TestGenericMethod(class1);
-            Assert.AreEqual(10, class1.Value);
+            using (Py.GIL())
+            {// Run in C#
+                var class1 = new TestGenericClass3();
+                TestGenericMethod(class1);
+                Assert.AreEqual(10, class1.Value);
 
 
-            // When available, should select non-generic method over generic method
-            Assert.DoesNotThrow(() => PyModule.FromString("test", @"
+                // When available, should select non-generic method over generic method
+                Assert.DoesNotThrow(() => PyModule.FromString("test", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -540,18 +597,20 @@ TestMethodBinder.TestGenericMethod(class1)
 if class1.Value != 10:
     raise AssertionError('Value was not updated')
 "));
+            }
         }
 
         [Test]
         public void TestMatchTypedGenericOverload()
         {
-            // Test to ensure we can match a typed generic overload
-            // even when there are other matches that would apply.
-            var class1 = new TestGenericClass4();
-            TestGenericMethod(class1);
-            Assert.AreEqual(15, class1.Value);
+            using (Py.GIL())
+            {// Test to ensure we can match a typed generic overload
+                // even when there are other matches that would apply.
+                var class1 = new TestGenericClass4();
+                TestGenericMethod(class1);
+                Assert.AreEqual(15, class1.Value);
 
-            Assert.DoesNotThrow(() => PyModule.FromString("test", @"
+                Assert.DoesNotThrow(() => PyModule.FromString("test", @"
 from clr import AddReference
 AddReference(""System"")
 AddReference(""Python.EmbeddingTest"")
@@ -564,20 +623,24 @@ TestMethodBinder.TestGenericMethod(class1)
 if class1.Value != 15:
     raise AssertionError('Value was not updated')
 "));
+            }
         }
 
         [Test]
         public void TestGenericBindingSpeed()
         {
-            var stopwatch = new Stopwatch();
-            stopwatch.Start();
-            for (int i = 0; i < 10000; i++)
+            using (Py.GIL())
             {
-                TestMultipleGenericParamMethodBinding();
-            }
-            stopwatch.Stop();
+                var stopwatch = new Stopwatch();
+                stopwatch.Start();
+                for (int i = 0; i < 10000; i++)
+                {
+                    TestMultipleGenericParamMethodBinding();
+                }
+                stopwatch.Stop();
 
-            Console.WriteLine($"Took: {stopwatch.ElapsedMilliseconds} ms");
+                Console.WriteLine($"Took: {stopwatch.ElapsedMilliseconds} ms");
+            }
         }
 
         [Test]
@@ -586,7 +649,8 @@ if class1.Value != 15:
             // This test ensures that we can still match and bind a generic method when we
             // have a converted pytype in the args (py timedelta -> C# TimeSpan)
 
-            Assert.DoesNotThrow(() => PyModule.FromString("test", @"
+            using (Py.GIL())
+                Assert.DoesNotThrow(() => PyModule.FromString("test", @"
 from datetime import timedelta
 from clr import AddReference
 AddReference(""System"")
@@ -608,7 +672,8 @@ if class1.Value != 5:
         {
             // This test ensures that we can still match and bind a generic method when we have default args
 
-            Assert.DoesNotThrow(() => PyModule.FromString("test", @"
+            using (Py.GIL())
+                Assert.DoesNotThrow(() => PyModule.FromString("test", @"
 from datetime import timedelta
 from clr import AddReference
 AddReference(""System"")
@@ -634,7 +699,8 @@ if class1.Value != 50:
             // This test ensures that we can still match and bind a generic method when we have \
             // null default args, important because caching by arg types occurs
 
-            Assert.DoesNotThrow(() => PyModule.FromString("test", @"
+            using (Py.GIL())
+                Assert.DoesNotThrow(() => PyModule.FromString("test", @"
 from datetime import timedelta
 from clr import AddReference
 AddReference(""System"")
@@ -657,8 +723,9 @@ if class1.Value != 20:
         [Test]
         public void TestMatchPyDateToDateTime()
         {
-            // This test ensures that we match py datetime.date object to C# DateTime object
-            Assert.DoesNotThrow(() => PyModule.FromString("test", @"
+            using (Py.GIL())
+                // This test ensures that we match py datetime.date object to C# DateTime object
+                Assert.DoesNotThrow(() => PyModule.FromString("test", @"
 from datetime import *
 from clr import AddReference
 AddReference(""System"")
@@ -779,9 +846,12 @@ if result != 5:
 
             private static void AssertErrorNotOccurred()
             {
-                if (Exceptions.ErrorOccurred())
+                using (Py.GIL())
                 {
-                    throw new Exception("Error occurred");
+                    if (Exceptions.ErrorOccurred())
+                    {
+                        throw new Exception("Error occurred");
+                    }
                 }
             }
 

@@ -8,6 +8,8 @@ using System.Security;
 
 using Python.Runtime.StateSerialization;
 
+using static Python.Runtime.MethodBinder;
+
 namespace Python.Runtime
 {
     /// <summary>
@@ -347,6 +349,7 @@ namespace Python.Runtime
             var items = new List<MemberInfo>();
             MemberInfo m;
 
+            var snakeCasedMethods = new HashSet<string>();
             var snakeCasedAttributes = new HashSet<string>();
             var originalMemberNames = info
                 .Where(mi => mi switch
@@ -367,6 +370,11 @@ namespace Python.Runtime
                 if (m.DeclaringType == type)
                 {
                     local.Add(m.Name);
+                    var snakeName = m.Name.ToSnakeCase();
+                    if (snakeName != m.Name && m is MethodInfo)
+                    {
+                        snakeCasedMethods.Add(snakeName);
+                    }
                 }
             }
 
@@ -398,6 +406,21 @@ namespace Python.Runtime
                 if (local.Contains(m.Name))
                 {
                     items.Add(m);
+                }
+                else if (m is MethodInfo)
+                {
+                    // the method binding is done by the case sensitive name and it's handled by a single MethodBinder instance, so in derived classes
+                    // we need to add the methods of the base classes which have the same name or snake name
+                    // - the name of this method (of a base type) matches a snakename method of this type
+                    // - the snake name of this method (of a base type) matches:
+                    //    - a method name in this type
+                    //    - a snakename method of this type
+                    var snakeName = m.Name.ToSnakeCase();
+                    if (snakeCasedMethods.Contains(m.Name)
+                        || local.Contains(snakeName) || snakeCasedMethods.Contains(snakeName))
+                    {
+                        items.Add(m);
+                    }
                 }
             }
 
@@ -497,9 +520,9 @@ namespace Python.Runtime
 
                         if (!methods.TryGetValue(name, out var methodList))
                         {
-                            methodList = methods[name] = new MethodOverloads(true);
+                            methodList = methods[name] = new MethodOverloads();
                         }
-                        methodList.Add(meth);
+                        methodList.Add(meth, true);
 
                         if (!OperatorMethod.IsOperatorMethod(meth))
                         {
@@ -508,9 +531,9 @@ namespace Python.Runtime
                             {
                                 if (!methods.TryGetValue(snakeCasedMethodName, out methodList))
                                 {
-                                    methodList = methods[snakeCasedMethodName] = new MethodOverloads(false);
+                                    methodList = methods[snakeCasedMethodName] = new ();
                                 }
-                                methodList.Add(meth);
+                                methodList.Add(meth, false);
                                 snakeCasedAttributes.Add(snakeCasedMethodName);
                             }
                         }
@@ -526,9 +549,9 @@ namespace Python.Runtime
                         name = "__init__";
                         if (!methods.TryGetValue(name, out methodList))
                         {
-                            methodList = methods[name] = new MethodOverloads(true);
+                            methodList = methods[name] = new ();
                         }
-                        methodList.Add(ctor);
+                        methodList.Add(ctor, true);
                         continue;
 
                     case MemberTypes.Property:
@@ -598,20 +621,20 @@ namespace Python.Runtime
             foreach (var iter in methods)
             {
                 name = iter.Key;
-                var mlist = iter.Value.Methods.ToArray();
+                var mlist = iter.Value.Methods;
 
-                ob = new MethodObject(type, name, mlist, isOriginal: iter.Value.IsOriginal);
+                ob = new MethodObject(type, name, mlist);
                 ci.members[name] = ob.AllocObject();
-                if (mlist.Any(OperatorMethod.IsOperatorMethod))
+                if (mlist.Select(x => x.MethodBase).Any(OperatorMethod.IsOperatorMethod))
                 {
                     string pyName = OperatorMethod.GetPyMethodName(name);
                     string pyNameReverse = OperatorMethod.ReversePyMethodName(pyName);
                     OperatorMethod.FilterMethods(mlist, out var forwardMethods, out var reverseMethods);
                     // Only methods where the left operand is the declaring type.
-                    if (forwardMethods.Length > 0)
+                    if (forwardMethods.Count > 0)
                         ci.members[pyName] = new MethodObject(type, name, forwardMethods).AllocObject();
                     // Only methods where only the right operand is the declaring type.
-                    if (reverseMethods.Length > 0)
+                    if (reverseMethods.Count > 0)
                         ci.members[pyNameReverse] = new MethodObject(type, name, reverseMethods).AllocObject();
                 }
             }
@@ -656,19 +679,15 @@ namespace Python.Runtime
 
         private class MethodOverloads
         {
-            public List<MethodBase> Methods { get; }
+            public List<MethodInformation> Methods { get; }
 
-            public bool IsOriginal { get; }
-
-            public MethodOverloads(bool original = true)
+            public MethodOverloads()
             {
-                Methods = new List<MethodBase>();
-                IsOriginal = original;
+                Methods = new List<MethodInformation>();
             }
-
-            public void Add(MethodBase method)
+            public void Add(MethodBase method, bool isOriginal)
             {
-                Methods.Add(method);
+                Methods.Add(new MethodInformation(method, isOriginal));
             }
         }
     }
