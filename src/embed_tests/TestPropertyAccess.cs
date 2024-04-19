@@ -966,6 +966,33 @@ class TestSetProtectedStaticReadOnlyFieldFails(TestPropertyAccess.Fixture):
             protected static string NonDynamicProtectedStaticProperty { get; set; } = "Default value";
 
             protected string NonDynamicProtectedField = "Default value";
+
+            public string NonDynamicField;
+        }
+
+        [TestCase("NonDynamicField")]
+        [TestCase("NonDynamicProperty")]
+        public void TestDynamicObjectCanAccessCSharpNonDynamicPropertiesAndFieldsWithPEP8Syntax(string name)
+        {
+            using var _ = Py.GIL();
+
+            var model = new DynamicFixture();
+            using var pyModel = model.ToPython();
+
+            var pep8Name = name.ToSnakeCase();
+            pyModel.SetAttr(pep8Name, "Piertotum Locomotor".ToPython());
+
+            Assert.IsFalse(model.Properties.ContainsKey(name));
+            Assert.IsFalse(model.Properties.ContainsKey(pep8Name));
+
+            var value = pyModel.GetAttr(pep8Name).As<string>();
+            Assert.AreEqual("Piertotum Locomotor", value);
+
+            var memberInfo = model.GetType().GetMember(name)[0];
+            var managedValue = memberInfo.MemberType == MemberTypes.Property
+                ? ((PropertyInfo)memberInfo).GetValue(model)
+                : ((FieldInfo)memberInfo).GetValue(model);
+            Assert.AreEqual(value, managedValue);
         }
 
         public class TestPerson : IComparable, IComparable<TestPerson>

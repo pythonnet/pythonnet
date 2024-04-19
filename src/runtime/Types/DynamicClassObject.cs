@@ -66,10 +66,7 @@ namespace Python.Runtime
         /// </summary>
         public static NewReference tp_getattro(BorrowedReference ob, BorrowedReference key)
         {
-            var result = Runtime.PyObject_GenericGetAttr(ob, key);
-
-            // If AttributeError was raised, we try to get the attribute from the managed object dynamic properties.
-            if (Exceptions.ExceptionMatches(Exceptions.AttributeError))
+            if (!TryGetNonDynamicMember(ob, key, out var result))
             {
                 var clrObj = (CLRObject)GetManagedObject(ob)!;
 
@@ -103,20 +100,14 @@ namespace Python.Runtime
         /// </summary>
         public static int tp_setattro(BorrowedReference ob, BorrowedReference key, BorrowedReference val)
         {
-            var clrObj = (CLRObject)GetManagedObject(ob)!;
-            var name = Runtime.GetManagedString(key);
-
-            // If the key corresponds to a valid property or field of the class, we let the default implementation handle it.
-            var clrObjectType = clrObj.inst.GetType();
-            var bindingFlags = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
-            var property = clrObjectType.GetProperty(name, bindingFlags);
-            var field = property == null ? clrObjectType.GetField(name, bindingFlags) : null;
-            if ((property != null && property.SetMethod != null) || field != null)
+            if (TryGetNonDynamicMember(ob, key, out _, clearExceptions: true))
             {
                 return Runtime.PyObject_GenericSetAttr(ob, key, val);
             }
 
-            var callsite = SetAttrCallSite(name, clrObjectType);
+            var clrObj = (CLRObject)GetManagedObject(ob)!;
+            var name = Runtime.GetManagedString(key);
+            var callsite = SetAttrCallSite(name, clrObj.inst.GetType());
             try
             {
                 callsite.Target(callsite, clrObj.inst, PyObject.FromNullableReference(val));
@@ -128,6 +119,20 @@ namespace Python.Runtime
             }
 
             return 0;
+        }
+
+        private static bool TryGetNonDynamicMember(BorrowedReference ob, BorrowedReference key, out NewReference value, bool clearExceptions = false)
+        {
+            value = Runtime.PyObject_GenericGetAttr(ob, key);
+            // If AttributeError was raised, we try to get the attribute from the managed object dynamic properties.
+            var result = !Exceptions.ExceptionMatches(Exceptions.AttributeError);
+
+            if (clearExceptions)
+            {
+                Exceptions.Clear();
+            }
+
+            return result;
         }
     }
 }
