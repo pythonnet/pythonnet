@@ -102,8 +102,11 @@ def PureCSharpConstruction():
         /// https://quantconnect.slack.com/archives/G51920EN4/p1615418516028900
         public void ParamTest()
         {
-            var output = (bool)module.TestA();
-            Assert.IsTrue(output);
+            using (Py.GIL())
+            {
+                var output = (bool)module.TestA();
+                Assert.IsTrue(output);
+            }
         }
 
         [TestCase("AAPL", false)]
@@ -111,7 +114,10 @@ def PureCSharpConstruction():
         public void ContainsTest(string key, bool expected)
         {
             var dic = new Dictionary<string, object> { { "SPY", new object() } };
-            Assert.AreEqual(expected, (bool)containsTest(key, dic));
+            using (Py.GIL())
+            {
+                Assert.AreEqual(expected, (bool)containsTest(key, dic));
+            }
         }
 
         [Test]

@@ -10,12 +10,21 @@ using Python.Runtime.Native;
 
 public static class Py
 {
+    public static IDisposable AllowThreads() => new AllowThreadsState();
     public static GILState GIL() => PythonEngine.DebugGIL ? new DebugGILState() : new GILState();
 
     public static PyModule CreateScope() => new();
     public static PyModule CreateScope(string name)
         => new(name ?? throw new ArgumentNullException(nameof(name)));
 
+    public sealed class AllowThreadsState : IDisposable
+    {
+        private readonly IntPtr ts = PythonEngine.BeginAllowThreads();
+        public void Dispose()
+        {
+            PythonEngine.EndAllowThreads(ts);
+        }
+    }
 
     public class GILState : IDisposable
     {

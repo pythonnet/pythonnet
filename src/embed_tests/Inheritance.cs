@@ -182,18 +182,21 @@ namespace Python.EmbeddingTest
         {
             get
             {
-                using (var scope = Py.CreateScope())
+                using(Py.GIL())
                 {
-                    scope.Set("this", this);
-                    try
+                    using (var scope = Py.CreateScope())
                     {
-                        return scope.Eval<int>($"super(this.__class__, this).{nameof(XProp)}");
-                    }
-                    catch (PythonException ex) when (PythonReferenceComparer.Instance.Equals(ex.Type, Exceptions.AttributeError))
-                    {
-                        if (this.extras.TryGetValue(nameof(this.XProp), out object value))
-                            return (int)value;
-                        throw;
+                        scope.Set("this", this);
+                        try
+                        {
+                            return scope.Eval<int>($"super(this.__class__, this).{nameof(XProp)}");
+                        }
+                        catch (PythonException ex) when (PythonReferenceComparer.Instance.Equals(ex.Type, Exceptions.AttributeError))
+                        {
+                            if (this.extras.TryGetValue(nameof(this.XProp), out object value))
+                                return (int)value;
+                            throw;
+                        }
                     }
                 }
             }

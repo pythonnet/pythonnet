@@ -33,6 +33,12 @@ namespace Python.EmbeddingTest
         [TestCase("PERatio10YearAverage", "pe_ratio_10_year_average")]
         [TestCase("CAPERatio", "cape_ratio")]
         [TestCase("EVToEBITDA3YearGrowth", "ev_to_ebitda_3_year_growth")]
+        [TestCase("EVToForwardEBITDA", "ev_to_forward_ebitda")]
+        [TestCase("EVToRevenue", "ev_to_revenue")]
+        [TestCase("EVToPreTaxIncome", "ev_to_pre_tax_income")]
+        [TestCase("EVToTotalAssets", "ev_to_total_assets")]
+        [TestCase("EVToFCF", "ev_to_fcf")]
+        [TestCase("EVToEBIT", "ev_to_ebit")]
         [TestCase("", "")]
         public void ConvertsNameToSnakeCase(string name, string expected)
         {

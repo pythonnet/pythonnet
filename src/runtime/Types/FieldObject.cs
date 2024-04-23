@@ -64,11 +64,18 @@ namespace Python.Runtime
                     // Fasterflect does not support constant fields
                     if (info.IsLiteral && !info.IsInitOnly)
                     {
-                        result = info.GetValue(null);
+                        using (Py.AllowThreads())
+                        {
+                            result = info.GetValue(null);
+                        }
                     }
                     else
                     {
-                        result = self.GetMemberGetter(info.DeclaringType)(info.DeclaringType);
+                        var getter = self.GetMemberGetter(info.DeclaringType);
+                        using (Py.AllowThreads())
+                        {
+                            result = getter(info.DeclaringType);
+                        }
                     }
 
                     return Converter.ToPython(result, info.FieldType);
@@ -92,12 +99,20 @@ namespace Python.Runtime
                 // Fasterflect does not support constant fields
                 if (info.IsLiteral && !info.IsInitOnly)
                 {
-                    result = info.GetValue(co.inst);
+                    using (Py.AllowThreads())
+                    {
+                        result = info.GetValue(co.inst);
+                    }
                 }
                 else
                 {
                     var type = co.inst.GetType();
-                    result = self.GetMemberGetter(type)(self.IsValueType(type) ? co.inst.WrapIfValueType() : co.inst);
+                    var getter = self.GetMemberGetter(type);
+                    var argument = self.IsValueType(type) ? co.inst.WrapIfValueType() : co.inst;
+                    using (Py.AllowThreads())
+                    {
+                        result = getter(argument);
+                    }
                 }
 
                 return Converter.ToPython(result, info.FieldType);

@@ -76,7 +76,11 @@ namespace Python.Runtime
 
                 try
                 {
-                    result = self.GetMemberGetter(info.DeclaringType)(info.DeclaringType);
+                    var getterFunc = self.GetMemberGetter(info.DeclaringType);
+                    using (Py.AllowThreads())
+                    {
+                        result = getterFunc(info.DeclaringType);
+                    }
                     return Converter.ToPython(result, info.PropertyType);
                 }
                 catch (Exception e)
@@ -93,7 +97,10 @@ namespace Python.Runtime
 
             try
             {
-                result = getter.Invoke(co.inst, Array.Empty<object>());
+                using (Py.AllowThreads())
+                {
+                    result = getter.Invoke(co.inst, Array.Empty<object>());
+                }
                 return Converter.ToPython(result, info.PropertyType);
             }
             catch (Exception e)
