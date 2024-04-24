@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Text;
 
 using NUnit.Framework;
 
@@ -208,6 +209,75 @@ class PyGetListImpl(test.GetListImpl):
             dynamic inst = pyImpl.Invoke();
             List<string> result = inst.GetList();
             CollectionAssert.AreEqual(new[] { "testing" }, result);
+        }
+
+        [Test]
+        public void TestConvertNumpyFloat32ArrayToManaged()
+        {
+            var testValue = new float[] { 0, 1, 2, 3 };
+            var nparr = np.arange(4, dtype: np.float32);
+
+            object convertedValue;
+            var converted = Converter.ToManaged(nparr, typeof(float[]), out convertedValue, false);
+
+            Assert.IsTrue(converted);
+            Assert.AreEqual(testValue, convertedValue);
+        }
+
+        [Test]
+        public void TestConvertNumpyFloat64_2DArrayToManaged()
+        {
+            var testValue = new double[,] {{ 0, 1, 2, 3,}, { 4, 5, 6, 7 }, { 8, 9, 10, 11 }};
+            var shape = new PyTuple(new[] {new PyInt(3), new PyInt(4)});
+            var nparr = np.arange(12, dtype: np.float64).reshape(shape);
+
+            object convertedValue;
+            var converted = Converter.ToManaged(nparr, typeof(double[,]), out convertedValue, false);
+
+            Assert.IsTrue(converted);
+            Assert.AreEqual(testValue, convertedValue);
+        }
+
+        [Test]
+        public void TestConvertBytearrayToManaged()
+        {
+            var testValue = Encoding.ASCII.GetBytes("test");
+            using var str = PythonEngine.Eval("'test'.encode('ascii')");
+
+            object convertedValue;
+            var converted = Converter.ToManaged(str, typeof(byte[]), out convertedValue, false);
+
+            Assert.IsTrue(converted);
+            Assert.AreEqual(testValue, convertedValue);
+        }
+
+        [Test]
+        public void TestConvertCharArrayToManaged()
+        {
+            var testValue = new char[] { 't', 'e', 's', 't' };
+            using var str = PythonEngine.Eval("'test'.encode('ascii')");
+
+            object convertedValue;
+            var converted = Converter.ToManaged(str, typeof(char[]), out convertedValue, false);
+
+            Assert.IsTrue(converted);
+            Assert.AreEqual(testValue, convertedValue);
+        }
+
+        dynamic np
+        {
+            get
+            {
+                try
+                {
+                    return Py.Import("numpy");
+                }
+                catch (PythonException)
+                {
+                    Assert.Inconclusive("Numpy or dependency not installed");
+                    return null;
+                }
+            }
         }
     }
 
