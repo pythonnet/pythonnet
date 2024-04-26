@@ -1,7 +1,5 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -18,21 +16,28 @@ namespace Python.Runtime
     public static class RuntimeData
     {
 
-        private readonly static Func<IFormatter> DefaultFormatter = () => new BinaryFormatter();
-        private static Func<IFormatter>? _formatterFactory { get; set; } = null;
+        public readonly static Func<IFormatter> DefaultFormatterFactory = () =>
+        {
+            try
+            {
+                return new BinaryFormatter();
+            }
+            catch
+            {
+                return new NoopFormatter();
+            }
+        };
+
+        private static Func<IFormatter> _formatterFactory { get; set; } = DefaultFormatterFactory;
 
         public static Func<IFormatter> FormatterFactory
         {
-            get
-            {
-                if (_formatterFactory is null)
-                {
-                    return DefaultFormatter;
-                }
-                return _formatterFactory;
-            }
+            get => _formatterFactory;
             set
             {
+                if (value == null)
+                    throw new ArgumentNullException(nameof(value));
+
                 _formatterFactory = value;
             }
         }
@@ -302,8 +307,8 @@ namespace Python.Runtime
         }
 
         /// <summary>
-        /// Stores the data in the <paramref name="stream"/> argument in a Python capsule and stores 
-        /// the capsule on the `sys` module object with the name <paramref name="key"/>. 
+        /// Stores the data in the <paramref name="stream"/> argument in a Python capsule and stores
+        /// the capsule on the `sys` module object with the name <paramref name="key"/>.
         /// </summary>
         /// <remarks>
         /// No checks on pre-existing names on the `sys` module object are made.
@@ -320,10 +325,10 @@ namespace Python.Runtime
 
             try
             {
-            using NewReference capsule = PyCapsule_New(mem, IntPtr.Zero, IntPtr.Zero);
-            int res = PySys_SetObject(key, capsule.BorrowOrThrow());
-            PythonException.ThrowIfIsNotZero(res);
-        }
+                using NewReference capsule = PyCapsule_New(mem, IntPtr.Zero, IntPtr.Zero);
+                int res = PySys_SetObject(key, capsule.BorrowOrThrow());
+                PythonException.ThrowIfIsNotZero(res);
+            }
             catch
             {
                 Marshal.FreeHGlobal(mem);
@@ -333,12 +338,12 @@ namespace Python.Runtime
 
         static byte[] emptyBuffer = new byte[0];
         /// <summary>
-        /// Retreives the previously stored data on a Python capsule. 
+        /// Retreives the previously stored data on a Python capsule.
         /// Throws if the object corresponding to the <paramref name="key"/> parameter
         /// on the `sys` module object is not a capsule.
         /// </summary>
         /// <param name="key">The name given to the capsule on the `sys` module object</param>
-        /// <returns>A MemoryStream containing the previously saved serialization data. 
+        /// <returns>A MemoryStream containing the previously saved serialization data.
         /// The stream is empty if no name matches the key.  </returns>
         public static MemoryStream GetSerializationData(string key)
         {
@@ -351,7 +356,7 @@ namespace Python.Runtime
             var ptr = PyCapsule_GetPointer(capsule, IntPtr.Zero);
             if (ptr == IntPtr.Zero)
             {
-                // The PyCapsule API returns NULL on error; NULL cannot be stored 
+                // The PyCapsule API returns NULL on error; NULL cannot be stored
                 // as a capsule's value
                 PythonException.ThrowIfIsNull(null);
             }
