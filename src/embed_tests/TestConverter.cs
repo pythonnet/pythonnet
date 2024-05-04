@@ -264,6 +264,36 @@ class PyGetListImpl(test.GetListImpl):
             Assert.AreEqual(testValue, convertedValue);
         }
 
+        [Test]
+        [TestCaseSource(typeof(Arrays))]
+        public void TestConvertArrayToManaged(string arrayType, Type t, object expected)
+        {
+            object convertedValue;
+            var arr = array.array(arrayType.ToPython(), expected.ToPython());
+            var converted = Converter.ToManaged(arr, t, out convertedValue, false);
+
+            Assert.IsTrue(converted);
+            Assert.AreEqual(expected, convertedValue);
+        }
+
+        public class Arrays : System.Collections.IEnumerable
+        {
+            public System.Collections.IEnumerator GetEnumerator()
+            {
+                yield return new object[] { "b", typeof(byte[]), new byte[] { 0, 1, 2, 3, 4 } };
+                yield return new object[] { "B", typeof(byte[]), new byte[] { 0, 1, 2, 3, 4 } };
+                yield return new object[] { "u", typeof(char[]), new char[] { 'a', 'b', 'c', 'd', 'e' } };
+                yield return new object[] { "h", typeof(short[]), new short[] { -2, -1, 0, 1, 2, 3, 4 } };
+                yield return new object[] { "H", typeof(ushort[]), new ushort[] { 0, 1, 2, 3, 4 } };
+                yield return new object[] { "i", typeof(int[]), new int[] { -2, -1, 0, 1, 2, 3, 4 } };
+                yield return new object[] { "I", typeof(uint[]), new uint[] { 0, 1, 2, 3, 4 } };
+                yield return new object[] { "q", typeof(long[]), new long[] { -2, -1, 0, 1, 2, 3, 4 } };
+                yield return new object[] { "q", typeof(ulong[]), new ulong[] { 0, 1, 2, 3, 4 } };
+                yield return new object[] { "f", typeof(float[]), new float[] { -2, -1, 0, 1, 2, 3, 4 } };
+                yield return new object[] { "d", typeof(double[]), new double[] { -2, -1, 0, 1, 2, 3, 4 } };
+            }
+        };
+
         dynamic np
         {
             get
@@ -275,6 +305,22 @@ class PyGetListImpl(test.GetListImpl):
                 catch (PythonException)
                 {
                     Assert.Inconclusive("Numpy or dependency not installed");
+                    return null;
+                }
+            }
+        }
+
+        dynamic array
+        {
+            get
+            {
+                try
+                {
+                    return Py.Import("array");
+                }
+                catch (PythonException)
+                {
+                    Assert.Inconclusive("Could not import array");
                     return null;
                 }
             }
