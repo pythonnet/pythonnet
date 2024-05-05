@@ -1252,12 +1252,14 @@ namespace Python.Runtime
 
         internal static NewReference PyString_FromString(string value)
         {
+            int byteorder = BitConverter.IsLittleEndian ? -1 : 1;
+            int* byteorderPtr = &byteorder;
             fixed(char* ptr = value)
                 return Delegates.PyUnicode_DecodeUTF16(
                     (IntPtr)ptr,
                     value.Length * sizeof(Char),
                     IntPtr.Zero,
-                    IntPtr.Zero
+                    (IntPtr)byteorderPtr
                 );
         }
 
