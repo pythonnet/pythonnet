@@ -252,19 +252,6 @@ class PyGetListImpl(test.GetListImpl):
         }
 
         [Test]
-        public void TestConvertCharArrayToManaged()
-        {
-            var testValue = new char[] { 't', 'e', 's', 't' };
-            using var str = PythonEngine.Eval("'test'.encode('ascii')");
-
-            object convertedValue;
-            var converted = Converter.ToManaged(str, typeof(char[]), out convertedValue, false);
-
-            Assert.IsTrue(converted);
-            Assert.AreEqual(testValue, convertedValue);
-        }
-
-        [Test]
         [TestCaseSource(typeof(Arrays))]
         public void TestConvertArrayToManaged(string arrayType, Type t, object expected)
         {
