@@ -317,21 +317,28 @@ namespace Python.Runtime
         /// <param name="stream">A MemoryStream that contains the data to be placed in the capsule</param>
         public static void StashSerializationData(string key, MemoryStream stream)
         {
-            var data = stream.GetBuffer();
-            IntPtr mem = Marshal.AllocHGlobal(IntPtr.Size + data.Length);
-            // store the length of the buffer first
-            Marshal.WriteIntPtr(mem, (IntPtr)data.Length);
-            Marshal.Copy(data, 0, mem + IntPtr.Size, data.Length);
+            if (stream.TryGetBuffer(out var data))
+            {
+                IntPtr mem = Marshal.AllocHGlobal(IntPtr.Size + data.Count);
 
-            try
-            {
-                using NewReference capsule = PyCapsule_New(mem, IntPtr.Zero, IntPtr.Zero);
-                int res = PySys_SetObject(key, capsule.BorrowOrThrow());
-                PythonException.ThrowIfIsNotZero(res);
+                // store the length of the buffer first
+                Marshal.WriteIntPtr(mem, (IntPtr)data.Count);
+                Marshal.Copy(data.Array, data.Offset, mem + IntPtr.Size, data.Count);
+
+                try
+                {
+                    using NewReference capsule = PyCapsule_New(mem, IntPtr.Zero, IntPtr.Zero);
+                    int res = PySys_SetObject(key, capsule.BorrowOrThrow());
+                    PythonException.ThrowIfIsNotZero(res);
+                }
+                catch
+                {
+                    Marshal.FreeHGlobal(mem);
+                }
             }
-            catch
+            else
             {
-                Marshal.FreeHGlobal(mem);
+                throw new NotImplementedException($"{nameof(stream)} must be exposable");
             }
 
         }
