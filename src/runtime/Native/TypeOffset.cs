@@ -152,7 +152,7 @@ namespace Python.Runtime
             foreach (var managedType in managedTypes)
             {
                 var slots = managedType.GetMethods(BindingFlags.Public | BindingFlags.Static);
-                foreach(var slot in slots)
+                foreach (var slot in slots)
                     if (!present.Contains(slot.Name))
                         missing.Add(slot.Name);
             }

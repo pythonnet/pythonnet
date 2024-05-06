@@ -427,7 +427,7 @@ namespace Python.Test
 
     public interface IInheritedIndexer : IIndexer { }
 
-    public class InterfaceInheritedIndexerTest : IndexerBase,  IInheritedIndexer
+    public class InterfaceInheritedIndexerTest : IndexerBase, IInheritedIndexer
     {
         private System.Collections.Generic.IDictionary<int, string> d = new System.Collections.Generic.Dictionary<int, string>();
 

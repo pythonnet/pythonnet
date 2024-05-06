@@ -2,9 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.InteropServices;
-using Python.Runtime.Reflection;
 using System.Reflection;
+using System.Runtime.InteropServices;
+
+using Python.Runtime.Reflection;
 
 namespace Python.Runtime
 {
@@ -61,7 +62,7 @@ namespace Python.Runtime
     /// </summary>
     // Py_TPFLAGS_*
     [Flags]
-    public enum TypeFlags: long
+    public enum TypeFlags : long
     {
         HeapType = (1 << 9),
         BaseType = (1 << 10),

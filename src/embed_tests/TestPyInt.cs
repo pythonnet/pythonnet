@@ -4,6 +4,7 @@ using System.Linq;
 using System.Numerics;
 
 using NUnit.Framework;
+
 using Python.Runtime;
 
 namespace Python.EmbeddingTest

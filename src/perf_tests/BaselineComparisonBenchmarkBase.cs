@@ -15,13 +15,15 @@ namespace Python.PerformanceTests
             Console.WriteLine($"CWD: {Environment.CurrentDirectory}");
             Console.WriteLine($"Using Python.Runtime from {typeof(PythonEngine).Assembly.Location} {typeof(PythonEngine).Assembly.GetName()}");
 
-            try {
+            try
+            {
                 PythonEngine.Initialize();
                 Console.WriteLine("Python Initialized");
                 Trace.Assert(PythonEngine.BeginAllowThreads() != IntPtr.Zero);
                 Console.WriteLine("Threading enabled");
             }
-            catch (Exception e) {
+            catch (Exception e)
+            {
                 Console.WriteLine(e);
                 throw;
             }
@@ -44,11 +46,13 @@ namespace Python.PerformanceTests
 
             Console.WriteLine("Preloading " + pythonRuntimeDll);
             Assembly.LoadFrom(pythonRuntimeDll);
-            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies()) {
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
                 if (assembly.FullName.StartsWith("Python.Runtime"))
                     Console.WriteLine(assembly.Location);
-                foreach(var dependency in assembly.GetReferencedAssemblies())
-                    if (dependency.FullName.Contains("Python.Runtime")) {
+                foreach (var dependency in assembly.GetReferencedAssemblies())
+                    if (dependency.FullName.Contains("Python.Runtime"))
+                    {
                         Console.WriteLine($"{assembly} -> {dependency}");
                     }
             }
@@ -56,7 +60,8 @@ namespace Python.PerformanceTests
             AppDomain.CurrentDomain.AssemblyResolve += CurrentDomainOnAssemblyResolve;
         }
 
-        static Assembly CurrentDomainOnAssemblyResolve(object sender, ResolveEventArgs args) {
+        static Assembly CurrentDomainOnAssemblyResolve(object sender, ResolveEventArgs args)
+        {
             if (!args.Name.StartsWith("Python.Runtime"))
                 return null;
 

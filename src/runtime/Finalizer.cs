@@ -27,7 +27,7 @@ namespace Python.Runtime
             public Exception Error { get; }
         }
 
-        public static Finalizer Instance { get; } = new ();
+        public static Finalizer Instance { get; } = new();
 
         public event EventHandler<CollectArgs>? BeforeCollect;
         public event EventHandler<ErrorArgs>? ErrorHandler;
@@ -94,14 +94,14 @@ namespace Python.Runtime
             internal IncorrectRefCountException(IntPtr ptr)
             {
                 PyPtr = ptr;
-                
+
             }
         }
 
         internal delegate bool IncorrectRefCntHandler(object sender, IncorrectFinalizeArgs e);
-        #pragma warning disable 414
+#pragma warning disable 414
         internal event IncorrectRefCntHandler? IncorrectRefCntResolver = null;
-        #pragma warning restore 414
+#pragma warning restore 414
         internal bool ThrowIfUnhandleIncorrectRefCount { get; set; } = true;
 
         #endregion
@@ -142,8 +142,10 @@ namespace Python.Runtime
             lock (_queueLock)
 #endif
             {
-                this._objQueue.Enqueue(new PendingFinalization {
-                    PyObj = obj, RuntimeRun = run,
+                this._objQueue.Enqueue(new PendingFinalization
+                {
+                    PyObj = obj,
+                    RuntimeRun = run,
 #if TRACE_ALLOC
                     StackTrace = stackTrace.ToString(),
 #endif

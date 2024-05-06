@@ -164,12 +164,12 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
             PythonException.ThrowIfIsNull(args);
             using var codeStr = Runtime.PyString_FromString(LoaderCode);
             Runtime.PyTuple_SetItem(args.Borrow(), 0, codeStr.StealOrThrow());
-            
+
             // reference not stolen due to overload incref'ing for us.
             Runtime.PyTuple_SetItem(args.Borrow(), 1, mod_dict);
             Runtime.PyObject_Call(exec, args.Borrow(), default).Dispose();
             // Set as a sub-module of clr.
-            if(Runtime.PyModule_AddObject(ClrModuleReference, "loader", import_hook_module.Steal()) != 0)
+            if (Runtime.PyModule_AddObject(ClrModuleReference, "loader", import_hook_module.Steal()) != 0)
             {
                 throw PythonException.ThrowLastAsClrException();
             }
@@ -232,7 +232,7 @@ class DotNetFinder(importlib.abc.MetaPathFinder):
         {
             using var pyNs = Runtime.PyString_FromString(name);
             var nsSet = Runtime.PyDict_GetItemString(clrModule.dict, _available_namespaces);
-            if (!(nsSet.IsNull  || nsSet == Runtime.PyNone))
+            if (!(nsSet.IsNull || nsSet == Runtime.PyNone))
             {
                 if (Runtime.PySet_Add(nsSet, pyNs.BorrowOrThrow()) != 0)
                 {

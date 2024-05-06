@@ -74,11 +74,11 @@ def test_list():
     Python.Runtime.Codecs.SequenceDecoder.Register()
     ob = ListConversionTester()
 
-    l = [1, 2, 3]
-    assert 3 == ob.GetLength(l)
+    lst = [1, 2, 3]
+    assert 3 == ob.GetLength(lst)
 
-    l2 = [ListMember(1, "one"), ListMember(2, "two"), ListMember(3, "three")]
-    assert 3 == ob.GetLength(l2)
+    lst2 = [ListMember(1, "one"), ListMember(2, "two"), ListMember(3, "three")]
+    assert 3 == ob.GetLength(lst2)
 
 
 def test_enum():

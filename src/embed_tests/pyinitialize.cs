@@ -1,5 +1,7 @@
 using System;
+
 using NUnit.Framework;
+
 using Python.Runtime;
 
 namespace Python.EmbeddingTest
@@ -25,7 +27,7 @@ namespace Python.EmbeddingTest
         {
             using (new PythonEngine())
             {
-                using(var argv = new PyList(Runtime.Runtime.PySys_GetObject("argv")))
+                using (var argv = new PyList(Runtime.Runtime.PySys_GetObject("argv")))
                 {
                     Assert.AreNotEqual(0, argv.Length());
                 }

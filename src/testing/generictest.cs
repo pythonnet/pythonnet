@@ -36,7 +36,7 @@ namespace Python.Test
     }
 
     public class GenericTypeWithConstraint<T>
-        where T: struct
+        where T : struct
     { }
 
     public class GenericNameTest1

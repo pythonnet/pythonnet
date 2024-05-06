@@ -21,7 +21,7 @@ namespace Python.Runtime
         {
             get
             {
-                return $"The .NET {typeof(T).Name} {Description} no longer exists. Cause: " + deserializationException?.Message ;
+                return $"The .NET {typeof(T).Name} {Description} no longer exists. Cause: " + deserializationException?.Message;
             }
         }
 

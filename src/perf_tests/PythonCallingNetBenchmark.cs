@@ -4,12 +4,13 @@ using System.Reflection;
 using System.Text;
 
 using BenchmarkDotNet.Attributes;
+
 using Python.Runtime;
 
 namespace Python.PerformanceTests
 {
     [Config(typeof(BaselineComparisonConfig))]
-    public class PythonCallingNetBenchmark: BaselineComparisonBenchmarkBase
+    public class PythonCallingNetBenchmark : BaselineComparisonBenchmarkBase
     {
         [Benchmark]
         public void ReadInt64Property()
@@ -27,8 +28,10 @@ for i in range(50000):
         }
 
         [Benchmark]
-        public void WriteInt64Property() {
-            using (Py.GIL()) {
+        public void WriteInt64Property()
+        {
+            using (Py.GIL())
+            {
                 var locals = new PyDict();
                 locals.SetItem("a", new NetObject().ToPython());
                 Exec($@"

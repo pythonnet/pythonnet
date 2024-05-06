@@ -3,7 +3,6 @@
 
 """Test CLR class support."""
 
-import clr
 import Python.Test as Test
 import System
 import pytest
@@ -15,6 +14,7 @@ def test_basic_reference_type():
     """Test usage of CLR defined reference types."""
     assert System.String.Empty == ""
 
+
 def test_basic_value_type():
     """Test usage of CLR defined value types."""
     assert System.Int32.MaxValue == 2147483647
@@ -24,16 +24,17 @@ def test_class_standard_attrs():
     """Test standard class attributes."""
     from Python.Test import ClassTest
 
-    assert ClassTest.__name__ == 'ClassTest'
-    assert ClassTest.__module__ == 'Python.Test'
+    assert ClassTest.__name__ == "ClassTest"
+    assert ClassTest.__module__ == "Python.Test"
     assert isinstance(ClassTest.__dict__, DictProxyType)
     assert len(ClassTest.__doc__) > 0
+
 
 def test_class_docstrings():
     """Test standard class docstring generation"""
     from Python.Test import ClassTest
 
-    value = 'Void .ctor()'
+    value = "Void .ctor()"
     assert ClassTest.__doc__ == value
 
 
@@ -52,15 +53,16 @@ def test_class_default_repr():
 def test_non_public_class():
     """Test that non-public classes are inaccessible."""
     with pytest.raises(ImportError):
-        from Python.Test import InternalClass
+        pass
 
     with pytest.raises(AttributeError):
         _ = Test.InternalClass
 
+
 def test_non_exported():
     """Test [PyExport(false)]"""
     with pytest.raises(ImportError):
-        from Python.Test import NonExportable
+        pass
 
     with pytest.raises(AttributeError):
         _ = Test.NonExportable
@@ -76,15 +78,15 @@ def test_basic_subclass():
 
     table = MyTable()
 
-    assert table.__class__.__name__.endswith('MyTable')
-    assert type(table).__name__.endswith('MyTable')
+    assert table.__class__.__name__.endswith("MyTable")
+    assert type(table).__name__.endswith("MyTable")
     assert len(table.__class__.__bases__) == 1
     assert table.__class__.__bases__[0] == Hashtable
 
     assert table.how_many() == 0
     assert table.Count == 0
 
-    table.set_Item('one', 'one')
+    table.set_Item("one", "one")
 
     assert table.how_many() == 1
     assert table.Count == 1
@@ -99,7 +101,7 @@ def test_subclass_with_no_arg_constructor():
             self.name = name
 
     # This failed in earlier versions
-    _ = SubClass('test')
+    _ = SubClass("test")
 
 
 def test_subclass_with_various_constructors():
@@ -111,18 +113,18 @@ def test_subclass_with_various_constructors():
             ClassCtorTest2.__init__(self, v)
             self.value2 = v
 
-    inst = SubClass('test')
-    assert inst.value == 'test'
-    assert inst.value2 == 'test'
+    inst = SubClass("test")
+    assert inst.value == "test"
+    assert inst.value2 == "test"
 
     class SubClass2(ClassCtorTest2):
         def __init__(self, v):
             ClassCtorTest2.__init__(self, v)
             self.value2 = v
 
-    inst = SubClass2('test')
-    assert inst.value == 'test'
-    assert inst.value2 == 'test'
+    inst = SubClass2("test")
+    assert inst.value == "test"
+    assert inst.value2 == "test"
 
 
 def test_struct_construction():
@@ -164,7 +166,7 @@ def test_ienumerable_iteration():
 
     for item in dict_:
         cname = item.__class__.__name__
-        assert cname.endswith('DictionaryEntry')
+        assert cname.endswith("DictionaryEntry")
 
 
 def test_ienumerator_iteration():
@@ -174,7 +176,8 @@ def test_ienumerator_iteration():
     chars = ClassTest.GetEnumerator()
 
     for item in chars:
-        assert item in 'test string'
+        assert item in "test string"
+
 
 def test_iterable():
     """Test what objects are Iterable"""
@@ -184,8 +187,8 @@ def test_iterable():
     assert isinstance(System.String.Empty, Iterable)
     assert isinstance(ClassTest.GetArrayList(), Iterable)
     assert isinstance(ClassTest.GetEnumerator(), Iterable)
-    assert (not isinstance(ClassTest, Iterable))
-    assert (not isinstance(ClassTest(), Iterable))
+    assert not isinstance(ClassTest, Iterable)
+    assert not isinstance(ClassTest(), Iterable)
 
     class ShouldBeIterable(ClassTest):
         def __iter__(self):
@@ -201,16 +204,16 @@ def test_override_get_item():
     class MyTable(Hashtable):
         def __getitem__(self, key):
             value = Hashtable.__getitem__(self, key)
-            return 'my ' + str(value)
+            return "my " + str(value)
 
     table = MyTable()
-    table['one'] = 'one'
-    table['two'] = 'two'
-    table['three'] = 'three'
+    table["one"] = "one"
+    table["two"] = "two"
+    table["three"] = "three"
 
-    assert table['one'] == 'my one'
-    assert table['two'] == 'my two'
-    assert table['three'] == 'my three'
+    assert table["one"] == "my one"
+    assert table["two"] == "my two"
+    assert table["three"] == "my three"
 
     assert table.Count == 3
 
@@ -221,17 +224,17 @@ def test_override_set_item():
 
     class MyTable(Hashtable):
         def __setitem__(self, key, value):
-            value = 'my ' + str(value)
+            value = "my " + str(value)
             Hashtable.__setitem__(self, key, value)
 
     table = MyTable()
-    table['one'] = 'one'
-    table['two'] = 'two'
-    table['three'] = 'three'
+    table["one"] = "one"
+    table["two"] = "two"
+    table["three"] = "three"
 
-    assert table['one'] == 'my one'
-    assert table['two'] == 'my two'
-    assert table['three'] == 'my three'
+    assert table["one"] == "my one"
+    assert table["two"] == "my two"
+    assert table["three"] == "my three"
 
     assert table.Count == 3
 
@@ -254,29 +257,29 @@ def test_comparisons():
     d1 = DateTimeOffset.Parse("2016-11-14")
     d2 = DateTimeOffset.Parse("2016-11-15")
 
-    assert (d1 == d2) == False
-    assert (d1 != d2) == True
+    assert (d1 == d2) == False  # noqa
+    assert (d1 != d2) == True  # noqa
 
-    assert (d1 < d2) == True
-    assert (d1 <= d2) == True
-    assert (d1 >= d2) == False
-    assert (d1 > d2) == False
+    assert (d1 < d2) == True  # noqa
+    assert (d1 <= d2) == True  # noqa
+    assert (d1 >= d2) == False  # noqa
+    assert (d1 > d2) == False  # noqa
 
-    assert (d1 == d1) == True
-    assert (d1 != d1) == False
+    assert (d1 == d1) == True  # noqa
+    assert (d1 != d1) == False  # noqa
 
-    assert (d1 < d1) == False
-    assert (d1 <= d1) == True
-    assert (d1 >= d1) == True
-    assert (d1 > d1) == False
+    assert (d1 < d1) == False  # noqa
+    assert (d1 <= d1) == True  # noqa
+    assert (d1 >= d1) == True  # noqa
+    assert (d1 > d1) == False  # noqa
 
-    assert (d2 == d1) == False
-    assert (d2 != d1) == True
+    assert (d2 == d1) == False  # noqa
+    assert (d2 != d1) == True  # noqa
 
-    assert (d2 < d1) == False
-    assert (d2 <= d1) == False
-    assert (d2 >= d1) == True
-    assert (d2 > d1) == True
+    assert (d2 < d1) == False  # noqa
+    assert (d2 <= d1) == False  # noqa
+    assert (d2 >= d1) == True  # noqa
+    assert (d2 > d1) == True  # noqa
 
     with pytest.raises(TypeError):
         d1 < None
@@ -312,13 +315,13 @@ def test_self_callback():
 
 def test_method_inheritance():
     """Ensure that we call the overridden method instead of the one provided in
-       the base class."""
+    the base class."""
 
     base = Test.BaseClass()
     derived = Test.DerivedClass()
 
-    assert base.IsBase() == True
-    assert derived.IsBase() == False
+    assert base.IsBase()
+    assert not derived.IsBase()
 
 
 def test_callable():
@@ -327,5 +330,5 @@ def test_callable():
     def foo():
         pass
 
-    assert callable(System.String("foo")) == False
-    assert callable(System.Action(foo)) == True
+    assert not callable(System.String("foo"))
+    assert callable(System.Action(foo))

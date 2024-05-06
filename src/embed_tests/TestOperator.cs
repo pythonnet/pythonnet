@@ -1,11 +1,11 @@
+using System;
+using System.Linq;
+using System.Reflection;
+
 using NUnit.Framework;
 
 using Python.Runtime;
 using Python.Runtime.Codecs;
-
-using System;
-using System.Linq;
-using System.Reflection;
 
 namespace Python.EmbeddingTest
 {
@@ -541,12 +541,12 @@ assert c == (a.Num > b)
         [Test]
         public void TupleComparisonOperatorOverloads()
         {
-                TupleCodec<ValueTuple>.Register();
-                string name = string.Format("{0}.{1}",
-                typeof(OperableObject).DeclaringType.Name,
-                typeof(OperableObject).Name);
+            TupleCodec<ValueTuple>.Register();
+            string name = string.Format("{0}.{1}",
+            typeof(OperableObject).DeclaringType.Name,
+            typeof(OperableObject).Name);
             string module = MethodBase.GetCurrentMethod().DeclaringType.Namespace;
-                PythonEngine.Exec($@"
+            PythonEngine.Exec($@"
 from {module} import *
 cls = {name}
 a = cls(2)

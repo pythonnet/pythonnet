@@ -31,7 +31,8 @@ namespace Python.Runtime
         /// The object must support iterator protocol.
         /// </summary>
         public PyIter(PyObject pyObject) : base(FromPyObject(pyObject)) { }
-        static BorrowedReference FromPyObject(PyObject pyObject) {
+        static BorrowedReference FromPyObject(PyObject pyObject)
+        {
             if (pyObject is null) throw new ArgumentNullException(nameof(pyObject));
 
             if (!Runtime.PyIter_Check(pyObject.Reference))

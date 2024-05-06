@@ -28,9 +28,7 @@ class clrproperty(object):
         self.fset = fset
 
     def __call__(self, fget):
-        return self.__class__(self._clr_property_type_,
-                              fget=fget,
-                              fset=self.fset)
+        return self.__class__(self._clr_property_type_, fget=fget, fset=self.fset)
 
     def setter(self, fset):
         self.fset = fset
@@ -75,10 +73,12 @@ class clrmethod(object):
         self.__func = func
 
     def __call__(self, func):
-        return self.__class__(self._clr_return_type_,
-                              self._clr_arg_types_,
-                              clrname=self._clr_method_name_,
-                              func=func)
+        return self.__class__(
+            self._clr_return_type_,
+            self._clr_arg_types_,
+            clrname=self._clr_method_name_,
+            func=func,
+        )
 
     def __get__(self, instance, owner):
         return self.__func.__get__(instance, owner)

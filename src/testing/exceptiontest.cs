@@ -1,7 +1,8 @@
-using Python.Runtime;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+
+using Python.Runtime;
 
 namespace Python.Test
 {
@@ -82,14 +83,14 @@ namespace Python.Test
                 throw new Exception("Outer exception", exc2);
             }
         }
-        
+
         public static IntPtr DoThrowSimple()
         {
             using (Py.GIL())
             {
                 dynamic builtins = Py.Import("builtins");
                 var typeErrorType = new PyType(builtins.TypeError);
-                var pyerr = new PythonException(typeErrorType, value:null, traceback:null, "Type error, the first", innerException:null);
+                var pyerr = new PythonException(typeErrorType, value: null, traceback: null, "Type error, the first", innerException: null);
                 throw new ArgumentException("Bogus bad parameter", pyerr);
 
             }
@@ -97,21 +98,21 @@ namespace Python.Test
 
         public static void DoThrowWithInner()
         {
-            using(Py.GIL())
+            using (Py.GIL())
             {
                 // create a TypeError
                 dynamic builtins = Py.Import("builtins");
-                var pyerrFirst = new PythonException(new PyType(builtins.TypeError), value:null, traceback:null, "Type error, the first", innerException:null);
+                var pyerrFirst = new PythonException(new PyType(builtins.TypeError), value: null, traceback: null, "Type error, the first", innerException: null);
 
                 // Create an ArgumentException, but as a python exception, with the previous type error as the inner exception
                 var argExc = new ArgumentException("Bogus bad parameter", pyerrFirst);
                 var argExcPyObj = argExc.ToPython();
-                var pyArgExc = new PythonException(argExcPyObj.GetPythonType(), value:null, traceback:null, argExc.Message, innerException:argExc.InnerException);
+                var pyArgExc = new PythonException(argExcPyObj.GetPythonType(), value: null, traceback: null, argExc.Message, innerException: argExc.InnerException);
                 // This object must be disposed explicitly or else we get a false-positive leak.
                 argExcPyObj.Dispose();
-                
+
                 // Then throw a TypeError with the ArgumentException-as-python-error exception as inner.
-                var pyerrSecond = new PythonException(new PyType(builtins.TypeError), value:null, traceback:null, "Type error, the second", innerException:pyArgExc);
+                var pyerrSecond = new PythonException(new PyType(builtins.TypeError), value: null, traceback: null, "Type error, the second", innerException: pyArgExc);
                 throw pyerrSecond;
 
             }

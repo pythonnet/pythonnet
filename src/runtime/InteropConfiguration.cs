@@ -6,7 +6,7 @@ namespace Python.Runtime
 
     using Python.Runtime.Mixins;
 
-    public sealed class InteropConfiguration: IDisposable
+    public sealed class InteropConfiguration : IDisposable
     {
         internal readonly PythonBaseTypeProviderGroup pythonBaseTypeProviders
             = new();

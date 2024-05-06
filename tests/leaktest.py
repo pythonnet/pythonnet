@@ -4,22 +4,28 @@
 
 from __future__ import print_function
 
-import clr
 import gc
 import sys
 
 import System
 
-from .utils import (CallableHandler, ClassMethodHandler, GenericHandler,
-                    HelloClass, StaticMethodHandler, VarCallableHandler,
-                    VariableArgsHandler, hello_func)
+from .utils import (
+    CallableHandler,
+    ClassMethodHandler,
+    GenericHandler,
+    HelloClass,
+    StaticMethodHandler,
+    VarCallableHandler,
+    VariableArgsHandler,
+    hello_func,
+)
 
 
 class LeakTest(object):
     """A leak-check test for the objects implemented in the managed
-       runtime. For each kind of object tested, memory should reach
-       a particular level after warming up and stay essentially the
-       same, net of minor fluctuation induced by GC."""
+    runtime. For each kind of object tested, memory should reach
+    a particular level after warming up and stay essentially the
+    same, net of minor fluctuation induced by GC."""
 
     def __init__(self):
         self.count = 50000
@@ -42,9 +48,9 @@ class LeakTest(object):
         end = System.Environment.WorkingSet
         diff = end - start
         if diff > 0:
-            diff = '+{0}'.format(diff)
+            diff = "+{0}".format(diff)
         else:
-            diff = '{0}'.format(diff)
+            diff = "{0}".format(diff)
         print("  start: {0}  end: {1} diff: {2}".format(start, end, diff))
         print("")
 
@@ -69,11 +75,11 @@ class LeakTest(object):
             if i == 10:
                 self.start_test()
 
-            __import__('clr')
-            __import__('System')
-            __import__('System.IO')
-            __import__('System.Net')
-            __import__('System.Xml')
+            __import__("clr")
+            __import__("System")
+            __import__("System.IO")
+            __import__("System.Net")
+            __import__("System.Xml")
 
         self.end_test()
 
@@ -202,10 +208,10 @@ class LeakTest(object):
             testob.PublicEvent -= EventTest.StaticHandler
 
             # Function event handler
-            dict_ = {'value': None}
+            dict_ = {"value": None}
 
             def handler(sender, args, dict_=dict_):
-                dict_['value'] = args.value
+                dict_["value"] = args.value
 
             testob.PublicEvent += handler
             testob.PublicEvent(testob, EventArgsTest(10))
@@ -326,7 +332,7 @@ class LeakTest(object):
         self.end_test()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     test = LeakTest()
     test.run()
     test.report()

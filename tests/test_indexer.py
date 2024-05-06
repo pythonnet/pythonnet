@@ -340,6 +340,7 @@ def test_decimal_indexer():
     ob = Test.DecimalIndexerTest()
 
     from System import Decimal
+
     max_d = Decimal.Parse("79228162514264337593543950335")
     min_d = Decimal.Parse("-79228162514264337593543950335")
 
@@ -365,19 +366,19 @@ def test_string_indexer():
     ob = Test.StringIndexerTest()
 
     assert ob["spam"] is None
-    assert ob[u"spam"] is None
+    assert ob["spam"] is None
 
     ob["spam"] = "spam"
     assert ob["spam"] == "spam"
-    assert ob["spam"] == u"spam"
-    assert ob[u"spam"] == "spam"
-    assert ob[u"spam"] == u"spam"
+    assert ob["spam"] == "spam"
+    assert ob["spam"] == "spam"
+    assert ob["spam"] == "spam"
 
-    ob[u"eggs"] = u"eggs"
+    ob["eggs"] = "eggs"
     assert ob["eggs"] == "eggs"
-    assert ob["eggs"] == u"eggs"
-    assert ob[u"eggs"] == "eggs"
-    assert ob[u"eggs"] == u"eggs"
+    assert ob["eggs"] == "eggs"
+    assert ob["eggs"] == "eggs"
+    assert ob["eggs"] == "eggs"
 
     with pytest.raises(TypeError):
         ob = Test.StringIndexerTest()
@@ -421,6 +422,7 @@ def test_object_indexer():
     ob = Test.ObjectIndexerTest()
 
     from Python.Test import Spam
+
     spam = Spam("spam")
 
     assert ob[spam] is None
@@ -454,6 +456,7 @@ def test_interface_indexer():
     ob = Test.InterfaceIndexerTest()
 
     from Python.Test import Spam
+
     spam = Spam("spam")
 
     assert ob[spam] is None
@@ -478,6 +481,7 @@ def test_typed_indexer():
     ob = Test.TypedIndexerTest()
 
     from Python.Test import Spam
+
     spam = Spam("spam")
 
     assert ob[spam] is None
@@ -604,6 +608,7 @@ def test_indexer_abuse():
 def test_indexer_accessed_through_interface():
     """Test that indexers can be accessed through interfaces"""
     from System.Collections.Generic import Dictionary, IDictionary
+
     d = IDictionary[str, str](Dictionary[str, str]())
     d["one"] = "1"
     assert d["one"] == "1"
@@ -612,6 +617,7 @@ def test_indexer_accessed_through_interface():
 def test_using_indexer_on_object_without_indexer():
     """Test using subscript syntax on an object an without indexer raises"""
     from System import Object
+
     o = Object()
     with pytest.raises(TypeError):
         o[0]
@@ -650,6 +656,7 @@ def test_inherited_indexer_interface():
     ifc = IInheritedIndexer(impl)
     ifc[0] = "zero"
     assert ifc[0] == "zero"
+
 
 def test_public_inherited_overloaded_indexer():
     """Test public indexers."""

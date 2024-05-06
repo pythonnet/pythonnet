@@ -21,7 +21,7 @@ def test_simple_callback_to_python():
 
 def test_double_callback_to_python():
     """Test a call to managed code that then calls back into Python
-       that then calls managed code that then calls Python again."""
+    that then calls managed code that then calls Python again."""
     from Python.Test import ThreadTest
 
     dprint("thread %s DoubleCallBack" % thread.get_ident())

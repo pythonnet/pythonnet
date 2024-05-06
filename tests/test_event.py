@@ -5,9 +5,15 @@
 import pytest
 from Python.Test import EventTest, EventArgsTest
 
-from .utils import (CallableHandler, ClassMethodHandler, GenericHandler,
-                    MultipleHandler, StaticMethodHandler, VarCallableHandler,
-                    VariableArgsHandler)
+from .utils import (
+    CallableHandler,
+    ClassMethodHandler,
+    GenericHandler,
+    MultipleHandler,
+    StaticMethodHandler,
+    VarCallableHandler,
+    VariableArgsHandler,
+)
 
 
 def test_public_instance_event():
@@ -278,28 +284,30 @@ def test_unbound_method_handler():
 def test_function_handler():
     """Test function handlers."""
     ob = EventTest()
-    dict_ = {'value': None}
+    dict_ = {"value": None}
 
     def handler(sender, args, dict_=dict_):
-        dict_['value'] = args.value
+        dict_["value"] = args.value
 
     ob.PublicEvent += handler
-    assert dict_['value'] is None
+    assert dict_["value"] is None
 
     ob.OnPublicEvent(EventArgsTest(10))
-    assert dict_['value'] == 10
+    assert dict_["value"] == 10
 
     ob.PublicEvent -= handler
-    assert dict_['value'] == 10
+    assert dict_["value"] == 10
 
     ob.OnPublicEvent(EventArgsTest(20))
-    assert dict_['value'] == 10
+    assert dict_["value"] == 10
+
 
 def test_out_function_handler():
     """Test function handlers with Out arguments."""
     ob = EventTest()
 
     value = 10
+
     def handler(ignored):
         return value
 
@@ -308,15 +316,17 @@ def test_out_function_handler():
     assert result == value
 
     ob.OutStringEvent += handler
-    value = 'This is the event data'
-    result = ob.OnOutStringEvent('Hello')
+    value = "This is the event data"
+    result = ob.OnOutStringEvent("Hello")
     assert result == value
+
 
 def test_ref_function_handler():
     """Test function handlers with Ref arguments."""
     ob = EventTest()
 
     value = 10
+
     def handler(data):
         return value + data
 
@@ -327,9 +337,10 @@ def test_ref_function_handler():
 
     ob.RefStringEvent += ob.RefStringHandler
     ob.RefStringEvent += handler
-    value = 'This is the event data'
-    result = ob.OnRefStringEvent('!')
-    assert result == value + '!!'
+    value = "This is the event data"
+    result = ob.OnRefStringEvent("!")
+    assert result == value + "!!"
+
 
 def test_add_non_callable_handler():
     """Test handling of attempts to add non-callable handlers."""
@@ -343,6 +354,7 @@ def test_add_non_callable_handler():
         ob.PublicEvent += "spam"
 
     with pytest.raises(TypeError):
+
         class Spam(object):
             pass
 
@@ -451,6 +463,7 @@ def test_remove_multiple_static_handlers():
 def test_random_multiple_handlers():
     """Test random subscribe / unsubscribe of the same handlers."""
     import random
+
     ob = EventTest()
     handler = MultipleHandler()
     handler2 = MultipleHandler()
@@ -522,7 +535,7 @@ def test_handler_callback_failure():
 
     class BadHandler(object):
         def handler(self, one):
-            return 'too many'
+            return "too many"
 
     ob = EventTest()
     handler = BadHandler()
@@ -535,7 +548,7 @@ def test_handler_callback_failure():
 
     class BadHandler(object):
         def handler(self, one, two, three, four, five):
-            return 'not enough'
+            return "not enough"
 
     ob = EventTest()
     handler = BadHandler()
@@ -600,9 +613,9 @@ def test_event_descriptor_abuse():
         del EventTest.PublicEvent
 
     with pytest.raises(TypeError):
-        del EventTest.__dict__['PublicEvent']
+        del EventTest.__dict__["PublicEvent"]
 
-    desc = EventTest.__dict__['PublicEvent']
+    desc = EventTest.__dict__["PublicEvent"]
 
     with pytest.raises(TypeError):
         desc.__get__(0, 0)

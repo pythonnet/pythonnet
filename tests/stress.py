@@ -27,6 +27,7 @@ class StressTest(object):
         sys.path.append(self.dirname)
         gc.set_debug(gc.DEBUG_LEAK)
         import runtests
+
         self.module = runtests
         self.done = []
 
@@ -64,7 +65,7 @@ class StressTest(object):
             dprint(len(self.done))
             time.sleep(0.1)
         self.mark_finish()
-        took = self.elapsed()
+        # took = self.elapsed()
         self.print_gc_report()
 
 
@@ -73,5 +74,5 @@ def main():
     test.stress_test(2, 10)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

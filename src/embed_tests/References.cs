@@ -1,6 +1,7 @@
 namespace Python.EmbeddingTest
 {
     using NUnit.Framework;
+
     using Python.Runtime;
 
     public class References

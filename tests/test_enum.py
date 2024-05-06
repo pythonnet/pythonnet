@@ -12,8 +12,8 @@ def test_enum_standard_attrs():
     """Test standard enum attributes."""
     from System import DayOfWeek
 
-    assert DayOfWeek.__name__ == 'DayOfWeek'
-    assert DayOfWeek.__module__ == 'System'
+    assert DayOfWeek.__name__ == "DayOfWeek"
+    assert DayOfWeek.__module__ == "System"
     assert isinstance(DayOfWeek.__dict__, DictProxyType)
 
 
@@ -88,6 +88,7 @@ def test_ulong_enum():
 
 def test_simple_enum_to_int():
     from System import DayOfWeek
+
     assert int(DayOfWeek.Sunday) == 0
 
 
@@ -113,6 +114,7 @@ def test_subclass_enum_fails():
     from System import DayOfWeek
 
     with pytest.raises(TypeError):
+
         class Boom(DayOfWeek):
             pass
 

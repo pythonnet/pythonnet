@@ -3,7 +3,7 @@
 """Test that callbacks from C# into python work."""
 
 
-def simpleDefaultArg(arg='test'):
+def simpleDefaultArg(arg="test"):
     return arg
 
 

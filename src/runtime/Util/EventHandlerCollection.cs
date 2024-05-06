@@ -7,7 +7,7 @@ using System.Security.Permissions;
 namespace Python.Runtime;
 
 [Serializable]
-internal class EventHandlerCollection: Dictionary<object, List<Handler>>
+internal class EventHandlerCollection : Dictionary<object, List<Handler>>
 {
     readonly EventInfo info;
     public EventHandlerCollection(EventInfo @event)

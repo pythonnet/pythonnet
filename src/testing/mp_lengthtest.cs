@@ -71,7 +71,8 @@ namespace Python.Test
     {
         private readonly List<T> items;
 
-        public MpLengthGenericCollectionTest() {
+        public MpLengthGenericCollectionTest()
+        {
             SyncRoot = new object();
             items = new List<T>();
         }

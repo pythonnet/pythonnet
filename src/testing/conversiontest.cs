@@ -39,7 +39,8 @@ namespace Python.Test
         public sbyte[] SByteArrayField;
         public readonly List<int> ListField = new List<int>();
 
-        public T? Echo<T>(T? arg) where T: struct {
+        public T? Echo<T>(T? arg) where T : struct
+        {
             return arg;
         }
 

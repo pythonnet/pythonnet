@@ -14,15 +14,17 @@ import gc
 # into olist, using seen to track
 # already processed objects.
 
+
 def _getr(slist, olist, seen):
     for e in slist:
-      if id(e) in seen:
-        continue
-      seen[id(e)] = None
-      olist.append(e)
-      tl = gc.get_referents(e)
-      if tl:
-        _getr(tl, olist, seen)
+        if id(e) in seen:
+            continue
+        seen[id(e)] = None
+        olist.append(e)
+        tl = gc.get_referents(e)
+        if tl:
+            _getr(tl, olist, seen)
+
 
 # The public function.
 def get_all_objects():
@@ -36,27 +38,37 @@ def get_all_objects():
     # _getr does the real work.
     _getr(gcl, olist, seen)
     return olist
+
+
 # end code from https://utcc.utoronto.ca/~cks/space/blog/python/GetAllObjects
+
 
 def leak_check(func):
     def do_leak_check():
         func()
         gc.collect()
-        exc = {x for x in get_all_objects() if isinstance(x, Exception) and not isinstance(x, pytest.PytestDeprecationWarning)}
+        exc = {
+            x
+            for x in get_all_objects()
+            if isinstance(x, Exception)
+            and not isinstance(x, pytest.PytestDeprecationWarning)
+        }
         print(len(exc))
         if len(exc):
             for x in exc:
-                print('-------')
+                print("-------")
                 print(repr(x))
                 print(gc.get_referrers(x))
                 print(len(gc.get_referrers(x)))
             assert False
+
     gc.collect()
     return do_leak_check
 
+
 def test_unified_exception_semantics():
     """Test unified exception semantics."""
-    e = System.Exception('Something bad happened')
+    e = System.Exception("Something bad happened")
     assert isinstance(e, Exception)
     assert isinstance(e, System.Exception)
 
@@ -69,10 +81,10 @@ def test_standard_exception_attributes():
     e = ExceptionTest.GetExplicitException()
     assert isinstance(e, OverflowException)
 
-    assert e.Message == 'error'
+    assert e.Message == "error"
 
-    e.Source = 'Test Suite'
-    assert e.Source == 'Test Suite'
+    e.Source = "Test Suite"
+    assert e.Source == "Test Suite"
 
     v = e.ToString()
     assert len(v) > 0
@@ -88,19 +100,19 @@ def test_extended_exception_attributes():
     assert isinstance(e, OverflowException)
     assert isinstance(e, System.Exception)
 
-    assert e.Message == 'error'
+    assert e.Message == "error"
 
-    e.Source = 'Test Suite'
-    assert e.Source == 'Test Suite'
+    e.Source = "Test Suite"
+    assert e.Source == "Test Suite"
 
     v = e.ToString()
     assert len(v) > 0
 
-    assert e.ExtraProperty == 'extra'
-    e.ExtraProperty = 'changed'
-    assert e.ExtraProperty == 'changed'
+    assert e.ExtraProperty == "extra"
+    e.ExtraProperty = "changed"
+    assert e.ExtraProperty == "changed"
 
-    assert e.GetExtraInfo() == 'changed'
+    assert e.GetExtraInfo() == "changed"
 
 
 def test_raise_class_exception():
@@ -118,6 +130,7 @@ def test_exc_info():
     """Test class exception propagation.
     Behavior of exc_info changed in Py3. Refactoring its test"""
     from System import NullReferenceException
+
     try:
         raise NullReferenceException("message")
     except Exception as exc:
@@ -135,11 +148,11 @@ def test_raise_class_exception_with_value():
     from System import NullReferenceException
 
     with pytest.raises(NullReferenceException) as cm:
-        raise NullReferenceException('Aiiieee!')
+        raise NullReferenceException("Aiiieee!")
 
     exc = cm.value
     assert isinstance(exc, NullReferenceException)
-    assert exc.Message == 'Aiiieee!'
+    assert exc.Message == "Aiiieee!"
 
 
 def test_raise_instance_exception():
@@ -163,7 +176,7 @@ def test_raise_instance_exception_with_args():
 
     exc = cm.value
     assert isinstance(exc, NullReferenceException)
-    assert exc.Message == 'Aiiieee!'
+    assert exc.Message == "Aiiieee!"
 
 
 def test_managed_exception_propagation():
@@ -190,13 +203,13 @@ def test_managed_exception_conversion():
     assert isinstance(e, OverflowException)
     assert isinstance(e, System.Exception)
 
-    v = ExceptionTest.SetBaseException(System.Exception('error'))
+    v = ExceptionTest.SetBaseException(System.Exception("error"))
     assert v
 
-    v = ExceptionTest.SetExplicitException(OverflowException('error'))
+    v = ExceptionTest.SetExplicitException(OverflowException("error"))
     assert v
 
-    v = ExceptionTest.SetWidenedException(OverflowException('error'))
+    v = ExceptionTest.SetWidenedException(OverflowException("error"))
     assert v
 
 
@@ -235,7 +248,7 @@ def test_catch_exception_managed_class():
     from System import OverflowException
 
     with pytest.raises(OverflowException):
-        raise OverflowException('overflow')
+        raise OverflowException("overflow")
 
 
 def test_catch_exception_python_class():
@@ -243,7 +256,7 @@ def test_catch_exception_python_class():
     from System import OverflowException
 
     with pytest.raises(Exception):
-        raise OverflowException('overflow')
+        raise OverflowException("overflow")
 
 
 def test_catch_exception_base_class():
@@ -251,7 +264,7 @@ def test_catch_exception_base_class():
     from System import OverflowException, ArithmeticException
 
     with pytest.raises(ArithmeticException):
-        raise OverflowException('overflow')
+        raise OverflowException("overflow")
 
 
 def test_catch_exception_nested_base_class():
@@ -259,7 +272,7 @@ def test_catch_exception_nested_base_class():
     from System import OverflowException, SystemException
 
     with pytest.raises(SystemException):
-        raise OverflowException('overflow')
+        raise OverflowException("overflow")
 
 
 def test_catch_exception_with_assignment():
@@ -267,7 +280,7 @@ def test_catch_exception_with_assignment():
     from System import OverflowException
 
     with pytest.raises(OverflowException) as cm:
-        raise OverflowException('overflow')
+        raise OverflowException("overflow")
 
     e = cm.value
     assert isinstance(e, OverflowException)
@@ -278,11 +291,11 @@ def test_catch_exception_unqualified():
     from System import OverflowException
 
     try:
-        raise OverflowException('overflow')
-    except:
+        raise OverflowException("overflow")
+    except:  # noqa: E722
         pass
     else:
-        self.fail("failed to catch unqualified exception")
+        pytest.fail("failed to catch unqualified exception")
 
 
 def test_catch_baseexception():
@@ -290,34 +303,35 @@ def test_catch_baseexception():
     from System import OverflowException
 
     with pytest.raises(BaseException):
-        raise OverflowException('overflow')
+        raise OverflowException("overflow")
 
 
 def test_apparent_module_of_exception():
     """Test the apparent module of an exception."""
     from System import OverflowException
 
-    assert System.Exception.__module__ == 'System'
-    assert OverflowException.__module__ == 'System'
+    assert System.Exception.__module__ == "System"
+    assert OverflowException.__module__ == "System"
 
 
 def test_str_of_exception():
     """Test the str() representation of an exception."""
     from System import NullReferenceException, Convert, FormatException
 
-    e = NullReferenceException('')
-    assert str(e) == ''
+    e = NullReferenceException("")
+    assert str(e) == ""
 
-    e = NullReferenceException('Something bad happened')
-    assert str(e).startswith('Something bad happened')
+    e = NullReferenceException("Something bad happened")
+    assert str(e).startswith("Something bad happened")
 
-    with pytest.raises(FormatException) as cm:
-        Convert.ToDateTime('this will fail')
+    with pytest.raises(FormatException):
+        Convert.ToDateTime("this will fail")
 
 
 def test_python_compat_of_managed_exceptions():
     """Test managed exceptions compatible with Python's implementation"""
     from System import OverflowException
+
     msg = "Simple message"
 
     e = OverflowException(msg)
@@ -326,7 +340,7 @@ def test_python_compat_of_managed_exceptions():
     assert e.args == (msg,)
     assert isinstance(e.args, tuple)
     strexp = "OverflowException('Simple message"
-    assert repr(e)[:len(strexp)] == strexp
+    assert repr(e)[: len(strexp)] == strexp
 
 
 def test_exception_is_instance_of_system_object():
@@ -348,7 +362,7 @@ def test_exception_is_instance_of_system_object():
     # be true, even though it does not really subclass Object.
     from System import OverflowException, Object
 
-    o = OverflowException('error')
+    o = OverflowException("error")
 
     if sys.version_info >= (2, 6):
         assert isinstance(o, Object)
@@ -372,13 +386,16 @@ def test_chained_exceptions():
 
     exc = cm.value
 
-    msgs = ("Outer exception",
-            "Inner exception",
-            "Innermost exception",)
+    msgs = (
+        "Outer exception",
+        "Inner exception",
+        "Innermost exception",
+    )
     for msg in msgs:
         assert exc.Message == msg
         assert exc.__cause__ == exc.InnerException
         exc = exc.__cause__
+
 
 def test_iteration_exception():
     from Python.Test import ExceptionTest
@@ -421,6 +438,7 @@ def test_iteration_innerexception():
     with pytest.raises(StopIteration):
         next(val)
 
+
 def leak_test(func):
     def do_test_leak():
         # PyTest leaks things, gather the current state
@@ -432,6 +450,7 @@ def leak_test(func):
 
     return do_test_leak
 
+
 @leak_test
 def test_dont_leak_exceptions_simple():
     from Python.Test import ExceptionTest
@@ -439,14 +458,16 @@ def test_dont_leak_exceptions_simple():
     try:
         ExceptionTest.DoThrowSimple()
     except System.ArgumentException:
-        print('type error, as expected')
+        print("type error, as expected")
+
 
 @leak_test
 def test_dont_leak_exceptions_inner():
     from Python.Test import ExceptionTest
+
     try:
         ExceptionTest.DoThrowWithInner()
     except TypeError:
-        print('type error, as expected')
+        print("type error, as expected")
     except System.ArgumentException:
-        print('type error, also expected')
+        print("type error, also expected")

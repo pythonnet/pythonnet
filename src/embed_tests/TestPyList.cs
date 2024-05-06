@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+
 using NUnit.Framework;
+
 using Python.Runtime;
 
 namespace Python.EmbeddingTest
@@ -67,7 +69,7 @@ namespace Python.EmbeddingTest
         [Test]
         public void TestPyObjectArrayCtor()
         {
-            var ai = new PyObject[] {new PyInt(3), new PyInt(2), new PyInt(1) };
+            var ai = new PyObject[] { new PyInt(3), new PyInt(2), new PyInt(1) };
             var s = new PyList(ai);
 
             Assert.IsInstanceOf(typeof(PyList), s);

@@ -15,7 +15,7 @@ namespace Python.Runtime
     /// </summary>
     internal class DelegateManager
     {
-        private readonly Dictionary<Type,Type> cache = new();
+        private readonly Dictionary<Type, Type> cache = new();
         private readonly Type basetype = typeof(Dispatcher);
         private readonly Type arrayType = typeof(object[]);
         private readonly Type voidtype = typeof(void);

@@ -35,7 +35,7 @@ namespace Python.Runtime
     }
 
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-    internal class OpsAttribute: Attribute { }
+    internal class OpsAttribute : Attribute { }
 
     [Ops]
     internal static class FlagEnumOps<T> where T : Enum

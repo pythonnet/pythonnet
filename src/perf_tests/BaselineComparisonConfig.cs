@@ -36,11 +36,13 @@ namespace Python.PerformanceTests
                     Path.Combine(deploymentRoot, "new", "Python.Runtime.dll")));
         }
 
-        static BaselineComparisonConfig() {
+        static BaselineComparisonConfig()
+        {
             AppDomain.CurrentDomain.AssemblyResolve += CurrentDomainOnAssemblyResolve;
         }
 
-        static Assembly CurrentDomainOnAssemblyResolve(object sender, ResolveEventArgs args) {
+        static Assembly CurrentDomainOnAssemblyResolve(object sender, ResolveEventArgs args)
+        {
             Console.WriteLine(args.Name);
             if (!args.Name.StartsWith("Python.Runtime"))
                 return null;

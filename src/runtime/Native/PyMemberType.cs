@@ -1,6 +1,6 @@
 namespace Python.Runtime.Native;
 
-enum PyMemberType: int
+enum PyMemberType : int
 {
     Short = 0,
     Int = 1,

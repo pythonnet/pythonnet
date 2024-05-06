@@ -1,10 +1,11 @@
 // We can't refer to or use Python.Runtime here.
 // We want it to be loaded only inside the subdomains
 using System;
-using Microsoft.CSharp;
 using System.CodeDom.Compiler;
 using System.IO;
 using System.Linq;
+
+using Microsoft.CSharp;
 
 namespace Python.DomainReloadTests
 {
@@ -110,7 +111,7 @@ def after_reload():
                     ",
             },
 
-            new TestCase 
+            new TestCase
             {
                 Name = "static_member_rename",
                 DotNetBefore = @"
@@ -165,7 +166,7 @@ def after_reload():
             },
 
 
-            new TestCase 
+            new TestCase
             {
                 Name = "member_rename",
                 DotNetBefore = @"
@@ -1209,7 +1210,7 @@ namespace CaseRunner
 
             CreatePythonModule(testCase);
             {
-                var runnerAssembly = CreateCaseRunnerAssembly(verb:"before");
+                var runnerAssembly = CreateCaseRunnerAssembly(verb: "before");
                 CreateTestClassAssembly(testCase.DotNetBefore);
                 {
                     var runnerDomain = CreateDomain("case runner before");
@@ -1222,7 +1223,7 @@ namespace CaseRunner
             }
 
             {
-                var runnerAssembly = CreateCaseRunnerAssembly(verb:"after");
+                var runnerAssembly = CreateCaseRunnerAssembly(verb: "after");
                 CreateTestClassAssembly(testCase.DotNetAfter);
 
                 // Do it twice for good measure
@@ -1311,8 +1312,8 @@ namespace CaseRunner
             parameters.ReferencedAssemblies.Add(netstandard);
             parameters.ReferencedAssemblies.Add(PythonDllLocation);
             // Write code to file so it can debugged.
-            var sourcePath = Path.Combine(TestPath, name+"_source.cs");
-            using(var file = new StreamWriter(sourcePath))
+            var sourcePath = Path.Combine(TestPath, name + "_source.cs");
+            using (var file = new StreamWriter(sourcePath))
             {
                 file.Write(code);
             }

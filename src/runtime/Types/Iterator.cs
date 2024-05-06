@@ -46,6 +46,8 @@ namespace Python.Runtime
             return Converter.ToPython(item, self.elemType);
         }
 
-        public static NewReference tp_iter(BorrowedReference ob) => new (ob);
+#pragma warning disable NoCopy05, NoCopy06
+        public static NewReference tp_iter(BorrowedReference ob) => new(ob);
+#pragma warning restore
     }
 }

@@ -2,7 +2,6 @@
 
 """Test support for managed arrays."""
 
-import clr
 import Python.Test as Test
 import System
 import pytest
@@ -120,9 +119,13 @@ def test_array_contains():
     assert 3 in items
     assert 4 in items
 
-    assert not (5 in items)  # "H:\Python27\Lib\unittest\case.py", line 592, in deprecated_func,
-    assert not (-1 in items)  # TypeError: int() argument must be a string or a number, not 'NoneType'
-    assert not (None in items)  # which threw ^ here which is a little odd.
+    assert (
+        5 not in items
+    )  # "H:\Python27\Lib\unittest\case.py", line 592, in deprecated_func,
+    assert (
+        -1 not in items
+    )  # TypeError: int() argument must be a string or a number, not 'NoneType'
+    assert None not in items  # which threw ^ here which is a little odd.
     # But when run from runtests.py. Not when this module ran by itself.
 
 
@@ -245,8 +248,8 @@ def test_char_array():
 
     assert len(items) == 5
 
-    assert items[0] == 'a'
-    assert items[4] == 'e'
+    assert items[0] == "a"
+    assert items[4] == "e"
 
     max_ = chr(65535)
     min_ = chr(0)
@@ -598,6 +601,7 @@ def test_decimal_array():
     items = ob.items
 
     from System import Decimal
+
     max_d = Decimal.Parse("79228162514264337593543950335")
     min_d = Decimal.Parse("-79228162514264337593543950335")
 
@@ -634,8 +638,8 @@ def test_string_array():
 
     assert len(items) == 5
 
-    assert items[0] == '0'
-    assert items[4] == '4'
+    assert items[0] == "0"
+    assert items[4] == "4"
 
     items[0] = "spam"
     assert items[0] == "spam"
@@ -661,6 +665,7 @@ def test_string_array():
 def test_enum_array():
     """Test enum arrays."""
     from Python.Test import ShortEnum
+
     ob = Test.EnumArrayTest()
     items = ob.items
 
@@ -697,6 +702,7 @@ def test_enum_array():
 def test_object_array():
     """Test ob arrays."""
     from Python.Test import Spam
+
     ob = Test.ObjectArrayTest()
     items = ob.items
 
@@ -765,6 +771,7 @@ def test_null_array():
 def test_interface_array():
     """Test interface arrays."""
     from Python.Test import Spam
+
     ob = Test.InterfaceArrayTest()
     items = ob.items
 
@@ -804,6 +811,7 @@ def test_interface_array():
 def test_typed_array():
     """Test typed arrays."""
     from Python.Test import Spam
+
     ob = Test.TypedArrayTest()
     items = ob.items
 
@@ -846,6 +854,7 @@ def test_typed_array():
     with pytest.raises(TypeError):
         ob = Test.TypedArrayTest()
         ob.items[0.5] = Spam("0")
+
 
 def test_multi_dimensional_array():
     """Test multi-dimensional arrays."""
@@ -927,6 +936,7 @@ def test_multi_dimensional_array():
         ob = Test.MultiDimensionalArrayTest()
         ob.items[0.5, 0] = 0
 
+
 def test_array_iteration():
     """Test array iteration."""
     items = Test.Int32ArrayTest().items
@@ -942,7 +952,7 @@ def test_array_iteration():
     empty = Test.NullArrayTest().empty
 
     for i in empty:
-        raise TypeError('iteration over empty array')
+        raise TypeError("iteration over empty array")
 
 
 def test_tuple_array_conversion():
@@ -1195,6 +1205,7 @@ def test_boxed_value_type_mutation_result():
         assert items[i].X == i + 1
         assert items[i].Y == i + 1
 
+
 def test_create_array_from_shape():
     from System import Array
 
@@ -1211,18 +1222,20 @@ def test_create_array_from_shape():
         Array[int](-1)
 
     with pytest.raises(TypeError):
-        Array[int]('1')
+        Array[int]("1")
 
     with pytest.raises(ValueError):
         Array[int](-1, -1)
 
     with pytest.raises(TypeError):
-        Array[int]('1', '1')
+        Array[int]("1", "1")
+
 
 def test_special_array_creation():
     """Test using the Array[<type>] syntax for creating arrays."""
     from Python.Test import ISayHello1, InterfaceTest, ShortEnum
     from System import Array
+
     inst = InterfaceTest()
 
     value = Array[System.Boolean]([True, True])
@@ -1245,9 +1258,9 @@ def test_special_array_creation():
     assert value[1] == 127
     assert value.Length == 2
 
-    value = Array[System.Char]([u'A', u'Z'])
-    assert value[0] == u'A'
-    assert value[1] == u'Z'
+    value = Array[System.Char](["A", "Z"])
+    assert value[0] == "A"
+    assert value[1] == "Z"
     assert value.Length == 2
 
     value = Array[System.Char]([0, 65535])
@@ -1372,10 +1385,10 @@ def test_array_abuse():
         Test.PublicArrayTest.__setitem__(0, 0, 0)
 
     with pytest.raises(KeyError):
-        Test.PublicArrayTest.__dict__['__getitem__']
+        Test.PublicArrayTest.__dict__["__getitem__"]
 
     with pytest.raises(KeyError):
-        Test.PublicArrayTest.__dict__['__setitem__']
+        Test.PublicArrayTest.__dict__["__setitem__"]
 
 
 def test_iterator_to_array():
@@ -1404,4 +1417,3 @@ def test_dict_keys_to_array():
     assert arr[0] == "a"
     assert arr[1] == "b"
     assert arr[2] == "c"
-

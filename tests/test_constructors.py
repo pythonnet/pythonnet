@@ -80,16 +80,15 @@ def test_constructor_leak():
     Runtime.TryCollectingGarbage(20)
     ref_count = sys.getrefcount(uri)
 
-    # check disabled due to GC uncertainty
-    # assert ref_count == 1
-
+    if ref_count != 1:
+        pytest.xfail("might have failed due to GC uncertainty")
 
 
 def test_string_constructor():
     from System import String, Char, Array
 
-    ob = String('A', 10)
-    assert ob == 'A' * 10
+    ob = String("A", 10)
+    assert ob == "A" * 10
 
     arr = Array[Char](10)
     for i in range(10):

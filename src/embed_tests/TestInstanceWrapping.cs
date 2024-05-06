@@ -1,6 +1,8 @@
 using System;
 using System.Globalization;
+
 using NUnit.Framework;
+
 using Python.Runtime;
 
 namespace Python.EmbeddingTest
@@ -44,10 +46,10 @@ namespace Python.EmbeddingTest
             Assert.IsTrue(weakref.Invoke().IsNone());
         }
 
-        class Base {}
-        class Derived: Base { }
+        class Base { }
+        class Derived : Base { }
 
-        class Overloaded: Derived
+        class Overloaded : Derived
         {
             public int Value { get; set; }
             public void IntOrStr(int arg) => this.Value = arg;

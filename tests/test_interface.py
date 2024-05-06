@@ -12,8 +12,8 @@ def test_interface_standard_attrs():
     """Test standard class attributes."""
     from Python.Test import IPublicInterface
 
-    assert IPublicInterface.__name__ == 'IPublicInterface'
-    assert IPublicInterface.__module__ == 'Python.Test'
+    assert IPublicInterface.__name__ == "IPublicInterface"
+    assert IPublicInterface.__module__ == "Python.Test"
     assert isinstance(IPublicInterface.__dict__, DictProxyType)
 
 
@@ -21,10 +21,11 @@ def test_global_interface_visibility():
     """Test visibility of module-level interfaces."""
     from Python.Test import IPublicInterface
 
-    assert IPublicInterface.__name__ == 'IPublicInterface'
+    assert IPublicInterface.__name__ == "IPublicInterface"
 
     with pytest.raises(ImportError):
         from Python.Test import IInternalInterface
+
         _ = IInternalInterface
 
     with pytest.raises(AttributeError):
@@ -36,10 +37,10 @@ def test_nested_interface_visibility():
     from Python.Test import InterfaceTest
 
     ob = InterfaceTest.IPublic
-    assert ob.__name__ == 'IPublic'
+    assert ob.__name__ == "IPublic"
 
     ob = InterfaceTest.IProtected
-    assert ob.__name__ == 'IProtected'
+    assert ob.__name__ == "IProtected"
 
     with pytest.raises(AttributeError):
         _ = InterfaceTest.IInternal
@@ -53,22 +54,22 @@ def test_explicit_cast_to_interface():
     from Python.Test import InterfaceTest
 
     ob = InterfaceTest()
-    assert type(ob).__name__ == 'InterfaceTest'
-    assert hasattr(ob, 'HelloProperty')
+    assert type(ob).__name__ == "InterfaceTest"
+    assert hasattr(ob, "HelloProperty")
 
     i1 = Test.ISayHello1(ob)
-    assert type(i1).__name__ == 'ISayHello1'
-    assert hasattr(i1, 'SayHello')
-    assert i1.SayHello() == 'hello 1'
-    assert not hasattr(i1, 'HelloProperty')
+    assert type(i1).__name__ == "ISayHello1"
+    assert hasattr(i1, "SayHello")
+    assert i1.SayHello() == "hello 1"
+    assert not hasattr(i1, "HelloProperty")
     assert i1.__implementation__ == ob
     assert i1.__raw_implementation__ == ob
 
     i2 = Test.ISayHello2(ob)
-    assert type(i2).__name__ == 'ISayHello2'
-    assert i2.SayHello() == 'hello 2'
-    assert hasattr(i2, 'SayHello')
-    assert not hasattr(i2, 'HelloProperty')
+    assert type(i2).__name__ == "ISayHello2"
+    assert i2.SayHello() == "hello 2"
+    assert hasattr(i2, "SayHello")
+    assert not hasattr(i2, "HelloProperty")
 
 
 def test_interface_object_returned_through_method():
@@ -77,10 +78,10 @@ def test_interface_object_returned_through_method():
 
     ob = InterfaceTest()
     hello1 = ob.GetISayHello1()
-    assert type(hello1).__name__ == 'ISayHello1'
+    assert type(hello1).__name__ == "ISayHello1"
     assert hello1.__implementation__.__class__.__name__ == "InterfaceTest"
 
-    assert hello1.SayHello() == 'hello 1'
+    assert hello1.SayHello() == "hello 1"
 
 
 def test_interface_object_returned_through_out_param():
@@ -89,9 +90,10 @@ def test_interface_object_returned_through_out_param():
 
     ob = InterfaceTest()
     hello2 = ob.GetISayHello2(None)
-    assert type(hello2).__name__ == 'ISayHello2'
+    assert type(hello2).__name__ == "ISayHello2"
 
-    assert hello2.SayHello() == 'hello 2'
+    assert hello2.SayHello() == "hello 2"
+
 
 def test_interface_out_param_python_impl():
     from Python.Test import IOutArg, OutArgCaller
@@ -101,7 +103,7 @@ def test_interface_out_param_python_impl():
 
         def MyMethod_Out(self, name, index):
             other_index = 101
-            return ('MyName', other_index)
+            return ("MyName", other_index)
 
     py_impl = MyOutImpl()
 
@@ -117,19 +119,22 @@ def test_null_interface_object_returned():
     assert hello1 is None
     assert hello2 is None
 
+
 def test_interface_array_returned():
     """Test interface type used for methods returning interface arrays"""
     from Python.Test import InterfaceTest
 
     ob = InterfaceTest()
     hellos = ob.GetISayHello1Array()
-    assert type(hellos[0]).__name__ == 'ISayHello1'
+    assert type(hellos[0]).__name__ == "ISayHello1"
     assert hellos[0].__implementation__.__class__.__name__ == "InterfaceTest"
+
 
 def test_implementation_access():
     """Test the __implementation__ and __raw_implementation__ properties"""
     import System
-    clrVal =  System.Int32(100)
+
+    clrVal = System.Int32(100)
     i = System.IComparable(clrVal)
     assert 100 == i.__implementation__
     assert clrVal == i.__raw_implementation__
@@ -140,6 +145,7 @@ def test_interface_collection_iteration():
     """Test interface type is used when iterating over interface collection"""
     import System
     from System.Collections.Generic import List
+
     elem = System.IComparable(System.Int32(100))
     typed_list = List[System.IComparable]()
     typed_list.Add(elem)
@@ -155,7 +161,8 @@ def test_interface_collection_iteration():
 def test_methods_of_Object_are_available():
     """Test calling methods inherited from Object"""
     import System
-    clrVal =  System.Int32(100)
+
+    clrVal = System.Int32(100)
     i = System.IComparable(clrVal)
     assert i.Equals(clrVal)
     assert clrVal.GetHashCode() == i.GetHashCode()

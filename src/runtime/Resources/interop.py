@@ -1,10 +1,11 @@
 _UNSET = object()
 
+
 class PyErr:
     def __init__(self, type=_UNSET, value=_UNSET, traceback=_UNSET):
-        if not(type is _UNSET):
+        if type is not _UNSET:
             self.type = type
-        if not(value is _UNSET):
+        if value is not _UNSET:
             self.value = value
-        if not(traceback is _UNSET):
+        if traceback is not _UNSET:
             self.traceback = traceback

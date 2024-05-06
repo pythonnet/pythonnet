@@ -6,6 +6,7 @@ import System
 import pytest
 from Python.Test import MethodTest
 
+
 def test_instance_method_overwritable():
     """Test instance method overwriting."""
 
@@ -110,7 +111,7 @@ def test_overloaded_method_inheritance():
 
 def test_method_descriptor_abuse():
     """Test method descriptor abuse."""
-    desc = MethodTest.__dict__['PublicMethod']
+    desc = MethodTest.__dict__["PublicMethod"]
 
     with pytest.raises(TypeError):
         desc.__get__(0, 0)
@@ -122,7 +123,7 @@ def test_method_descriptor_abuse():
 def test_method_docstrings():
     """Test standard method docstring generation"""
     method = MethodTest.GetType
-    value = 'System.Type GetType()'
+    value = "System.Type GetType()"
     assert method.__doc__ == value
 
 
@@ -180,36 +181,36 @@ def test_null_array_conversion():
 
 def test_string_params_args():
     """Test use of string params."""
-    result = MethodTest.TestStringParamsArg('one', 'two', 'three')
+    result = MethodTest.TestStringParamsArg("one", "two", "three")
     assert result.Length == 4
     assert len(result) == 4, result
-    assert result[0] == 'one'
-    assert result[1] == 'two'
-    assert result[2] == 'three'
+    assert result[0] == "one"
+    assert result[1] == "two"
+    assert result[2] == "three"
     # ensures params string[] overload takes precedence over params object[]
-    assert result[3] == 'tail'
+    assert result[3] == "tail"
 
-    result = MethodTest.TestStringParamsArg(['one', 'two', 'three'])
+    result = MethodTest.TestStringParamsArg(["one", "two", "three"])
     assert len(result) == 4
-    assert result[0] == 'one'
-    assert result[1] == 'two'
-    assert result[2] == 'three'
-    assert result[3] == 'tail'
+    assert result[0] == "one"
+    assert result[1] == "two"
+    assert result[2] == "three"
+    assert result[3] == "tail"
 
 
 def test_object_params_args():
     """Test use of object params."""
-    result = MethodTest.TestObjectParamsArg('one', 'two', 'three')
+    result = MethodTest.TestObjectParamsArg("one", "two", "three")
     assert len(result) == 3, result
-    assert result[0] == 'one'
-    assert result[1] == 'two'
-    assert result[2] == 'three'
+    assert result[0] == "one"
+    assert result[1] == "two"
+    assert result[2] == "three"
 
-    result = MethodTest.TestObjectParamsArg(['one', 'two', 'three'])
+    result = MethodTest.TestObjectParamsArg(["one", "two", "three"])
     assert len(result) == 3, result
-    assert result[0] == 'one'
-    assert result[1] == 'two'
-    assert result[2] == 'three'
+    assert result[0] == "one"
+    assert result[1] == "two"
+    assert result[2] == "three"
 
 
 def test_value_params_args():
@@ -233,37 +234,41 @@ def test_non_params_array_in_last_place():
     result = MethodTest.TestNonParamsArrayInLastPlace(1, 2, 3)
     assert result
 
+
 def test_params_methods_with_no_params():
     """Tests that passing no arguments to a params method
     passes an empty array"""
     result = MethodTest.TestValueParamsArg()
     assert len(result) == 0
 
-    result = MethodTest.TestOneArgWithParams('Some String')
+    result = MethodTest.TestOneArgWithParams("Some String")
     assert len(result) == 0
 
-    result = MethodTest.TestTwoArgWithParams('Some String', 'Some Other String')
+    result = MethodTest.TestTwoArgWithParams("Some String", "Some Other String")
     assert len(result) == 0
+
 
 def test_params_methods_with_non_lists():
     """Tests that passing single parameters to a params
     method will convert into an array on the .NET side"""
-    result = MethodTest.TestOneArgWithParams('Some String', [1, 2, 3, 4])
+    result = MethodTest.TestOneArgWithParams("Some String", [1, 2, 3, 4])
     assert len(result) == 4
 
-    result = MethodTest.TestOneArgWithParams('Some String', 1, 2, 3, 4)
+    result = MethodTest.TestOneArgWithParams("Some String", 1, 2, 3, 4)
     assert len(result) == 4
 
-    result = MethodTest.TestOneArgWithParams('Some String', [5])
+    result = MethodTest.TestOneArgWithParams("Some String", [5])
     assert len(result) == 1
 
-    result = MethodTest.TestOneArgWithParams('Some String', 5)
+    result = MethodTest.TestOneArgWithParams("Some String", 5)
     assert len(result) == 1
+
 
 def test_params_method_with_lists():
     """Tests passing multiple lists to a params object[] method"""
-    result = MethodTest.TestObjectParamsArg([],[])
+    result = MethodTest.TestObjectParamsArg([], [])
     assert len(result) == 2
+
 
 def test_string_out_params():
     """Test use of string out-parameters."""
@@ -468,15 +473,13 @@ def test_two_default_param():
 def test_explicit_selection_with_out_modifier():
     """Check explicit overload selection with out modifiers."""
     refstr = System.String("").GetType().MakeByRefType()
-    result = MethodTest.TestStringOutParams.__overloads__[str, refstr](
-        "hi", "there")
+    result = MethodTest.TestStringOutParams.__overloads__[str, refstr]("hi", "there")
     assert isinstance(result, tuple)
     assert len(result) == 2
     assert result[0] is True
     assert result[1] == "output string"
 
-    result = MethodTest.TestStringOutParams.__overloads__[str, refstr](
-        "hi", None)
+    result = MethodTest.TestStringOutParams.__overloads__[str, refstr]("hi", None)
     assert isinstance(result, tuple)
     assert len(result) == 2
     assert result[0] is True
@@ -486,15 +489,13 @@ def test_explicit_selection_with_out_modifier():
 def test_explicit_selection_with_ref_modifier():
     """Check explicit overload selection with ref modifiers."""
     refstr = System.String("").GetType().MakeByRefType()
-    result = MethodTest.TestStringRefParams.__overloads__[str, refstr](
-        "hi", "there")
+    result = MethodTest.TestStringRefParams.__overloads__[str, refstr]("hi", "there")
     assert isinstance(result, tuple)
     assert len(result) == 2
     assert result[0] is True
     assert result[1] == "output string"
 
-    result = MethodTest.TestStringRefParams.__overloads__[str, refstr](
-        "hi", None)
+    result = MethodTest.TestStringRefParams.__overloads__[str, refstr]("hi", None)
     assert isinstance(result, tuple)
     assert len(result) == 2
     assert result[0] is True
@@ -520,8 +521,8 @@ def test_explicit_overload_selection():
     value = MethodTest.Overloaded.__overloads__[System.SByte](127)
     assert value == 127
 
-    value = MethodTest.Overloaded.__overloads__[System.Char](u'A')
-    assert value == u'A'
+    value = MethodTest.Overloaded.__overloads__[System.Char]("A")
+    assert value == "A"
 
     value = MethodTest.Overloaded.__overloads__[System.Char](65535)
     assert value == chr(65535)
@@ -535,37 +536,28 @@ def test_explicit_overload_selection():
     value = MethodTest.Overloaded.__overloads__[int](2147483647)
     assert value == 2147483647
 
-    value = MethodTest.Overloaded.__overloads__[System.Int64](
-        9223372036854775807
-    )
+    value = MethodTest.Overloaded.__overloads__[System.Int64](9223372036854775807)
     assert value == 9223372036854775807
 
     value = MethodTest.Overloaded.__overloads__[System.UInt16](65000)
     assert value == 65000
 
-    value = MethodTest.Overloaded.__overloads__[System.UInt32](
-        4294967295
-    )
+    value = MethodTest.Overloaded.__overloads__[System.UInt32](4294967295)
     assert value == 4294967295
 
-    value = MethodTest.Overloaded.__overloads__[System.UInt64](
-        18446744073709551615
-    )
+    value = MethodTest.Overloaded.__overloads__[System.UInt64](18446744073709551615)
     assert value == 18446744073709551615
 
     value = MethodTest.Overloaded.__overloads__[System.Single](3.402823e38)
     assert value == System.Single(3.402823e38)
 
-    value = MethodTest.Overloaded.__overloads__[System.Double](
-        1.7976931348623157e308)
+    value = MethodTest.Overloaded.__overloads__[System.Double](1.7976931348623157e308)
     assert value == 1.7976931348623157e308
 
-    value = MethodTest.Overloaded.__overloads__[float](
-        1.7976931348623157e308)
+    value = MethodTest.Overloaded.__overloads__[float](1.7976931348623157e308)
     assert value == 1.7976931348623157e308
 
-    value = MethodTest.Overloaded.__overloads__[System.Decimal](
-        System.Decimal.One)
+    value = MethodTest.Overloaded.__overloads__[System.Decimal](System.Decimal.One)
     assert value == System.Decimal.One
 
     value = MethodTest.Overloaded.__overloads__[System.String]("spam")
@@ -590,7 +582,8 @@ def test_explicit_overload_selection():
 
     atype = Array[System.Object]
     value = MethodTest.Overloaded.__overloads__[str, int, atype](
-        "one", 1, atype([1, 2, 3]))
+        "one", 1, atype([1, 2, 3])
+    )
     assert value == 3
 
     value = MethodTest.Overloaded.__overloads__[str, int]("one", 1)
@@ -632,10 +625,10 @@ def test_overload_selection_with_array_types():
     assert value[1] == 127
 
     vtype = Array[System.Char]
-    input_ = vtype([u'A', u'Z'])
+    input_ = vtype(["A", "Z"])
     value = MethodTest.Overloaded.__overloads__[vtype](input_)
-    assert value[0] == u'A'
-    assert value[1] == u'Z'
+    assert value[0] == "A"
+    assert value[1] == "Z"
 
     vtype = Array[System.Char]
     input_ = vtype([0, 65535])
@@ -769,7 +762,7 @@ def test_we_can_bind_to_encoding_get_string():
     from System.Text import Encoding
     from System.IO import MemoryStream
 
-    my_bytes = Encoding.UTF8.GetBytes('Some testing string')
+    my_bytes = Encoding.UTF8.GetBytes("Some testing string")
     stream = MemoryStream()
     stream.Write(my_bytes, 0, my_bytes.Length)
     stream.Position = 0
@@ -784,8 +777,8 @@ def test_we_can_bind_to_encoding_get_string():
         temp = Encoding.UTF8.GetString(buff, 0, read)
         data.append(temp)
 
-    data = ''.join(data)
-    assert data == 'Some testing string'
+    data = "".join(data)
+    assert data == "Some testing string"
 
 
 def test_wrong_overload():
@@ -795,23 +788,24 @@ def test_wrong_overload():
     # Used to return `50L`
     res = System.Math.Abs(50.5)
     assert res == 50.5
-    assert type(res) == float
+    assert type(res) == float  # noqa: E721
 
     res = System.Math.Abs(-50.5)
     assert res == 50.5
-    assert type(res) == float
+    assert type(res) == float  # noqa: E721
 
     res = System.Math.Max(50.5, 50.1)
     assert res == 50.5
-    assert type(res) == float
+    assert type(res) == float  # noqa: E721
 
     res = System.Math.Max(System.Double(10.5), System.Double(50.5))
     assert res == 50.5
-    assert type(res) == float  # Should it return a System.Double?
+    # Should it return a System.Double?
+    assert type(res) == float  # noqa: E721
 
     res = System.Math.Max(System.Double(50.5), 50.1)
     assert res == 50.5
-    assert type(res) == float
+    assert type(res) == float  # noqa: E721
 
 
 def test_no_object_in_param():
@@ -832,6 +826,7 @@ def test_no_object_in_param():
     # Ensure that the top-level error is TypeError even if the inner error is an OverflowError
     with pytest.raises(TypeError):
         MethodTest.TestOverloadedNoObject(2147483648)
+
 
 def test_object_in_param():
     """Test regression introduced by #151 in which Object method overloads
@@ -916,8 +911,9 @@ def test_object_in_multiparam_exception():
 
     e = excinfo.value
     c = e.__cause__
-    assert c.GetType().FullName == 'System.AggregateException'
+    assert c.GetType().FullName == "System.AggregateException"
     assert len(c.InnerExceptions) == 2
+
 
 def test_case_sensitive():
     """Test that case-sensitivity is respected. GH#81"""
@@ -931,6 +927,7 @@ def test_case_sensitive():
     with pytest.raises(AttributeError):
         MethodTest.casesensitive()
 
+
 def test_getting_generic_method_binding_does_not_leak_ref_count():
     """Test that managed object is freed after calling generic method. Issue #691"""
 
@@ -941,16 +938,22 @@ def test_getting_generic_method_binding_does_not_leak_ref_count():
     refCount = sys.getrefcount(PlainOldClass().GenericMethod[str])
     assert refCount == 1
 
+
 def test_getting_generic_method_binding_does_not_leak_memory():
     """Test that managed object is freed after calling generic method. Issue #691"""
 
     from PlainOldNamespace import PlainOldClass
 
-    import psutil, os, gc, clr
+    import psutil
+    import os
+    import gc
 
     process = psutil.Process(os.getpid())
     processBytesBeforeCall = process.memory_info().rss
-    print("\n\nMemory consumption (bytes) at start of test: " + str(processBytesBeforeCall))
+    print(
+        "\n\nMemory consumption (bytes) at start of test: "
+        + str(processBytesBeforeCall)
+    )
 
     iterations = 500
     for i in range(iterations):
@@ -972,6 +975,7 @@ def test_getting_generic_method_binding_does_not_leak_memory():
 
     assert bytesLeakedPerIteration < failThresholdBytesLeakedPerIteration
 
+
 def test_getting_overloaded_method_binding_does_not_leak_ref_count():
     """Test that managed object is freed after calling overloaded method. Issue #691"""
 
@@ -982,16 +986,22 @@ def test_getting_overloaded_method_binding_does_not_leak_ref_count():
     refCount = sys.getrefcount(PlainOldClass().OverloadedMethod.Overloads[int])
     assert refCount == 1
 
+
 def test_getting_overloaded_method_binding_does_not_leak_memory():
     """Test that managed object is freed after calling overloaded method. Issue #691"""
 
     from PlainOldNamespace import PlainOldClass
 
-    import psutil, os, gc, clr
+    import psutil
+    import os
+    import gc
 
     process = psutil.Process(os.getpid())
     processBytesBeforeCall = process.memory_info().rss
-    print("\n\nMemory consumption (bytes) at start of test: " + str(processBytesBeforeCall))
+    print(
+        "\n\nMemory consumption (bytes) at start of test: "
+        + str(processBytesBeforeCall)
+    )
 
     iterations = 500
     for i in range(iterations):
@@ -1013,6 +1023,7 @@ def test_getting_overloaded_method_binding_does_not_leak_memory():
 
     assert bytesLeakedPerIteration < failThresholdBytesLeakedPerIteration
 
+
 def test_getting_method_overloads_binding_does_not_leak_ref_count():
     """Test that managed object is freed after calling overloaded method. Issue #691"""
 
@@ -1023,16 +1034,22 @@ def test_getting_method_overloads_binding_does_not_leak_ref_count():
     refCount = sys.getrefcount(PlainOldClass().OverloadedMethod.Overloads)
     assert refCount == 1
 
+
 def test_getting_method_overloads_binding_does_not_leak_memory():
     """Test that managed object is freed after calling overloaded method. Issue #691"""
 
     from PlainOldNamespace import PlainOldClass
 
-    import psutil, os, gc, clr
+    import psutil
+    import os
+    import gc
 
     process = psutil.Process(os.getpid())
     processBytesBeforeCall = process.memory_info().rss
-    print("\n\nMemory consumption (bytes) at start of test: " + str(processBytesBeforeCall))
+    print(
+        "\n\nMemory consumption (bytes) at start of test: "
+        + str(processBytesBeforeCall)
+    )
 
     iterations = 500
     for i in range(iterations):
@@ -1054,6 +1071,7 @@ def test_getting_method_overloads_binding_does_not_leak_memory():
 
     assert bytesLeakedPerIteration < failThresholdBytesLeakedPerIteration
 
+
 def test_getting_overloaded_constructor_binding_does_not_leak_ref_count():
     """Test that managed object is freed after calling overloaded constructor, constructorbinding.cs mp_subscript. Issue #691"""
 
@@ -1068,7 +1086,7 @@ def test_getting_overloaded_constructor_binding_does_not_leak_ref_count():
 
 def test_default_params():
     # all positional parameters
-    res = MethodTest.DefaultParams(1,2,3,4)
+    res = MethodTest.DefaultParams(1, 2, 3, 4)
     assert res == "1234"
 
     res = MethodTest.DefaultParams(1, 2, 3)
@@ -1099,7 +1117,8 @@ def test_default_params():
     assert res == "1037"
 
     with pytest.raises(TypeError):
-        MethodTest.DefaultParams(1,2,3,4,5)
+        MethodTest.DefaultParams(1, 2, 3, 4, 5)
+
 
 def test_optional_params():
     res = MethodTest.OptionalParams(1, 2, 3, 4)
@@ -1133,34 +1152,34 @@ def test_optional_params():
     assert res == "1037"
 
     res = MethodTest.OptionalParams_TestMissing()
-    assert res == True
+    assert res == True  # noqa: E712
 
     res = MethodTest.OptionalParams_TestMissing(None)
-    assert res == False
+    assert res == False  # noqa: E712
 
-    res = MethodTest.OptionalParams_TestMissing(a = None)
-    assert res == False
+    res = MethodTest.OptionalParams_TestMissing(a=None)
+    assert res == False  # noqa: E712
 
-    res = MethodTest.OptionalParams_TestMissing(a='hi')
-    assert res == False
+    res = MethodTest.OptionalParams_TestMissing(a="hi")
+    assert res == False  # noqa: E712
 
     res = MethodTest.OptionalParams_TestReferenceType()
-    assert res == True
+    assert res == True  # noqa: E712
 
     res = MethodTest.OptionalParams_TestReferenceType(None)
-    assert res == True
+    assert res == True  # noqa: E712
 
     res = MethodTest.OptionalParams_TestReferenceType(a=None)
-    assert res == True
+    assert res == True  # noqa: E712
 
-    res = MethodTest.OptionalParams_TestReferenceType('hi')
-    assert res == False
+    res = MethodTest.OptionalParams_TestReferenceType("hi")
+    assert res == False  # noqa: E712
 
-    res = MethodTest.OptionalParams_TestReferenceType(a='hi')
-    assert res == False
+    res = MethodTest.OptionalParams_TestReferenceType(a="hi")
+    assert res == False  # noqa: E712
+
 
 def test_optional_and_default_params():
-
     res = MethodTest.OptionalAndDefaultParams()
     assert res == "0000"
 
@@ -1176,11 +1195,12 @@ def test_optional_and_default_params():
     res = MethodTest.OptionalAndDefaultParams2()
     assert res == "0012"
 
-    res = MethodTest.OptionalAndDefaultParams2(a=1,b=2,c=3,d=4)
+    res = MethodTest.OptionalAndDefaultParams2(a=1, b=2, c=3, d=4)
     assert res == "1234"
 
     res = MethodTest.OptionalAndDefaultParams2(b=2, c=3)
     assert res == "0232"
+
 
 def test_default_params_overloads():
     res = MethodTest.DefaultParamsWithOverloading(1, 2)
@@ -1207,15 +1227,18 @@ def test_default_params_overloads():
     res = MethodTest.DefaultParamsWithOverloading(1, d=1)
     assert res == "1671XXX"
 
+
 def test_default_params_overloads_ambiguous_call():
     with pytest.raises(TypeError):
         MethodTest.DefaultParamsWithOverloading()
+
 
 def test_keyword_arg_method_resolution():
     from Python.Test import MethodArityTest
 
     ob = MethodArityTest()
     assert ob.Foo(1, b=2) == "Arity 2"
+
 
 def test_params_array_overload():
     res = MethodTest.ParamsArrayOverloaded()
@@ -1242,6 +1265,7 @@ def test_params_array_overload():
     res = MethodTest.ParamsArrayOverloaded(1, 2, 3, i=1)
     assert res == "with params-array"
 
+
 @pytest.mark.skip(reason="FIXME: incorrectly failing")
 def test_params_array_overloaded_failing():
     res = MethodTest.ParamsArrayOverloaded(1, 2, i=1)
@@ -1250,15 +1274,17 @@ def test_params_array_overloaded_failing():
     res = MethodTest.ParamsArrayOverloaded(paramsArray=[], i=1)
     assert res == "with params-array"
 
+
 def test_method_encoding():
     MethodTest.EncodingTestÅngström()
+
 
 def test_method_with_pointer_array_argument():
     with pytest.raises(TypeError):
         MethodTest.PointerArray([0])
 
-def test_method_call_implicit_conversion():
 
+def test_method_call_implicit_conversion():
     class IntAnswerMixin:
         # For Python >= 3.8
         def __index__(self):

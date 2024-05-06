@@ -3,13 +3,13 @@
 
 import clr
 import System
-clr.AddReference("System.Windows.Forms")
-import System.Windows.Forms as WinForms
 
-from System.IO import File
-from System.Text import Encoding
-from System.Drawing import Color, Point, Size
-from System.Threading import ApartmentState, Thread, ThreadStart
+clr.AddReference("System.Windows.Forms")
+import System.Windows.Forms as WinForms  # noqa
+
+from System.IO import File  # noqa
+from System.Text import Encoding  # noqa
+from System.Threading import ApartmentState, Thread, ThreadStart  # noqa
 
 
 class Wordpad(WinForms.Form):
@@ -17,7 +17,7 @@ class Wordpad(WinForms.Form):
 
     def __init__(self):
         super().__init__()
-        self.filename = ''
+        self.filename = ""
         self.word_wrap = True
         self.doctype = 1
         self.InitializeComponent()
@@ -101,9 +101,14 @@ class Wordpad(WinForms.Form):
         self.fileMenu.Text = "&File"
         self.fileMenu.Index = 0
 
-        items = (self.menuFileNew, self.menuFileOpen,
-                 self.menuFileSave, self.menuFileSaveAs,
-                 self.menuFileSep_1, self.menuFileExit)
+        items = (
+            self.menuFileNew,
+            self.menuFileOpen,
+            self.menuFileSave,
+            self.menuFileSaveAs,
+            self.menuFileSep_1,
+            self.menuFileExit,
+        )
 
         self.fileMenu.MenuItems.AddRange(items)
 
@@ -150,10 +155,16 @@ class Wordpad(WinForms.Form):
         self.editMenu.Text = "&Edit"
         self.editMenu.Index = 1
 
-        items = (self.menuEditUndo, self.menuEditRedo,
-                 self.menuEditSep_1, self.menuEditCut,
-                 self.menuEditCopy, self.menuEditPaste,
-                 self.menuEditSep_2, self.menuEditSelectAll)
+        items = (
+            self.menuEditUndo,
+            self.menuEditRedo,
+            self.menuEditSep_1,
+            self.menuEditCut,
+            self.menuEditCopy,
+            self.menuEditPaste,
+            self.menuEditSep_2,
+            self.menuEditSelectAll,
+        )
 
         self.editMenu.MenuItems.AddRange(items)
 
@@ -215,8 +226,7 @@ class Wordpad(WinForms.Form):
         self.openFileDialog.Filter = "Text documents|*.txt|RTF document|*.rtf"
         self.openFileDialog.Title = "Open document"
 
-        self.saveFileDialog.Filter = "Text Documents|*.txt|" \
-                                     "Rich Text Format|*.rtf"
+        self.saveFileDialog.Filter = "Text Documents|*.txt|" "Rich Text Format|*.rtf"
         self.saveFileDialog.Title = "Save document"
         self.saveFileDialog.FileName = "Untitled"
 
@@ -245,7 +255,7 @@ class Wordpad(WinForms.Form):
         self.SaveDocument()
 
     def OnClickFileSaveAs(self, sender, args):
-        self.filename = ''
+        self.filename = ""
         self.SaveDocument()
 
     def OnClickFileExit(self, sender, args):
@@ -285,10 +295,10 @@ class Wordpad(WinForms.Form):
 
     def NewDocument(self):
         self.doctype = 1
-        self.richTextBox.Rtf = ''
-        self.richTextBox.Text = ''
-        self.Text = 'Python Wordpad - (New Document)'
-        self.filename = ''
+        self.richTextBox.Rtf = ""
+        self.richTextBox.Text = ""
+        self.Text = "Python Wordpad - (New Document)"
+        self.filename = ""
 
     def OpenDocument(self):
         if self.openFileDialog.ShowDialog() != WinForms.DialogResult.OK:
@@ -308,19 +318,19 @@ class Wordpad(WinForms.Form):
             temp = Encoding.ASCII.GetString(buff, 0, read)
             data.append(temp)
 
-        data = ''.join(data)
+        data = "".join(data)
         stream.Close()
 
         filename = self.filename = filename.lower()
 
-        if filename.endswith('.rtf'):
+        if filename.endswith(".rtf"):
             self.richTextBox.Rtf = data
             self.doctype = 2
         else:
             self.richTextBox.Text = data
             self.doctype = 1
 
-        self.Text = 'Python Wordpad - %s' % filename
+        self.Text = "Python Wordpad - %s" % filename
         self.richTextBox.Select(0, 0)
 
     def SaveDocument(self):
@@ -332,13 +342,13 @@ class Wordpad(WinForms.Form):
             filename = self.saveFileDialog.FileName
 
         filename = self.filename = filename.lower()
-        self.Text = 'Python Wordpad - %s' % filename
+        self.Text = "Python Wordpad - %s" % filename
 
         self.richTextBox.Select(0, 0)
 
         stream = File.OpenWrite(filename)
 
-        if filename.endswith('.rtf'):
+        if filename.endswith(".rtf"):
             data = self.richTextBox.Rtf
         else:
             data = self.richTextBox.Text
@@ -350,11 +360,14 @@ class Wordpad(WinForms.Form):
 
     def SaveChangesDialog(self):
         if self.richTextBox.Modified:
-            if WinForms.MessageBox.Show(
-                    "Save changes?", "Word Pad",
-                            WinForms.MessageBoxButtons.OK |
-                            WinForms.MessageBoxButtons.YesNo
-            ) == WinForms.DialogResult.Yes:
+            if (
+                WinForms.MessageBox.Show(
+                    "Save changes?",
+                    "Word Pad",
+                    WinForms.MessageBoxButtons.OK | WinForms.MessageBoxButtons.YesNo,
+                )
+                == WinForms.DialogResult.Yes
+            ):
                 self.SaveDocument()
                 return 1
         return 0
@@ -384,8 +397,9 @@ class AboutForm(WinForms.Form):
         self.label1.Name = "label1"
         self.label1.Size = System.Drawing.Size(296, 140)
         self.label1.TabIndex = 2
-        self.label1.Text = "Python Wordpad - an example winforms " \
-                           "application using Python.NET"
+        self.label1.Text = (
+            "Python Wordpad - an example winforms " "application using Python.NET"
+        )
 
         self.AutoScaleBaseSize = System.Drawing.Size(5, 13)
         self.ClientSize = System.Drawing.Size(300, 150)
@@ -418,5 +432,5 @@ def main():
     thread.Join()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

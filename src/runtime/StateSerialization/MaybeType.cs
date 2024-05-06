@@ -1,15 +1,15 @@
 using System;
+using System.IO;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
-using System.IO;
 
 namespace Python.Runtime
 {
     [Serializable]
     internal struct MaybeType : ISerializable
     {
-        public static implicit operator MaybeType (Type ob) => new(ob);
+        public static implicit operator MaybeType(Type ob) => new(ob);
 
         // The AssemblyQualifiedName of the serialized Type
         const string SerializationName = "n";
@@ -53,7 +53,7 @@ namespace Python.Runtime
         private MaybeType(SerializationInfo serializationInfo, StreamingContext context)
         {
             name = (string)serializationInfo.GetValue(SerializationName, typeof(string));
-            type = Type.GetType(name, throwOnError:false);
+            type = Type.GetType(name, throwOnError: false);
         }
 
         public void GetObjectData(SerializationInfo serializationInfo, StreamingContext context)

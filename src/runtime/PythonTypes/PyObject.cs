@@ -30,10 +30,10 @@ namespace Python.Runtime
         protected IntPtr rawPtr = IntPtr.Zero;
         internal readonly int run = Runtime.GetRun();
 
-        internal BorrowedReference obj => new (rawPtr);
+        internal BorrowedReference obj => new(rawPtr);
 
-        public static PyObject None => new (Runtime.PyNone);
-        internal BorrowedReference Reference => new (rawPtr);
+        public static PyObject None => new(Runtime.PyNone);
+        internal BorrowedReference Reference => new(rawPtr);
 
         /// <summary>
         /// PyObject Constructor
@@ -235,7 +235,7 @@ namespace Python.Runtime
         {
             GC.SuppressFinalize(this);
             Dispose(true);
-            
+
         }
 
         internal StolenReference Steal()

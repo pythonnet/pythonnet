@@ -5,7 +5,8 @@ namespace Python.Runtime
 {
     /* buffer interface */
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
-    internal struct Py_buffer {
+    internal struct Py_buffer
+    {
         public IntPtr buf;
         public IntPtr obj;        /* owned reference */
         /// <summary>Buffer size in bytes</summary>

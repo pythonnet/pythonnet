@@ -2,11 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 using BenchmarkDotNet.Reports;
 using BenchmarkDotNet.Running;
+
 using NUnit.Framework;
 
 namespace Python.PerformanceTests
@@ -64,7 +65,8 @@ namespace Python.PerformanceTests
 
         public static void AssertPerformanceIsBetterOrSame(
             double actual, double target,
-            double wiggleRoom = 1.1, [CallerMemberName] string testName = null) {
+            double wiggleRoom = 1.1, [CallerMemberName] string testName = null)
+        {
             double threshold = target * wiggleRoom;
             Assert.LessOrEqual(actual, threshold,
                 $"{testName}: {actual:F3} > {threshold:F3} (target: {target:F3})"

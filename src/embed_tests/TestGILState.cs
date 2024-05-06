@@ -1,6 +1,7 @@
 namespace Python.EmbeddingTest
 {
     using NUnit.Framework;
+
     using Python.Runtime;
 
     public class TestGILState
@@ -13,7 +14,7 @@ namespace Python.EmbeddingTest
         {
             using (var gilState = Py.GIL())
             {
-                for(int i = 0; i < 50; i++)
+                for (int i = 0; i < 50; i++)
                     gilState.Dispose();
             }
         }
