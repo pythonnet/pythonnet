@@ -19,6 +19,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 ### Fixed
 
 -   Fixed RecursionError for reverse operators on C# operable types from python. See #2240
+-   Fixed possible access violation exception on shutdown (#1977)
 
 ## [3.0.3](https://github.com/pythonnet/pythonnet/releases/tag/v3.0.3) - 2023-10-11
 
