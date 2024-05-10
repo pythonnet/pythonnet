@@ -1,7 +1,5 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -17,7 +15,34 @@ namespace Python.Runtime
 {
     public static class RuntimeData
     {
-        private static Type? _formatterType;
+
+        public readonly static Func<IFormatter> DefaultFormatterFactory = () =>
+        {
+            try
+            {
+                return new BinaryFormatter();
+            }
+            catch
+            {
+                return new NoopFormatter();
+            }
+        };
+
+        private static Func<IFormatter> _formatterFactory { get; set; } = DefaultFormatterFactory;
+
+        public static Func<IFormatter> FormatterFactory
+        {
+            get => _formatterFactory;
+            set
+            {
+                if (value == null)
+                    throw new ArgumentNullException(nameof(value));
+
+                _formatterFactory = value;
+            }
+        }
+
+        private static Type? _formatterType = null;
         public static Type? FormatterType
         {
             get => _formatterType;
@@ -31,6 +56,14 @@ namespace Python.Runtime
             }
         }
 
+        /// <summary>
+        /// Callback called as a last step in the serialization process
+        /// </summary>
+        public static Action? PostStashHook { get; set; } = null;
+        /// <summary>
+        /// Callback called as the first step in the deserialization process
+        /// </summary>
+        public static Action? PreRestoreHook { get; set; } = null;
         public static ICLRObjectStorer? WrappersStorer { get; set; }
 
         /// <summary>
@@ -74,6 +107,7 @@ namespace Python.Runtime
             using NewReference capsule = PyCapsule_New(mem, IntPtr.Zero, IntPtr.Zero);
             int res = PySys_SetObject("clr_data", capsule.BorrowOrThrow());
             PythonException.ThrowIfIsNotZero(res);
+            PostStashHook?.Invoke();
         }
 
         internal static void RestoreRuntimeData()
@@ -90,6 +124,7 @@ namespace Python.Runtime
 
         private static void RestoreRuntimeDataImpl()
         {
+            PreRestoreHook?.Invoke();
             BorrowedReference capsule = PySys_GetObject("clr_data");
             if (capsule.IsNull)
             {
@@ -250,11 +285,102 @@ namespace Python.Runtime
             }
         }
 
+        static readonly string serialization_key_namepsace = "pythonnet_serialization_";
+        /// <summary>
+        /// Removes the serialization capsule from the `sys` module object.
+        /// </summary>
+        /// <remarks>
+        /// The serialization data must have been set with <code>StashSerializationData</code>
+        /// </remarks>
+        /// <param name="key">The name given to the capsule on the `sys` module object</param>
+        public static void FreeSerializationData(string key)
+        {
+            key = serialization_key_namepsace + key;
+            BorrowedReference oldCapsule = PySys_GetObject(key);
+            if (!oldCapsule.IsNull)
+            {
+                IntPtr oldData = PyCapsule_GetPointer(oldCapsule, IntPtr.Zero);
+                Marshal.FreeHGlobal(oldData);
+                PyCapsule_SetPointer(oldCapsule, IntPtr.Zero);
+                PySys_SetObject(key, null);
+            }
+        }
+
+        /// <summary>
+        /// Stores the data in the <paramref name="stream"/> argument in a Python capsule and stores
+        /// the capsule on the `sys` module object with the name <paramref name="key"/>.
+        /// </summary>
+        /// <remarks>
+        /// No checks on pre-existing names on the `sys` module object are made.
+        /// </remarks>
+        /// <param name="key">The name given to the capsule on the `sys` module object</param>
+        /// <param name="stream">A MemoryStream that contains the data to be placed in the capsule</param>
+        public static void StashSerializationData(string key, MemoryStream stream)
+        {
+            if (stream.TryGetBuffer(out var data))
+            {
+                IntPtr mem = Marshal.AllocHGlobal(IntPtr.Size + data.Count);
+
+                // store the length of the buffer first
+                Marshal.WriteIntPtr(mem, (IntPtr)data.Count);
+                Marshal.Copy(data.Array, data.Offset, mem + IntPtr.Size, data.Count);
+
+                try
+                {
+                    using NewReference capsule = PyCapsule_New(mem, IntPtr.Zero, IntPtr.Zero);
+                    int res = PySys_SetObject(key, capsule.BorrowOrThrow());
+                    PythonException.ThrowIfIsNotZero(res);
+                }
+                catch
+                {
+                    Marshal.FreeHGlobal(mem);
+                }
+            }
+            else
+            {
+                throw new NotImplementedException($"{nameof(stream)} must be exposable");
+            }
+
+        }
+
+        static byte[] emptyBuffer = new byte[0];
+        /// <summary>
+        /// Retreives the previously stored data on a Python capsule.
+        /// Throws if the object corresponding to the <paramref name="key"/> parameter
+        /// on the `sys` module object is not a capsule.
+        /// </summary>
+        /// <param name="key">The name given to the capsule on the `sys` module object</param>
+        /// <returns>A MemoryStream containing the previously saved serialization data.
+        /// The stream is empty if no name matches the key.  </returns>
+        public static MemoryStream GetSerializationData(string key)
+        {
+            BorrowedReference capsule = PySys_GetObject(key);
+            if (capsule.IsNull)
+            {
+                // nothing to do.
+                return new MemoryStream(emptyBuffer, writable:false);
+            }
+            var ptr = PyCapsule_GetPointer(capsule, IntPtr.Zero);
+            if (ptr == IntPtr.Zero)
+            {
+                // The PyCapsule API returns NULL on error; NULL cannot be stored
+                // as a capsule's value
+                PythonException.ThrowIfIsNull(null);
+            }
+            var len = (int)Marshal.ReadIntPtr(ptr);
+            byte[] buffer = new byte[len];
+            Marshal.Copy(ptr+IntPtr.Size, buffer, 0, len);
+            return new MemoryStream(buffer, writable:false);
+        }
+
         internal static IFormatter CreateFormatter()
         {
-            return FormatterType != null ?
-                (IFormatter)Activator.CreateInstance(FormatterType)
-                : new BinaryFormatter();
+
+            if (FormatterType != null)
+            {
+                return (IFormatter)Activator.CreateInstance(FormatterType);
+            }
+            return FormatterFactory();
         }
     }
 }
