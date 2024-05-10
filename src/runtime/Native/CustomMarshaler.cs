@@ -42,7 +42,7 @@ namespace Python.Runtime
     internal class UcsMarshaler : MarshalerBase
     {
         internal static readonly int _UCS = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? 2 : 4;
-        internal static readonly Encoding PyEncoding = _UCS == 2 ? Encoding.Unicode : Encoding.UTF32;
+        internal static readonly Encoding PyEncoding = _UCS == 2 ? Encodings.UTF16 : Encodings.UTF32;
         private static readonly MarshalerBase Instance = new UcsMarshaler();
 
         public override IntPtr MarshalManagedToNative(object managedObj)

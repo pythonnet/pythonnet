@@ -53,7 +53,7 @@ namespace Python.Runtime
                 {
                     RawPointer = Util.ReadIntPtr(this, TypeOffset.tp_name),
                 };
-                return namePtr.ToString(System.Text.Encoding.UTF8)!;
+                return namePtr.ToString(Encodings.UTF8)!;
             }
         }
 
