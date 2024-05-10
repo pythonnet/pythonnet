@@ -740,6 +740,57 @@ if result != 5:
 "));
         }
 
+        public class CSharpClass
+        {
+            public string CalledMethodMessage { get; private set; }
+
+            public void Method()
+            {
+                CalledMethodMessage = "Overload 1";
+            }
+
+            public void Method(string stringArgument, decimal decimalArgument = 1.2m)
+            {
+                CalledMethodMessage = "Overload 2";
+            }
+
+            public void Method(PyObject typeArgument, decimal decimalArgument = 1.2m)
+            {
+                CalledMethodMessage = "Overload 3";
+            }
+        }
+
+        [Test]
+        public void CallsCorrectOverloadWithoutErrors()
+        {
+            using var _ = Py.GIL();
+
+            var module = PyModule.FromString("CallsCorrectOverloadWithoutErrors", @"
+from clr import AddReference
+AddReference(""System"")
+AddReference(""Python.EmbeddingTest"")
+from Python.EmbeddingTest import *
+
+class PythonModel(TestMethodBinder.CSharpModel):
+    pass
+
+def call_method(instance):
+    instance.Method(PythonModel, decimalArgument=1.234)
+");
+
+            var instance = new CSharpClass();
+            using var pyInstance = instance.ToPython();
+
+            Assert.DoesNotThrow(() =>
+            {
+                module.GetAttr("call_method").Invoke(pyInstance);
+            });
+
+            Assert.AreEqual("Overload 3", instance.CalledMethodMessage);
+
+            Assert.IsFalse(Exceptions.ErrorOccurred());
+        }
+
 
         // Used to test that we match this function with Py DateTime & Date Objects
         public static int GetMonth(DateTime test)

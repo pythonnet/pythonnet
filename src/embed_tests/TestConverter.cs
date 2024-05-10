@@ -450,6 +450,27 @@ class PyGetListImpl(test.GetListImpl):
             var testInt = pyValue.As<int>();
             Assert.AreEqual(testInt , 10);
         }
+
+        [TestCase(typeof(Type), true)]
+        [TestCase(typeof(string), false)]
+        [TestCase(typeof(TestCSharpModel), false)]
+        public void NoErrorSetWhenFailingToConvertClassType(Type type, bool shouldConvert)
+        {
+            using var _ = Py.GIL();
+
+            var module = PyModule.FromString("CallsCorrectOverloadWithoutErrors", @"
+from clr import AddReference
+AddReference(""System"")
+AddReference(""Python.EmbeddingTest"")
+from Python.EmbeddingTest import *
+
+class TestPythonModel(TestCSharpModel):
+    pass
+");
+            var testPythonModelClass = module.GetAttr("TestPythonModel");
+            Assert.AreEqual(shouldConvert, Converter.ToManaged(testPythonModelClass, type, out var result, setError: false));
+            Assert.IsFalse(Exceptions.ErrorOccurred());
+        }
     }
 
     public interface IGetList
@@ -460,5 +481,9 @@ class PyGetListImpl(test.GetListImpl):
     public class GetListImpl : IGetList
     {
         public List<string> GetList() => new() { "testing" };
+    }
+
+    public class TestCSharpModel
+    {
     }
 }

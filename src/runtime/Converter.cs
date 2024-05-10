@@ -473,7 +473,13 @@ class GMT(tzinfo):
                 }
                 if (mt is ClassBase cb)
                 {
-                    if (!cb.type.Valid || !obType.IsInstanceOfType(cb.type.Value))
+                    // The value being converted is a class type, so it will only succeed if it's being converted into a Type
+                    if (obType != typeof(Type))
+                    {
+                        return false;
+                    }
+
+                    if (!cb.type.Valid)
                     {
                         Exceptions.SetError(Exceptions.TypeError, cb.type.DeletedMessage);
                         return false;
