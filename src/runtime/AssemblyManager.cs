@@ -200,6 +200,13 @@ namespace Python.Runtime
                 }
                 else
                 {
+                    int invalidCharIndex = head.IndexOfAny(Path.GetInvalidPathChars());
+                    if (invalidCharIndex >= 0)
+                    {
+                        using var importWarning = Runtime.PyObject_GetAttrString(Exceptions.exceptions_module, "ImportWarning");
+                        Exceptions.warn($"Path entry '{head}' has invalid char at position {invalidCharIndex}", importWarning.BorrowOrThrow());
+                        continue;
+                    }
                     path = Path.Combine(head, name);
                 }
 
