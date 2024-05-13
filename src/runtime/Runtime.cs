@@ -278,6 +278,8 @@ namespace Python.Runtime
             ClearClrModules();
             RemoveClrRootModule();
 
+            TryCollectingGarbage(MaxCollectRetriesOnShutdown, forceBreakLoops: true);
+
             NullGCHandles(ExtensionType.loadedExtensions);
             ClassManager.RemoveClasses();
             TypeManager.RemoveTypes();
@@ -295,8 +297,7 @@ namespace Python.Runtime
             PyObjectConversions.Reset();
 
             PyGC_Collect();
-            bool everythingSeemsCollected = TryCollectingGarbage(MaxCollectRetriesOnShutdown,
-                                                                 forceBreakLoops: true);
+            bool everythingSeemsCollected = TryCollectingGarbage(MaxCollectRetriesOnShutdown);
             Debug.Assert(everythingSeemsCollected);
 
             Finalizer.Shutdown();
