@@ -740,6 +740,98 @@ if result != 5:
 "));
         }
 
+        public class OverloadsTestClass
+        {
+
+            public string Method1(string positionalArg, decimal namedArg1 = 1.2m, int namedArg2 = 123)
+            {
+                Console.WriteLine("1");
+                return "Method1 Overload 1";
+            }
+
+            public string Method1(decimal namedArg1 = 1.2m, int namedArg2 = 123)
+            {
+                Console.WriteLine("2");
+                return "Method1 Overload 2";
+            }
+
+            // ----
+
+            public string Method2(string arg1, int arg2, float arg3, float kwarg1 = 1.1f, bool kwarg2 = false, string kwarg3 = "")
+            {
+                return "Method2 Overload 1";
+            }
+
+            public string Method2(string arg1, int arg2, float kwarg1 = 1.1f, bool kwarg2 = false, string kwarg3 = "")
+            {
+                return "Method2 Overload 2";
+            }
+
+            // ----
+
+            public string ImplicitConversionSameArgumentCount(string symbol, int quantity, float trailingAmount, bool trailingAsPercentage, string tag = "")
+            {
+                return "ImplicitConversionSameArgumentCount 1";
+            }
+
+            public string ImplicitConversionSameArgumentCount(string symbol, decimal quantity, decimal trailingAmount, bool trailingAsPercentage, string tag = "")
+            {
+                return "ImplicitConversionSameArgumentCount 2";
+            }
+
+            public string ImplicitConversionSameArgumentCount2(string symbol, int quantity, float trailingAmount, bool trailingAsPercentage, string tag = "")
+            {
+                return "ImplicitConversionSameArgumentCount2 1";
+            }
+
+            public string ImplicitConversionSameArgumentCount2(string symbol, float quantity, float trailingAmount, bool trailingAsPercentage, string tag = "")
+            {
+                return "ImplicitConversionSameArgumentCount2 2";
+            }
+
+            public string ImplicitConversionSameArgumentCount2(string symbol, decimal quantity, float trailingAmount, bool trailingAsPercentage, string tag = "")
+            {
+                return "ImplicitConversionSameArgumentCount2 2";
+            }
+        }
+
+        [TestCase("Method1('abc', namedArg1=1.234, namedArg2=321)", "Method1 Overload 1")]
+        [TestCase("Method2(\"SPY\", 10, 123.4, kwarg1=0.0025, kwarg2=True)", "Method2 Overload 1")]
+        public void SelectsRightOverloadWithNamedParameters(string methodCallCode, string expectedResult)
+        {
+            using var _ = Py.GIL();
+
+            dynamic module = PyModule.FromString("SelectsRightOverloadWithNamedParameters", @$"
+
+def call_method(instance):
+    return instance.{methodCallCode}
+");
+
+            var instance = new OverloadsTestClass();
+            var result = module.call_method(instance).As<string>();
+
+            Assert.AreEqual(expectedResult, result);
+        }
+
+        [TestCase("ImplicitConversionSameArgumentCount", "10", "ImplicitConversionSameArgumentCount 1")]
+        [TestCase("ImplicitConversionSameArgumentCount", "10.1", "ImplicitConversionSameArgumentCount 2")]
+        [TestCase("ImplicitConversionSameArgumentCount2", "10", "ImplicitConversionSameArgumentCount2 1")]
+        [TestCase("ImplicitConversionSameArgumentCount2", "10.1", "ImplicitConversionSameArgumentCount2 2")]
+        public void DisambiguatesOverloadWithSameArgumentCountAndImplicitConversion(string methodName, string quantity, string expectedResult)
+        {
+            using var _ = Py.GIL();
+
+            dynamic module = PyModule.FromString("DisambiguatesOverloadWithSameArgumentCountAndImplicitConversion", @$"
+def call_method(instance):
+    return instance.{methodName}(""SPY"", {quantity}, 123.4, trailingAsPercentage=True)
+");
+
+            var instance = new OverloadsTestClass();
+            var result = module.call_method(instance).As<string>();
+
+            Assert.AreEqual(expectedResult, result);
+        }
+
         public class CSharpClass
         {
             public string CalledMethodMessage { get; private set; }

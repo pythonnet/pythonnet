@@ -851,8 +851,21 @@ class GMT(tzinfo):
                     }
 
                 case TypeCode.Boolean:
-                    result = Runtime.PyObject_IsTrue(value) != 0;
+                    if (value == Runtime.PyTrue)
+                    {
+                        result = true;
+                        return true;
+                    }
+                    if (value == Runtime.PyFalse)
+                    {
+                        result = false;
                     return true;
+                    }
+                    if (setError)
+                    {
+                        goto type_error;
+                    }
+                    return false;
 
                 case TypeCode.Byte:
                     {
