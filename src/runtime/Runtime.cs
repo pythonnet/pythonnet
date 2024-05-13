@@ -278,7 +278,8 @@ namespace Python.Runtime
             ClearClrModules();
             RemoveClrRootModule();
 
-            TryCollectingGarbage(MaxCollectRetriesOnShutdown, forceBreakLoops: true);
+            TryCollectingGarbage(MaxCollectRetriesOnShutdown, forceBreakLoops: true,
+                                 obj: true, derived: false, buffer: false);
 
             NullGCHandles(ExtensionType.loadedExtensions);
             ClassManager.RemoveClasses();
@@ -329,7 +330,8 @@ namespace Python.Runtime
 
         const int MaxCollectRetriesOnShutdown = 20;
         internal static int _collected;
-        static bool TryCollectingGarbage(int runs, bool forceBreakLoops)
+        static bool TryCollectingGarbage(int runs, bool forceBreakLoops,
+                                         bool obj = true, bool derived = true, bool buffer = true)
         {
             if (runs <= 0) throw new ArgumentOutOfRangeException(nameof(runs));
 
@@ -342,7 +344,9 @@ namespace Python.Runtime
                     GC.Collect();
                     GC.WaitForPendingFinalizers();
                     pyCollected += PyGC_Collect();
-                    pyCollected += Finalizer.Instance.DisposeAll();
+                    pyCollected += Finalizer.Instance.DisposeAll(disposeObj: obj,
+                                                                 disposeDerived: derived,
+                                                                 disposeBuffer: buffer);
                 }
                 if (Volatile.Read(ref _collected) == 0 && pyCollected == 0)
                 {
