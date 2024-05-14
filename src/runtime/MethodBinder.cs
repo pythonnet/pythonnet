@@ -609,7 +609,9 @@ namespace Python.Runtime
                                         typematch = true;
                                         clrtype = parameter.ParameterType;
                                     }
-                                    else
+                                    // we won't take matches using implicit conversions if there is already a match
+                                    // not using implicit conversions
+                                    else if (matches.Count == 0)
                                     {
                                         // accepts non-decimal numbers in decimal parameters
                                         if (underlyingType == typeof(decimal))
