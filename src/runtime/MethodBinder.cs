@@ -508,7 +508,6 @@ namespace Python.Runtime
                     int paramsArrayIndex = paramsArray ? pi.Length - 1 : -1; // -1 indicates no paramsArray
                     var usedImplicitConversion = false;
                     var kwargsMatched = 0;
-                    var defaultsNeeded = 0;
 
                     // Conversion loop for each parameter
                     for (int paramIndex = 0; paramIndex < clrArgCount; paramIndex++)
@@ -524,25 +523,24 @@ namespace Python.Runtime
                         if (paramIndex >= pyArgCount)
                         {
                             // All positional arguments have been used:
-                        // Check our KWargs for this parameter
+                            // Check our KWargs for this parameter
                             if (hasNamedParam)
                             {
                                 kwargsMatched++;
-                        if (tempPyObject != null)
-                        {
-                            op = tempPyObject;
-                        }
+                                if (tempPyObject != null)
+                                {
+                                    op = tempPyObject;
+                                }
                             }
                             else if (parameter.IsOptional && !(hasNamedParam || (paramsArray && paramIndex == paramsArrayIndex)))
-                        {
-                                defaultsNeeded++;
-                            if (defaultArgList != null)
                             {
-                                margs[paramIndex] = defaultArgList[paramIndex - pyArgCount];
-                            }
+                                if (defaultArgList != null)
+                                {
+                                    margs[paramIndex] = defaultArgList[paramIndex - pyArgCount];
+                                }
 
-                            continue;
-                        }
+                                continue;
+                            }
                         }
 
                         NewReference tempObject = default;
@@ -723,33 +721,33 @@ namespace Python.Runtime
                 var mi = bestMatch.Method;
 
                 object? target = null;
-                    if (!mi.IsStatic && inst != null)
-                    {
-                        //CLRObject co = (CLRObject)ManagedType.GetManagedObject(inst);
-                        // InvalidCastException: Unable to cast object of type
-                        // 'Python.Runtime.ClassObject' to type 'Python.Runtime.CLRObject'
+                if (!mi.IsStatic && inst != null)
+                {
+                    //CLRObject co = (CLRObject)ManagedType.GetManagedObject(inst);
+                    // InvalidCastException: Unable to cast object of type
+                    // 'Python.Runtime.ClassObject' to type 'Python.Runtime.CLRObject'
 
-                        // Sanity check: this ensures a graceful exit if someone does
-                        // something intentionally wrong like call a non-static method
-                        // on the class rather than on an instance of the class.
-                        // XXX maybe better to do this before all the other rigmarole.
+                    // Sanity check: this ensures a graceful exit if someone does
+                    // something intentionally wrong like call a non-static method
+                    // on the class rather than on an instance of the class.
+                    // XXX maybe better to do this before all the other rigmarole.
                     if (ManagedType.GetManagedObject(inst) is CLRObject co)
                     {
                         target = co.inst;
                     }
                     else
-                        {
-                        Exceptions.SetError(Exceptions.TypeError, "Invoked a non-static method with an invalid instance");
-                            return null;
-                        }
-                    }
-
-                    // If this match is generic we need to resolve it with our types.
-                    // Store this generic match to be used if no others match
-                    if (mi.IsGenericMethod)
                     {
-                        mi = ResolveGenericMethod((MethodInfo)mi, margs);
-            }
+                        Exceptions.SetError(Exceptions.TypeError, "Invoked a non-static method with an invalid instance");
+                        return null;
+                    }
+                }
+
+                // If this match is generic we need to resolve it with our types.
+                // Store this generic match to be used if no others match
+                if (mi.IsGenericMethod)
+                {
+                    mi = ResolveGenericMethod((MethodInfo)mi, margs);
+                }
 
                 return new Binding(mi, target, margs, outs);
             }
