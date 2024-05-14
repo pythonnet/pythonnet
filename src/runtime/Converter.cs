@@ -473,7 +473,13 @@ class GMT(tzinfo):
                 }
                 if (mt is ClassBase cb)
                 {
-                    if (!cb.type.Valid || !obType.IsInstanceOfType(cb.type.Value))
+                    // The value being converted is a class type, so it will only succeed if it's being converted into a Type
+                    if (obType != typeof(Type))
+                    {
+                        return false;
+                    }
+
+                    if (!cb.type.Valid)
                     {
                         Exceptions.SetError(Exceptions.TypeError, cb.type.DeletedMessage);
                         return false;
@@ -845,8 +851,21 @@ class GMT(tzinfo):
                     }
 
                 case TypeCode.Boolean:
-                    result = Runtime.PyObject_IsTrue(value) != 0;
+                    if (value == Runtime.PyTrue)
+                    {
+                        result = true;
+                        return true;
+                    }
+                    if (value == Runtime.PyFalse)
+                    {
+                        result = false;
                     return true;
+                    }
+                    if (setError)
+                    {
+                        goto type_error;
+                    }
+                    return false;
 
                 case TypeCode.Byte:
                     {

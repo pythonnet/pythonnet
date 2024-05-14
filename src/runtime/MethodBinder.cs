@@ -431,10 +431,6 @@ namespace Python.Runtime
 
         internal Binding Bind(BorrowedReference inst, BorrowedReference args, BorrowedReference kw, MethodBase info)
         {
-            // Relevant function variables used post conversion
-            Binding bindingUsingImplicitConversion = null;
-            Binding genericBinding = null;
-
             // If we have KWArgs create dictionary and collect them
             Dictionary<string, PyObject> kwArgDict = null;
             if (kw != null)
@@ -455,6 +451,9 @@ namespace Python.Runtime
             // Fetch our methods we are going to attempt to match and bind too.
             var methods = info == null ? GetMethods()
                 : new List<MethodInformation>(1) { new MethodInformation(info, true) };
+
+            var matches = new List<MatchedMethod>(methods.Count);
+            List<MatchedMethod> matchesUsingImplicitConversion = null;
 
             for (var i = 0; i < methods.Count; i++)
             {
@@ -504,6 +503,7 @@ namespace Python.Runtime
 
                     int paramsArrayIndex = paramsArray ? pi.Length - 1 : -1; // -1 indicates no paramsArray
                     var usedImplicitConversion = false;
+                    var kwargsMatched = 0;
 
                     // Conversion loop for each parameter
                     for (int paramIndex = 0; paramIndex < clrArgCount; paramIndex++)
@@ -513,25 +513,33 @@ namespace Python.Runtime
                         var parameter = pi[paramIndex];     // Clr parameter we are targeting
                         object arg;                         // Python -> Clr argument
 
-                        // Check our KWargs for this parameter
-                        bool hasNamedParam = kwArgDict == null ? false : kwArgDict.TryGetValue(paramNames[paramIndex], out tempPyObject);
-                        if (tempPyObject != null)
+                        // Check positional arguments first and then check for named arguments and optional values
+                        if (paramIndex >= pyArgCount)
                         {
-                            op = tempPyObject;
+                            var hasNamedParam = kwArgDict == null ? false : kwArgDict.TryGetValue(paramNames[paramIndex], out tempPyObject);
+
+                            // All positional arguments have been used:
+                            // Check our KWargs for this parameter
+                            if (hasNamedParam)
+                            {
+                                kwargsMatched++;
+                                if (tempPyObject != null)
+                                {
+                                    op = tempPyObject;
+                                }
+                            }
+                            else if (parameter.IsOptional && !(hasNamedParam || (paramsArray && paramIndex == paramsArrayIndex)))
+                            {
+                                if (defaultArgList != null)
+                                {
+                                    margs[paramIndex] = defaultArgList[paramIndex - pyArgCount];
+                                }
+
+                                continue;
+                            }
                         }
 
                         NewReference tempObject = default;
-
-                        // Check if we are going to use default
-                        if (paramIndex >= pyArgCount && !(hasNamedParam || (paramsArray && paramIndex == paramsArrayIndex)))
-                        {
-                            if (defaultArgList != null)
-                            {
-                                margs[paramIndex] = defaultArgList[paramIndex - pyArgCount];
-                            }
-
-                            continue;
-                        }
 
                         // At this point, if op is IntPtr.Zero we don't have a KWArg and are not using default
                         if (op == null)
@@ -601,9 +609,9 @@ namespace Python.Runtime
                                         typematch = true;
                                         clrtype = parameter.ParameterType;
                                     }
-                                    // lets just keep the first binding using implicit conversion
-                                    // this is to respect method order/precedence
-                                    else if (bindingUsingImplicitConversion == null)
+                                    // we won't take matches using implicit conversions if there is already a match
+                                    // not using implicit conversions
+                                    else if (matches.Count == 0)
                                     {
                                         // accepts non-decimal numbers in decimal parameters
                                         if (underlyingType == typeof(decimal))
@@ -687,58 +695,65 @@ namespace Python.Runtime
                         }
                     }
 
-                    object target = null;
-                    if (!mi.IsStatic && inst != null)
-                    {
-                        //CLRObject co = (CLRObject)ManagedType.GetManagedObject(inst);
-                        // InvalidCastException: Unable to cast object of type
-                        // 'Python.Runtime.ClassObject' to type 'Python.Runtime.CLRObject'
-                        var co = ManagedType.GetManagedObject(inst) as CLRObject;
-
-                        // Sanity check: this ensures a graceful exit if someone does
-                        // something intentionally wrong like call a non-static method
-                        // on the class rather than on an instance of the class.
-                        // XXX maybe better to do this before all the other rigmarole.
-                        if (co == null)
-                        {
-                            return null;
-                        }
-                        target = co.inst;
-                    }
-
-                    // If this match is generic we need to resolve it with our types.
-                    // Store this generic match to be used if no others match
-                    if (mi.IsGenericMethod)
-                    {
-                        mi = ResolveGenericMethod((MethodInfo)mi, margs);
-                        genericBinding = new Binding(mi, target, margs, outs);
-                        continue;
-                    }
-
-                    var binding = new Binding(mi, target, margs, outs);
+                    var match = new MatchedMethod(kwargsMatched, margs, outs, mi);
                     if (usedImplicitConversion)
                     {
-                        // in this case we will not return the binding yet in case there is a match
-                        // which does not use implicit conversions, which will return directly
-                        bindingUsingImplicitConversion = binding;
+                        if (matchesUsingImplicitConversion == null)
+                        {
+                            matchesUsingImplicitConversion = new List<MatchedMethod>();
+                        }
+                        matchesUsingImplicitConversion.Add(match);
                     }
                     else
                     {
-                        return binding;
+                        matches.Add(match);
+                        // We don't need the matches using implicit conversion anymore, we can free the memory
+                        matchesUsingImplicitConversion = null;
                     }
                 }
             }
 
-            // if we generated a binding using implicit conversion return it
-            if (bindingUsingImplicitConversion != null)
+            if (matches.Count > 0 || (matchesUsingImplicitConversion != null && matchesUsingImplicitConversion.Count > 0))
             {
-                return bindingUsingImplicitConversion;
-            }
+                // We favor matches that do not use implicit conversion
+                var matchesTouse = matches.Count > 0 ? matches : matchesUsingImplicitConversion;
 
-            // if we generated a generic binding, return it
-            if (genericBinding != null)
-            {
-                return genericBinding;
+                // The best match would be the one with the most named arguments matched
+                var bestMatch = matchesTouse.MaxBy(x => x.KwargsMatched);
+                var margs = bestMatch.ManagedArgs;
+                var outs = bestMatch.Outs;
+                var mi = bestMatch.Method;
+
+                object? target = null;
+                if (!mi.IsStatic && inst != null)
+                {
+                    //CLRObject co = (CLRObject)ManagedType.GetManagedObject(inst);
+                    // InvalidCastException: Unable to cast object of type
+                    // 'Python.Runtime.ClassObject' to type 'Python.Runtime.CLRObject'
+
+                    // Sanity check: this ensures a graceful exit if someone does
+                    // something intentionally wrong like call a non-static method
+                    // on the class rather than on an instance of the class.
+                    // XXX maybe better to do this before all the other rigmarole.
+                    if (ManagedType.GetManagedObject(inst) is CLRObject co)
+                    {
+                        target = co.inst;
+                    }
+                    else
+                    {
+                        Exceptions.SetError(Exceptions.TypeError, "Invoked a non-static method with an invalid instance");
+                        return null;
+                    }
+                }
+
+                // If this match is generic we need to resolve it with our types.
+                // Store this generic match to be used if no others match
+                if (mi.IsGenericMethod)
+                {
+                    mi = ResolveGenericMethod((MethodInfo)mi, margs);
+                }
+
+                return new Binding(mi, target, margs, outs);
             }
 
             return null;
@@ -1063,6 +1078,23 @@ namespace Python.Runtime
                 return 0;
             }
         }
+
+        private readonly struct MatchedMethod
+        {
+            public int KwargsMatched { get; }
+            public object?[] ManagedArgs { get; }
+            public int Outs { get; }
+            public MethodBase Method { get; }
+
+            public MatchedMethod(int kwargsMatched, object?[] margs, int outs, MethodBase mb)
+            {
+                KwargsMatched = kwargsMatched;
+                ManagedArgs = margs;
+                Outs = outs;
+                Method = mb;
+            }
+        }
+
         protected static void AppendArgumentTypes(StringBuilder to, BorrowedReference args)
         {
             long argCount = Runtime.PyTuple_Size(args);
