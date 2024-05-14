@@ -431,10 +431,6 @@ namespace Python.Runtime
 
         internal Binding Bind(BorrowedReference inst, BorrowedReference args, BorrowedReference kw, MethodBase info)
         {
-            // Relevant function variables used post conversion
-            Binding bindingUsingImplicitConversion = null;
-            Binding genericBinding = null;
-
             // If we have KWArgs create dictionary and collect them
             Dictionary<string, PyObject> kwArgDict = null;
             if (kw != null)
@@ -456,8 +452,8 @@ namespace Python.Runtime
             var methods = info == null ? GetMethods()
                 : new List<MethodInformation>(1) { new MethodInformation(info, true) };
 
-            var matches = new List<MatchedMethod>();
-            var matchesUsingImplicitConversion = new List<MatchedMethod>();
+            var matches = new List<MatchedMethod>(methods.Count);
+            List<MatchedMethod> matchesUsingImplicitConversion = null;
 
             for (var i = 0; i < methods.Count; i++)
             {
@@ -517,11 +513,11 @@ namespace Python.Runtime
                         var parameter = pi[paramIndex];     // Clr parameter we are targeting
                         object arg;                         // Python -> Clr argument
 
-                        var hasNamedParam = kwArgDict == null ? false : kwArgDict.TryGetValue(paramNames[paramIndex], out tempPyObject);
-
                         // Check positional arguments first and then check for named arguments and optional values
                         if (paramIndex >= pyArgCount)
                         {
+                            var hasNamedParam = kwArgDict == null ? false : kwArgDict.TryGetValue(paramNames[paramIndex], out tempPyObject);
+
                             // All positional arguments have been used:
                             // Check our KWargs for this parameter
                             if (hasNamedParam)
@@ -698,18 +694,26 @@ namespace Python.Runtime
                     }
 
                     var match = new MatchedMethod(kwargsMatched, margs, outs, mi);
-                    if (usedImplicitConversion)
+                    // Only add matches using implicit conversion if no other regular matches were found,
+                    // since we favor regular matches over matches using implicit conversion
+                    if (usedImplicitConversion && matches.Count == 0)
                     {
+                        if (matchesUsingImplicitConversion == null)
+                        {
+                            matchesUsingImplicitConversion = new List<MatchedMethod>();
+                        }
                         matchesUsingImplicitConversion.Add(match);
                     }
                     else
                     {
                         matches.Add(match);
+                        // We don't need the matches using implicit conversion anymore
+                        matchesUsingImplicitConversion = null;
                     }
                 }
             }
 
-            if (matches.Count > 0 || matchesUsingImplicitConversion.Count > 0)
+            if (matches.Count > 0 || (matchesUsingImplicitConversion != null && matchesUsingImplicitConversion.Count > 0))
             {
                 // We favor matches that do not use implicit conversion
                 var matchesTouse = matches.Count > 0 ? matches : matchesUsingImplicitConversion;

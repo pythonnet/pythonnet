@@ -757,14 +757,26 @@ if result != 5:
 
             // ----
 
-            public string Method2(string arg1, int arg2, float arg3, float kwarg1 = 1.1f, bool kwarg2 = false, string kwarg3 = "")
+            public string Method2(string arg1, int arg2, decimal arg3, decimal kwarg1 = 1.1m, bool kwarg2 = false, string kwarg3 = "")
             {
                 return "Method2 Overload 1";
             }
 
-            public string Method2(string arg1, int arg2, float kwarg1 = 1.1f, bool kwarg2 = false, string kwarg3 = "")
+            public string Method2(string arg1, int arg2, decimal kwarg1 = 1.1m, bool kwarg2 = false, string kwarg3 = "")
             {
                 return "Method2 Overload 2";
+            }
+
+            // ----
+
+            public string Method3(string arg1, int arg2, float arg3, float kwarg1 = 1.1f, bool kwarg2 = false, string kwarg3 = "")
+            {
+                return "Method3 Overload 1";
+            }
+
+            public string Method3(string arg1, int arg2, float kwarg1 = 1.1f, bool kwarg2 = false, string kwarg3 = "")
+            {
+                return "Method3 Overload 2";
             }
 
             // ----
@@ -795,8 +807,11 @@ if result != 5:
             }
         }
 
-        [TestCase("Method1('abc', namedArg1=1.234, namedArg2=321)", "Method1 Overload 1")]
-        [TestCase("Method2(\"SPY\", 10, 123.4, kwarg1=0.0025, kwarg2=True)", "Method2 Overload 1")]
+        [TestCase("Method1('abc', namedArg1=10, namedArg2=321)", "Method1 Overload 1")]
+        [TestCase("Method1('abc', namedArg1=12.34, namedArg2=321)", "Method1 Overload 1")]
+        [TestCase("Method2(\"SPY\", 10, 123, kwarg1=1, kwarg2=True)", "Method2 Overload 1")]
+        [TestCase("Method2(\"SPY\", 10, 123.34, kwarg1=1.23, kwarg2=True)", "Method2 Overload 1")]
+        [TestCase("Method3(\"SPY\", 10, 123.34, kwarg1=1.23, kwarg2=True)", "Method3 Overload 1")]
         public void SelectsRightOverloadWithNamedParameters(string methodCallCode, string expectedResult)
         {
             using var _ = Py.GIL();
