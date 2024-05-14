@@ -696,9 +696,7 @@ namespace Python.Runtime
                     }
 
                     var match = new MatchedMethod(kwargsMatched, margs, outs, mi);
-                    // Only add matches using implicit conversion if no other regular matches were found,
-                    // since we favor regular matches over matches using implicit conversion
-                    if (usedImplicitConversion && matches.Count == 0)
+                    if (usedImplicitConversion)
                     {
                         if (matchesUsingImplicitConversion == null)
                         {
@@ -709,7 +707,7 @@ namespace Python.Runtime
                     else
                     {
                         matches.Add(match);
-                        // We don't need the matches using implicit conversion anymore
+                        // We don't need the matches using implicit conversion anymore, we can free the memory
                         matchesUsingImplicitConversion = null;
                     }
                 }
