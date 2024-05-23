@@ -898,6 +898,24 @@ def call_method(instance):
             Assert.IsFalse(Exceptions.ErrorOccurred());
         }
 
+        [Test]
+        public void BindsConstructorToSnakeCasedArgumentsVersion()
+        {
+            using var _ = Py.GIL();
+
+            var module = PyModule.FromString("CallsCorrectOverloadWithoutErrors", @"
+from clr import AddReference
+AddReference(""System"")
+from Python.EmbeddingTest import *
+
+def create_instance():
+    return TestMethodBinder.CSharpModel(some_argument=1, another_argument=""another argument value"")
+");
+            var exception = Assert.Throws<ClrBubbledException>(() => module.GetAttr("create_instance").Invoke());
+            var sourceException = exception.InnerException;
+            Assert.IsInstanceOf<NotImplementedException>(sourceException);
+            Assert.AreEqual("Constructor with arguments", sourceException.Message);
+        }
 
         // Used to test that we match this function with Py DateTime & Date Objects
         public static int GetMonth(DateTime test)
@@ -918,6 +936,12 @@ def call_method(instance):
                     new TestImplicitConversion()
                 };
             }
+
+            public CSharpModel(int someArgument, string anotherArgument = "another argument")
+            {
+                throw new NotImplementedException("Constructor with arguments");
+            }
+
             public void TestList(List<TestImplicitConversion> conversions)
             {
                 if (!conversions.Any())
