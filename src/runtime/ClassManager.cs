@@ -553,7 +553,7 @@ namespace Python.Runtime
                         }
                         methodList.Add(ctor, true);
                         // Same constructor, but with snake-cased arguments
-                        if (ctor.GetParameters().Any(pi => pi.Name.ToSnakeCase() != pi.Name))
+                        if (ctor.GetParameters().Any(pi => pi.Name?.ToSnakeCase() != pi.Name))
                         {
                             methodList.Add(ctor, false);
                         }

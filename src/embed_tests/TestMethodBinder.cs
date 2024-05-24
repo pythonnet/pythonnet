@@ -805,6 +805,34 @@ if result != 5:
             {
                 return "ImplicitConversionSameArgumentCount2 2";
             }
+
+            // ----
+
+            public string VariableArgumentsMethod(params CSharpModel[] paramsParams)
+            {
+                return "VariableArgumentsMethod(CSharpModel[])";
+            }
+
+            public string VariableArgumentsMethod(params PyObject[] paramsParams)
+            {
+                return "VariableArgumentsMethod(PyObject[])";
+            }
+
+            public string ConstructorMessage { get; set; }
+
+            public OverloadsTestClass(params CSharpModel[] paramsParams)
+            {
+                ConstructorMessage = "OverloadsTestClass(CSharpModel[])";
+            }
+
+            public OverloadsTestClass(params PyObject[] paramsParams)
+            {
+                ConstructorMessage = "OverloadsTestClass(PyObject[])";
+            }
+
+            public OverloadsTestClass()
+            {
+            }
         }
 
         [TestCase("Method1('abc', namedArg1=10, namedArg2=321)", "Method1 Overload 1")]
@@ -907,7 +935,7 @@ def call_method(instance):
             var argument2Name = useCamelCase ? "anotherArgument" : "another_argument";
             var argument2Code = passOptionalArgument ? $", {argument2Name}=\"another argument value\"" : "";
 
-            var module = PyModule.FromString("CallsCorrectOverloadWithoutErrors", @$"
+            var module = PyModule.FromString("BindsConstructorToSnakeCasedArgumentsVersion", @$"
 from clr import AddReference
 AddReference(""System"")
 from Python.EmbeddingTest import *
@@ -924,6 +952,49 @@ def create_instance():
                 : "Constructor with arguments: someArgument=1. anotherArgument=\"another argument default value\"";
             Assert.AreEqual(expectedMessage, sourceException.Message);
         }
+
+        [Test]
+        public void PyObjectArrayHasPrecedenceOverOtherTypeArrays()
+        {
+            using var _ = Py.GIL();
+
+            var module = PyModule.FromString("PyObjectArrayHasPrecedenceOverOtherTypeArrays", @$"
+from clr import AddReference
+AddReference(""System"")
+from Python.EmbeddingTest import *
+
+class PythonModel(TestMethodBinder.CSharpModel):
+    pass
+
+def call_method():
+    return TestMethodBinder.OverloadsTestClass().VariableArgumentsMethod(PythonModel(), PythonModel())
+");
+
+            var result = module.GetAttr("call_method").Invoke().As<string>();
+            Assert.AreEqual("VariableArgumentsMethod(PyObject[])", result);
+        }
+
+        [Test]
+        public void PyObjectArrayHasPrecedenceOverOtherTypeArraysInConstructors()
+        {
+            using var _ = Py.GIL();
+
+            var module = PyModule.FromString("PyObjectArrayHasPrecedenceOverOtherTypeArrays", @$"
+from clr import AddReference
+AddReference(""System"")
+from Python.EmbeddingTest import *
+
+class PythonModel(TestMethodBinder.CSharpModel):
+    pass
+
+def get_instance():
+    return TestMethodBinder.OverloadsTestClass(PythonModel(), PythonModel())
+");
+
+            var instance = module.GetAttr("get_instance").Invoke();
+            Assert.AreEqual("OverloadsTestClass(PyObject[])", instance.GetAttr("ConstructorMessage").As<string>());
+        }
+
 
         // Used to test that we match this function with Py DateTime & Date Objects
         public static int GetMonth(DateTime test)
