@@ -899,22 +899,30 @@ def call_method(instance):
         }
 
         [Test]
-        public void BindsConstructorToSnakeCasedArgumentsVersion()
+        public void BindsConstructorToSnakeCasedArgumentsVersion([Values] bool useCamelCase, [Values] bool passOptionalArgument)
         {
             using var _ = Py.GIL();
 
-            var module = PyModule.FromString("CallsCorrectOverloadWithoutErrors", @"
+            var argument1Name = useCamelCase ? "someArgument" : "some_argument";
+            var argument2Name = useCamelCase ? "anotherArgument" : "another_argument";
+            var argument2Code = passOptionalArgument ? $", {argument2Name}=\"another argument value\"" : "";
+
+            var module = PyModule.FromString("CallsCorrectOverloadWithoutErrors", @$"
 from clr import AddReference
 AddReference(""System"")
 from Python.EmbeddingTest import *
 
 def create_instance():
-    return TestMethodBinder.CSharpModel(some_argument=1, another_argument=""another argument value"")
+    return TestMethodBinder.CSharpModel({argument1Name}=1{argument2Code})
 ");
             var exception = Assert.Throws<ClrBubbledException>(() => module.GetAttr("create_instance").Invoke());
             var sourceException = exception.InnerException;
             Assert.IsInstanceOf<NotImplementedException>(sourceException);
-            Assert.AreEqual("Constructor with arguments", sourceException.Message);
+
+            var expectedMessage = passOptionalArgument
+                ? "Constructor with arguments: someArgument=1. anotherArgument=\"another argument value\""
+                : "Constructor with arguments: someArgument=1. anotherArgument=\"another argument default value\"";
+            Assert.AreEqual(expectedMessage, sourceException.Message);
         }
 
         // Used to test that we match this function with Py DateTime & Date Objects
@@ -937,9 +945,9 @@ def create_instance():
                 };
             }
 
-            public CSharpModel(int someArgument, string anotherArgument = "another argument")
+            public CSharpModel(int someArgument, string anotherArgument = "another argument default value")
             {
-                throw new NotImplementedException("Constructor with arguments");
+                throw new NotImplementedException($"Constructor with arguments: someArgument={someArgument}. anotherArgument=\"{anotherArgument}\"");
             }
 
             public void TestList(List<TestImplicitConversion> conversions)
