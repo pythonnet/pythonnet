@@ -805,6 +805,34 @@ if result != 5:
             {
                 return "ImplicitConversionSameArgumentCount2 2";
             }
+
+            // ----
+
+            public string VariableArgumentsMethod(params CSharpModel[] paramsParams)
+            {
+                return "VariableArgumentsMethod(CSharpModel[])";
+            }
+
+            public string VariableArgumentsMethod(params PyObject[] paramsParams)
+            {
+                return "VariableArgumentsMethod(PyObject[])";
+            }
+
+            public string ConstructorMessage { get; set; }
+
+            public OverloadsTestClass(params CSharpModel[] paramsParams)
+            {
+                ConstructorMessage = "OverloadsTestClass(CSharpModel[])";
+            }
+
+            public OverloadsTestClass(params PyObject[] paramsParams)
+            {
+                ConstructorMessage = "OverloadsTestClass(PyObject[])";
+            }
+
+            public OverloadsTestClass()
+            {
+            }
         }
 
         [TestCase("Method1('abc', namedArg1=10, namedArg2=321)", "Method1 Overload 1")]
@@ -898,6 +926,75 @@ def call_method(instance):
             Assert.IsFalse(Exceptions.ErrorOccurred());
         }
 
+        [Test]
+        public void BindsConstructorToSnakeCasedArgumentsVersion([Values] bool useCamelCase, [Values] bool passOptionalArgument)
+        {
+            using var _ = Py.GIL();
+
+            var argument1Name = useCamelCase ? "someArgument" : "some_argument";
+            var argument2Name = useCamelCase ? "anotherArgument" : "another_argument";
+            var argument2Code = passOptionalArgument ? $", {argument2Name}=\"another argument value\"" : "";
+
+            var module = PyModule.FromString("BindsConstructorToSnakeCasedArgumentsVersion", @$"
+from clr import AddReference
+AddReference(""System"")
+from Python.EmbeddingTest import *
+
+def create_instance():
+    return TestMethodBinder.CSharpModel({argument1Name}=1{argument2Code})
+");
+            var exception = Assert.Throws<ClrBubbledException>(() => module.GetAttr("create_instance").Invoke());
+            var sourceException = exception.InnerException;
+            Assert.IsInstanceOf<NotImplementedException>(sourceException);
+
+            var expectedMessage = passOptionalArgument
+                ? "Constructor with arguments: someArgument=1. anotherArgument=\"another argument value\""
+                : "Constructor with arguments: someArgument=1. anotherArgument=\"another argument default value\"";
+            Assert.AreEqual(expectedMessage, sourceException.Message);
+        }
+
+        [Test]
+        public void PyObjectArrayHasPrecedenceOverOtherTypeArrays()
+        {
+            using var _ = Py.GIL();
+
+            var module = PyModule.FromString("PyObjectArrayHasPrecedenceOverOtherTypeArrays", @$"
+from clr import AddReference
+AddReference(""System"")
+from Python.EmbeddingTest import *
+
+class PythonModel(TestMethodBinder.CSharpModel):
+    pass
+
+def call_method():
+    return TestMethodBinder.OverloadsTestClass().VariableArgumentsMethod(PythonModel(), PythonModel())
+");
+
+            var result = module.GetAttr("call_method").Invoke().As<string>();
+            Assert.AreEqual("VariableArgumentsMethod(PyObject[])", result);
+        }
+
+        [Test]
+        public void PyObjectArrayHasPrecedenceOverOtherTypeArraysInConstructors()
+        {
+            using var _ = Py.GIL();
+
+            var module = PyModule.FromString("PyObjectArrayHasPrecedenceOverOtherTypeArrays", @$"
+from clr import AddReference
+AddReference(""System"")
+from Python.EmbeddingTest import *
+
+class PythonModel(TestMethodBinder.CSharpModel):
+    pass
+
+def get_instance():
+    return TestMethodBinder.OverloadsTestClass(PythonModel(), PythonModel())
+");
+
+            var instance = module.GetAttr("get_instance").Invoke();
+            Assert.AreEqual("OverloadsTestClass(PyObject[])", instance.GetAttr("ConstructorMessage").As<string>());
+        }
+
 
         // Used to test that we match this function with Py DateTime & Date Objects
         public static int GetMonth(DateTime test)
@@ -918,6 +1015,12 @@ def call_method(instance):
                     new TestImplicitConversion()
                 };
             }
+
+            public CSharpModel(int someArgument, string anotherArgument = "another argument default value")
+            {
+                throw new NotImplementedException($"Constructor with arguments: someArgument={someArgument}. anotherArgument=\"{anotherArgument}\"");
+            }
+
             public void TestList(List<TestImplicitConversion> conversions)
             {
                 if (!conversions.Any())

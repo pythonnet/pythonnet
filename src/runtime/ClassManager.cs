@@ -552,6 +552,11 @@ namespace Python.Runtime
                             methodList = methods[name] = new ();
                         }
                         methodList.Add(ctor, true);
+                        // Same constructor, but with snake-cased arguments
+                        if (ctor.GetParameters().Any(pi => pi.Name?.ToSnakeCase() != pi.Name))
+                        {
+                            methodList.Add(ctor, false);
+                        }
                         continue;
 
                     case MemberTypes.Property:
