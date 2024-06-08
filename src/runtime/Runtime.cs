@@ -814,6 +814,7 @@ namespace Python.Runtime
         internal static NewReference Py_CompileString(string str, string file, int start)
         {
             using var strPtr = new StrPtr(str);
+
             using var fileObj = new PyString(file);
             return Delegates.Py_CompileStringObject(strPtr, fileObj, start, Utf8String, -1);
         }
