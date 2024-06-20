@@ -93,6 +93,25 @@ namespace Python.EmbeddingTest {
         static PyObject GetPythonIterable() => PythonEngine.Eval("map(lambda x: x, [1,2,3])");
 
         [Test]
+        public void FuncDecoderTest()
+        {
+            IPyObjectDecoder decoder = FuncDecoder.Instance;
+            var scope = Py.CreateScope();
+            var func = scope.Eval("lambda x: x + 30");
+            var funcType = func.GetPythonType();
+            var wrongType = new PyList(new PyObject[0]).GetPythonType();
+            // Check some good conversions...
+            Assert.IsTrue(decoder.CanDecode(funcType, typeof(Func<int, int>)));
+            Assert.IsTrue(decoder.CanDecode(funcType, typeof(Func<int>)));
+            // ...and some bad
+            Assert.IsFalse(decoder.CanDecode(funcType, typeof(List<string>)));
+            Assert.IsFalse(decoder.CanDecode(wrongType, typeof(Func<int>)));
+            // Create a wrapper for the lambda function above and invoke it
+            Assert.IsTrue(decoder.TryDecode(func, out Func<int, int> handler));
+            Assert.AreEqual(handler(12), 42);
+        }
+
+        [Test]
         public void ListDecoderTest()
         {
             var codec = ListDecoder.Instance;
