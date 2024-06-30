@@ -288,15 +288,13 @@ namespace Python.Runtime
             Runtime.PyType_Modified(pyType.Reference);
         }
 
-        internal static bool ShouldBindMethod(MethodBase mb)
-        {
-            return (mb.IsPublic || mb.IsFamily || mb.IsFamilyOrAssembly);
-        }
+        internal static bool ShouldBindMethod(MethodBase mb) =>
+            mb != null &&
+            (mb.IsPublic || mb.IsFamily || mb.IsFamilyOrAssembly);
 
-        internal static bool ShouldBindField(FieldInfo fi)
-        {
-            return (fi.IsPublic || fi.IsFamily || fi.IsFamilyOrAssembly);
-        }
+        internal static bool ShouldBindField(FieldInfo fi) =>
+            fi != null &&
+            (fi.IsPublic || fi.IsFamily || fi.IsFamilyOrAssembly);
 
         internal static bool ShouldBindProperty(PropertyInfo pi)
         {
