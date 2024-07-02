@@ -30,22 +30,29 @@ internal sealed class ReflectedClrType : PyType
             return pyType;
         }
 
-        // Ensure, that matching Python type exists first.
-        // It is required for self-referential classes
-        // (e.g. with members, that refer to the same class)
-        pyType = AllocateClass(type);
-        ClassManager.cache.Add(type, pyType);
+        try
+        {
+            // Ensure, that matching Python type exists first.
+            // It is required for self-referential classes
+            // (e.g. with members, that refer to the same class)
+            pyType = AllocateClass(type);
+            ClassManager.cache.Add(type, pyType);
 
-        var impl = ClassManager.CreateClass(type);
+            var impl = ClassManager.CreateClass(type);
 
-        TypeManager.InitializeClassCore(type, pyType, impl);
+            TypeManager.InitializeClassCore(type, pyType, impl);
 
-        ClassManager.InitClassBase(type, impl, pyType);
+            ClassManager.InitClassBase(type, impl, pyType);
 
-        // Now we force initialize the Python type object to reflect the given
-        // managed type, filling the Python type slots with thunks that
-        // point to the managed methods providing the implementation.
-        TypeManager.InitializeClass(pyType, impl, type);
+            // Now we force initialize the Python type object to reflect the given
+            // managed type, filling the Python type slots with thunks that
+            // point to the managed methods providing the implementation.
+            TypeManager.InitializeClass(pyType, impl, type);
+        }
+        catch (Exception e)
+        {
+            throw new InternalPythonnetException($"Failed to create Python type for {type.FullName}", e);
+        }
 
         return pyType;
     }
