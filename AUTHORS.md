@@ -38,6 +38,7 @@
 -   Dmitriy Se ([@dmitriyse](https://github.com/dmitriyse))
 -   Félix Bourbonnais ([@BadSingleton](https://github.com/BadSingleton))
 -   Florian Treurniet ([@ftreurni](https://github.com/ftreurni))
+-   Frank Witscher ([@Frawak](https://github.com/Frawak))
 -   He-chien Tsai ([@t3476](https://github.com/t3476))
 -   Inna Wiesel ([@inna-w](https://github.com/inna-w))
 -   Ivan Cronyn ([@cronan](https://github.com/cronan))

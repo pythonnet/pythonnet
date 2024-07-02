@@ -191,7 +191,7 @@ namespace Python.Runtime
             Instance.started = false;
         }
 
-        internal nint DisposeAll()
+        internal nint DisposeAll(bool disposeObj = true, bool disposeDerived = true, bool disposeBuffer = true)
         {
             if (_objQueue.IsEmpty && _derivedQueue.IsEmpty && _bufferQueue.IsEmpty)
                 return 0;
@@ -216,7 +216,7 @@ namespace Python.Runtime
 
                 try
                 {
-                    while (!_objQueue.IsEmpty)
+                    if (disposeObj) while (!_objQueue.IsEmpty)
                     {
                         if (!_objQueue.TryDequeue(out var obj))
                             continue;
@@ -240,7 +240,7 @@ namespace Python.Runtime
                         }
                     }
 
-                    while (!_derivedQueue.IsEmpty)
+                    if (disposeDerived) while (!_derivedQueue.IsEmpty)
                     {
                         if (!_derivedQueue.TryDequeue(out var derived))
                             continue;
@@ -258,7 +258,7 @@ namespace Python.Runtime
                         collected++;
                     }
 
-                    while (!_bufferQueue.IsEmpty)
+                    if (disposeBuffer) while (!_bufferQueue.IsEmpty)
                     {
                         if (!_bufferQueue.TryDequeue(out var buffer))
                             continue;
