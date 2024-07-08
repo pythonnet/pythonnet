@@ -158,6 +158,7 @@ namespace Python.Runtime
             ClassManager.Reset();
             ClassDerivedObject.Reset();
             TypeManager.Initialize();
+            CLRObject.creationBlocked = false;
             _typesInitialized = true;
 
             // Initialize modules that depend on the runtime class.
@@ -356,6 +357,7 @@ namespace Python.Runtime
                 {
                     NullGCHandles(CLRObject.reflectedObjects);
                     CLRObject.reflectedObjects.Clear();
+                    CLRObject.creationBlocked = true;
                 }
             }
             return false;
