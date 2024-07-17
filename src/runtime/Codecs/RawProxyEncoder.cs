@@ -8,7 +8,7 @@ namespace Python.Runtime.Codecs
     /// </summary>
     public class RawProxyEncoder: IPyObjectEncoder
     {
-        public PyObject TryEncode(object value)
+        public PyObject TryEncode(object value, Type type)
         {
             if (value is null) throw new ArgumentNullException(nameof(value));
 

@@ -28,13 +28,13 @@ namespace Python.Runtime.Codecs
         /// <inheritdoc />
         public bool CanEncode(Type type) => this.encoders.Any(encoder => encoder.CanEncode(type));
         /// <inheritdoc />
-        public PyObject? TryEncode(object value)
+        public PyObject? TryEncode(object value, Type type)
         {
             if (value is null) throw new ArgumentNullException(nameof(value));
 
             foreach (var encoder in this.GetEncoders(value.GetType()))
             {
-                var result = encoder.TryEncode(value);
+                var result = encoder.TryEncode(value, type);
                 if (result != null)
                 {
                     return result;

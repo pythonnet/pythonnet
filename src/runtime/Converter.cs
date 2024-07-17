@@ -987,5 +987,11 @@ namespace Python.Runtime
             if (o is null) return Runtime.None;
             return Converter.ToPython(o, typeof(T)).MoveToPyObject();
         }
+
+        public static PyObject ToPythonAs(this object o, Type type)
+        {
+            if (o is null) return Runtime.None;
+            return Converter.ToPython(o, type).MoveToPyObject();
+        }
     }
 }

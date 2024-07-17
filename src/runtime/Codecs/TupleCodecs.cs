@@ -18,20 +18,19 @@ namespace Python.Runtime.Codecs
                    && type.Name.StartsWith(typeof(TTuple).Name + '`');
         }
 
-        public PyObject? TryEncode(object value)
+        public PyObject? TryEncode(object value, Type type)
         {
             if (value == null) return null;
 
-            var tupleType = value.GetType();
-            if (tupleType == typeof(object)) return null;
-            if (!this.CanEncode(tupleType)) return null;
-            if (tupleType == typeof(TTuple)) return new PyTuple();
+            if (type == typeof(object)) return null;
+            if (!this.CanEncode(type)) return null;
+            if (type == typeof(TTuple)) return new PyTuple();
 
-            nint fieldCount = tupleType.GetGenericArguments().Length;
+            nint fieldCount = type.GetGenericArguments().Length;
             using var tuple = Runtime.PyTuple_New(fieldCount);
             PythonException.ThrowIfIsNull(tuple);
             int fieldIndex = 0;
-            foreach (FieldInfo field in tupleType.GetFields())
+            foreach (FieldInfo field in type.GetFields())
             {
                 var item = field.GetValue(value);
                 using var pyItem = Converter.ToPython(item, field.FieldType);
