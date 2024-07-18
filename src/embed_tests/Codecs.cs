@@ -339,22 +339,19 @@ def call(func):
             Assert.AreEqual(TestExceptionMessage, error.Message);
         }
 
-        [Test]
+        [Test(Description = "Tests encoding of an object that explicitly implements an interface.")]
         public void ExplicitObjectInterfaceEncoded()
         {
             var obj = new ExplicitInterfaceObject();
-
-            // explicitly pass an interface (but not a generic type argument) to simulate a scenario where the type is not know at build time
-            // var encoder = new InterfaceEncoder(typeof(IObjectInterface));
-            // PyObjectConversions.RegisterEncoder(encoder);
-
             using var scope = Py.CreateScope();
             scope.Exec(@"
 def call(obj):
   return dir(obj)
 ");
             var callFunc = scope.Get("call");
-            var members = callFunc.Invoke(obj.ToPythonAs(typeof(IObjectInterface))).As<string[]>();
+            // explicitly pass an interface (but not a generic type argument) to simulate a scenario where the type is not know at build time
+            var callArg = obj.ToPythonAs(typeof(IObjectInterface));
+            var members = callFunc.Invoke(callArg).As<string[]>();
             CollectionAssert.Contains(members, nameof(IObjectInterface.MemberFromInterface));
             CollectionAssert.DoesNotContain(members, nameof(ExplicitInterfaceObject.MemberFromObject));
         }
