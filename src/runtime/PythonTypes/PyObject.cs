@@ -25,7 +25,7 @@ namespace Python.Runtime
         /// Trace stack for PyObject's construction
         /// </summary>
         public StackTrace Traceback { get; } = new StackTrace(1);
-#endif  
+#endif
 
         protected IntPtr rawPtr = IntPtr.Zero;
         internal readonly int run = Runtime.GetRun();
@@ -136,14 +136,14 @@ namespace Python.Runtime
         /// Given an arbitrary managed object, return a Python instance that
         /// reflects the managed object.
         /// </remarks>
-        public static PyObject FromManagedObject(object ob)
+        public static PyObject FromManagedObject(object ob, Type? type = null)
         {
             // Special case: if ob is null, we return None.
             if (ob == null)
             {
                 return new PyObject(Runtime.PyNone);
             }
-            return CLRObject.GetReference(ob).MoveToPyObject();
+            return CLRObject.GetReference(ob, type ?? ob.GetType()).MoveToPyObject();
         }
 
         /// <summary>
@@ -235,7 +235,7 @@ namespace Python.Runtime
         {
             GC.SuppressFinalize(this);
             Dispose(true);
-            
+
         }
 
         internal StolenReference Steal()

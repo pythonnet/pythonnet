@@ -13,7 +13,6 @@ public interface IPyObjectEncoder
     bool CanEncode(Type type);
     /// <summary>
     /// Attempts to encode CLR object <paramref name="value"/> into Python object
-    /// using the specified <paramref name="type"/>
     /// </summary>
-    PyObject? TryEncode(object value, Type type);
+    PyObject? TryEncode(object value);
 }

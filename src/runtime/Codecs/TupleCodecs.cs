@@ -18,10 +18,11 @@ namespace Python.Runtime.Codecs
                    && type.Name.StartsWith(typeof(TTuple).Name + '`');
         }
 
-        public PyObject? TryEncode(object value, Type type)
+        public PyObject? TryEncode(object value)
         {
             if (value == null) return null;
 
+            var type = value.GetType();
             if (type == typeof(object)) return null;
             if (!this.CanEncode(type)) return null;
             if (type == typeof(TTuple)) return new PyTuple();

@@ -46,11 +46,11 @@ namespace Python.Runtime.Codecs
             return false;
         }
 
-        public PyObject? TryEncode(object value, Type type)
+        public PyObject? TryEncode(object value)
         {
             if (value is null) return null;
-            
-            if (!type.IsEnum) return null;
+
+            if (!value.GetType().IsEnum) return null;
 
             try
             {

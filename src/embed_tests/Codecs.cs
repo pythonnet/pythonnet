@@ -71,7 +71,7 @@ namespace Python.EmbeddingTest {
         static void TupleRoundtripObject<T, TTuple>()
         {
             var tuple = Activator.CreateInstance(typeof(T), 42.0, "42", new object());
-            using var pyTuple = TupleCodec<TTuple>.Instance.TryEncode(tuple, typeof(T));
+            using var pyTuple = TupleCodec<TTuple>.Instance.TryEncode(tuple);
             Assert.IsTrue(TupleCodec<TTuple>.Instance.TryDecode(pyTuple, out object restored));
             Assert.AreEqual(expected: tuple, actual: restored);
         }
@@ -85,7 +85,7 @@ namespace Python.EmbeddingTest {
         static void TupleRoundtripGeneric<T, TTuple>()
         {
             var tuple = Activator.CreateInstance(typeof(T), 42, "42", new object());
-            using var pyTuple = TupleCodec<TTuple>.Instance.TryEncode(tuple, typeof(T));
+            using var pyTuple = TupleCodec<TTuple>.Instance.TryEncode(tuple);
             Assert.IsTrue(TupleCodec<TTuple>.Instance.TryDecode(pyTuple, out T restored));
             Assert.AreEqual(expected: tuple, actual: restored);
         }
@@ -340,6 +340,26 @@ def call(func):
         }
 
         [Test]
+        public void ExplicitObjectInterfaceEncoded()
+        {
+            var obj = new ExplicitInterfaceObject();
+
+            // explicitly pass an interface (but not a generic type argument) to simulate a scenario where the type is not know at build time
+            // var encoder = new InterfaceEncoder(typeof(IObjectInterface));
+            // PyObjectConversions.RegisterEncoder(encoder);
+
+            using var scope = Py.CreateScope();
+            scope.Exec(@"
+def call(obj):
+  return dir(obj)
+");
+            var callFunc = scope.Get("call");
+            var members = callFunc.Invoke(obj.ToPythonAs(typeof(IObjectInterface))).As<string[]>();
+            CollectionAssert.Contains(members, nameof(IObjectInterface.MemberFromInterface));
+            CollectionAssert.DoesNotContain(members, nameof(ExplicitInterfaceObject.MemberFromObject));
+        }
+
+        [Test]
         public void DateTimeDecoded()
         {
             using var scope = Py.CreateScope();
@@ -438,7 +458,7 @@ DateTimeDecoder.Setup()
                 return true;
             }
 
-            public PyObject TryEncode(object value, Type type)
+            public PyObject TryEncode(object value)
             {
                 var error = (ValueErrorWrapper)value;
                 return PythonEngine.Eval("ValueError").Invoke(error.Message.ToPython());
@@ -478,7 +498,7 @@ DateTimeDecoder.Setup()
     class ObjectToEncoderInstanceEncoder<T> : IPyObjectEncoder
     {
         public bool CanEncode(Type type) => type == typeof(T);
-        public PyObject TryEncode(object value, Type type) => PyObject.FromManagedObject(this);
+        public PyObject TryEncode(object value) => PyObject.FromManagedObject(this);
     }
 
     /// <summary>
@@ -532,5 +552,17 @@ DateTimeDecoder.Setup()
             value = (T)(object)dt;
             return true;
         }
+    }
+
+    interface IObjectInterface
+    {
+        int MemberFromInterface { get; }
+    }
+
+    class ExplicitInterfaceObject : IObjectInterface
+    {
+        int IObjectInterface.MemberFromInterface { get; }
+
+        public int MemberFromObject { get; }
     }
 }

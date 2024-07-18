@@ -54,7 +54,7 @@ namespace Python.Runtime
 
             foreach (var encoder in clrToPython.GetOrAdd(type, GetEncoders))
             {
-                var result = encoder.TryEncode(obj, type);
+                var result = encoder.TryEncode(obj);
                 if (result != null) return result;
             }
 
