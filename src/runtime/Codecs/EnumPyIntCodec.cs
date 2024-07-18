@@ -50,7 +50,8 @@ namespace Python.Runtime.Codecs
         {
             if (value is null) return null;
 
-            if (!value.GetType().IsEnum) return null;
+            var enumType = value.GetType();
+            if (!enumType.IsEnum) return null;
 
             try
             {

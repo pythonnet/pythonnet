@@ -22,16 +22,16 @@ namespace Python.Runtime.Codecs
         {
             if (value == null) return null;
 
-            var type = value.GetType();
-            if (type == typeof(object)) return null;
-            if (!this.CanEncode(type)) return null;
-            if (type == typeof(TTuple)) return new PyTuple();
+            var tupleType = value.GetType();
+            if (tupleType == typeof(object)) return null;
+            if (!this.CanEncode(tupleType)) return null;
+            if (tupleType == typeof(TTuple)) return new PyTuple();
 
-            nint fieldCount = type.GetGenericArguments().Length;
+            nint fieldCount = tupleType.GetGenericArguments().Length;
             using var tuple = Runtime.PyTuple_New(fieldCount);
             PythonException.ThrowIfIsNull(tuple);
             int fieldIndex = 0;
-            foreach (FieldInfo field in type.GetFields())
+            foreach (FieldInfo field in tupleType.GetFields())
             {
                 var item = field.GetValue(value);
                 using var pyItem = Converter.ToPython(item, field.FieldType);

@@ -235,7 +235,6 @@ namespace Python.Runtime
         {
             GC.SuppressFinalize(this);
             Dispose(true);
-
         }
 
         internal StolenReference Steal()
