@@ -44,6 +44,7 @@
 -   Jan Krivanek ([@jakrivan](https://github.com/jakrivan))
 -   Jeff Reback ([@jreback](https://github.com/jreback))
 -   Jeff Robbins ([@jeff17robbins](https://github.com/jeff17robbins))
+-   João Neves ([@joaompneves](https://github.com/joaompneves))
 -   Joe Frayne ([@jfrayne](https://github.com/jfrayne))
 -   Joe Lidbetter ([@jmlidbetter](https://github.com/jmlidbetter))
 -   Joe Savage ([@s4v4g3](https://github.com/s4v4g3))
