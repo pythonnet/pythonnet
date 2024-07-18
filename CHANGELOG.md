@@ -20,7 +20,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ### Fixed
 
--   Fixed probing for assemblies in `sys.path` failing when a path in `sys.path` has invalid characters. See #2376
+-   Fixed RecursionError for reverse operators on C# operable types from python. See #2240
 
 ## [3.0.3](https://github.com/pythonnet/pythonnet/releases/tag/v3.0.3) - 2023-10-11
 
