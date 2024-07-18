@@ -48,12 +48,12 @@ namespace Python.EmbeddingTest
                 encoder2,
             };
 
-            var uri = group.TryEncode(new Uri("data:"));
+            var uri = group.TryEncode(new Uri("data:"), typeof(Uri));
             var clrObject = (CLRObject)ManagedType.GetManagedObject(uri);
             Assert.AreSame(encoder1, clrObject.inst);
             Assert.AreNotSame(encoder2, clrObject.inst);
 
-            var tuple = group.TryEncode(Tuple.Create(1));
+            var tuple = group.TryEncode(Tuple.Create(1), typeof(Tuple<int>));
             clrObject = (CLRObject)ManagedType.GetManagedObject(tuple);
             Assert.AreSame(encoder0, clrObject.inst);
         }

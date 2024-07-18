@@ -71,7 +71,7 @@ namespace Python.EmbeddingTest {
         static void TupleRoundtripObject<T, TTuple>()
         {
             var tuple = Activator.CreateInstance(typeof(T), 42.0, "42", new object());
-            using var pyTuple = TupleCodec<TTuple>.Instance.TryEncode(tuple);
+            using var pyTuple = TupleCodec<TTuple>.Instance.TryEncode(tuple, typeof(T));
             Assert.IsTrue(TupleCodec<TTuple>.Instance.TryDecode(pyTuple, out object restored));
             Assert.AreEqual(expected: tuple, actual: restored);
         }
@@ -85,7 +85,7 @@ namespace Python.EmbeddingTest {
         static void TupleRoundtripGeneric<T, TTuple>()
         {
             var tuple = Activator.CreateInstance(typeof(T), 42, "42", new object());
-            using var pyTuple = TupleCodec<TTuple>.Instance.TryEncode(tuple);
+            using var pyTuple = TupleCodec<TTuple>.Instance.TryEncode(tuple, typeof(T));
             Assert.IsTrue(TupleCodec<TTuple>.Instance.TryDecode(pyTuple, out T restored));
             Assert.AreEqual(expected: tuple, actual: restored);
         }
@@ -438,7 +438,7 @@ DateTimeDecoder.Setup()
                 return true;
             }
 
-            public PyObject TryEncode(object value)
+            public PyObject TryEncode(object value, Type type)
             {
                 var error = (ValueErrorWrapper)value;
                 return PythonEngine.Eval("ValueError").Invoke(error.Message.ToPython());
@@ -478,7 +478,7 @@ DateTimeDecoder.Setup()
     class ObjectToEncoderInstanceEncoder<T> : IPyObjectEncoder
     {
         public bool CanEncode(Type type) => type == typeof(T);
-        public PyObject TryEncode(object value) => PyObject.FromManagedObject(this);
+        public PyObject TryEncode(object value, Type type) => PyObject.FromManagedObject(this);
     }
 
     /// <summary>
