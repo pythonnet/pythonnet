@@ -25,7 +25,7 @@ namespace Python.Runtime
         /// Trace stack for PyObject's construction
         /// </summary>
         public StackTrace Traceback { get; } = new StackTrace(1);
-#endif
+#endif  
 
         protected IntPtr rawPtr = IntPtr.Zero;
         internal readonly int run = Runtime.GetRun();
@@ -235,7 +235,7 @@ namespace Python.Runtime
         {
             GC.SuppressFinalize(this);
             Dispose(true);
-
+            
         }
 
         internal StolenReference Steal()
