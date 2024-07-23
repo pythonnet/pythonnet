@@ -984,8 +984,7 @@ namespace Python.Runtime
 
         public static PyObject ToPythonAs<T>(this T? o)
         {
-            if (o is null) return Runtime.None;
-            return Converter.ToPython(o, typeof(T)).MoveToPyObject();
+            return ToPythonAs(o, typeof(T));
         }
 
         public static PyObject ToPythonAs(this object? o, Type type)
