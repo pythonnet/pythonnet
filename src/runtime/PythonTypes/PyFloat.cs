@@ -8,7 +8,7 @@ namespace Python.Runtime
     /// PY3: https://docs.python.org/3/c-api/float.html
     /// for details.
     /// </summary>
-    public class PyFloat : PyNumber
+    public partial class PyFloat : PyNumber
     {
         internal PyFloat(in StolenReference ptr) : base(ptr)
         {
@@ -99,6 +99,8 @@ namespace Python.Runtime
             PythonException.ThrowIfIsNull(op);
             return new PyFloat(op.Steal());
         }
+
+        public double ToDouble() => Runtime.PyFloat_AsDouble(obj);
 
         public override TypeCode GetTypeCode() => TypeCode.Double;
     }

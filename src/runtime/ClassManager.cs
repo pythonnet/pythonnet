@@ -290,11 +290,13 @@ namespace Python.Runtime
 
         internal static bool ShouldBindMethod(MethodBase mb)
         {
+            if (mb is null) throw new ArgumentNullException(nameof(mb));
             return (mb.IsPublic || mb.IsFamily || mb.IsFamilyOrAssembly);
         }
 
         internal static bool ShouldBindField(FieldInfo fi)
         {
+            if (fi is null) throw new ArgumentNullException(nameof(fi));
             return (fi.IsPublic || fi.IsFamily || fi.IsFamilyOrAssembly);
         }
 
@@ -326,7 +328,7 @@ namespace Python.Runtime
 
         internal static bool ShouldBindEvent(EventInfo ei)
         {
-            return ShouldBindMethod(ei.GetAddMethod(true));
+            return ei.GetAddMethod(true) is { } add && ShouldBindMethod(add);
         }
 
         private static ClassInfo GetClassInfo(Type type, ClassBase impl)
@@ -546,7 +548,7 @@ namespace Python.Runtime
                         ci.members[pyName] = new MethodObject(type, name, forwardMethods).AllocObject();
                     // Only methods where only the right operand is the declaring type.
                     if (reverseMethods.Length > 0)
-                        ci.members[pyNameReverse] = new MethodObject(type, name, reverseMethods).AllocObject();
+                        ci.members[pyNameReverse] = new MethodObject(type, name, reverseMethods, argsReversed: true).AllocObject();
                 }
             }
 

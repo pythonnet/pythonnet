@@ -795,13 +795,13 @@ namespace Python.Runtime
 
         internal static int PyRun_SimpleString(string code)
         {
-            using var codePtr = new StrPtr(code, Encoding.UTF8);
+            using var codePtr = new StrPtr(code);
             return Delegates.PyRun_SimpleStringFlags(codePtr, Utf8String);
         }
 
         internal static NewReference PyRun_String(string code, RunFlagType st, BorrowedReference globals, BorrowedReference locals)
         {
-            using var codePtr = new StrPtr(code, Encoding.UTF8);
+            using var codePtr = new StrPtr(code);
             return Delegates.PyRun_StringFlags(codePtr, st, globals, locals, Utf8String);
         }
 
@@ -813,14 +813,15 @@ namespace Python.Runtime
         /// </summary>
         internal static NewReference Py_CompileString(string str, string file, int start)
         {
-            using var strPtr = new StrPtr(str, Encoding.UTF8);
+            using var strPtr = new StrPtr(str);
+
             using var fileObj = new PyString(file);
             return Delegates.Py_CompileStringObject(strPtr, fileObj, start, Utf8String, -1);
         }
 
         internal static NewReference PyImport_ExecCodeModule(string name, BorrowedReference code)
         {
-            using var namePtr = new StrPtr(name, Encoding.UTF8);
+            using var namePtr = new StrPtr(name);
             return Delegates.PyImport_ExecCodeModule(namePtr, code);
         }
 
@@ -867,13 +868,13 @@ namespace Python.Runtime
 
         internal static int PyObject_HasAttrString(BorrowedReference pointer, string name)
         {
-            using var namePtr = new StrPtr(name, Encoding.UTF8);
+            using var namePtr = new StrPtr(name);
             return Delegates.PyObject_HasAttrString(pointer, namePtr);
         }
 
         internal static NewReference PyObject_GetAttrString(BorrowedReference pointer, string name)
         {
-            using var namePtr = new StrPtr(name, Encoding.UTF8);
+            using var namePtr = new StrPtr(name);
             return Delegates.PyObject_GetAttrString(pointer, namePtr);
         }
 
@@ -884,12 +885,12 @@ namespace Python.Runtime
         internal static int PyObject_DelAttr(BorrowedReference @object, BorrowedReference name) => Delegates.PyObject_SetAttr(@object, name, null);
         internal static int PyObject_DelAttrString(BorrowedReference @object, string name)
         {
-            using var namePtr = new StrPtr(name, Encoding.UTF8);
+            using var namePtr = new StrPtr(name);
             return Delegates.PyObject_SetAttrString(@object, namePtr, null);
         }
         internal static int PyObject_SetAttrString(BorrowedReference @object, string name, BorrowedReference value)
         {
-            using var namePtr = new StrPtr(name, Encoding.UTF8);
+            using var namePtr = new StrPtr(name);
             return Delegates.PyObject_SetAttrString(@object, namePtr, value);
         }
 
@@ -1071,7 +1072,7 @@ namespace Python.Runtime
 
         internal static NewReference PyLong_FromString(string value, int radix)
         {
-            using var valPtr = new StrPtr(value, Encoding.UTF8);
+            using var valPtr = new StrPtr(value);
             return Delegates.PyLong_FromString(valPtr, IntPtr.Zero, radix);
         }
 
@@ -1252,12 +1253,14 @@ namespace Python.Runtime
 
         internal static NewReference PyString_FromString(string value)
         {
+            int byteorder = BitConverter.IsLittleEndian ? -1 : 1;
+            int* byteorderPtr = &byteorder;
             fixed(char* ptr = value)
                 return Delegates.PyUnicode_DecodeUTF16(
                     (IntPtr)ptr,
                     value.Length * sizeof(Char),
                     IntPtr.Zero,
-                    IntPtr.Zero
+                    (IntPtr)byteorderPtr
                 );
         }
 
@@ -1272,7 +1275,7 @@ namespace Python.Runtime
         internal static NewReference PyByteArray_FromStringAndSize(IntPtr strPtr, nint len) => Delegates.PyByteArray_FromStringAndSize(strPtr, len);
         internal static NewReference PyByteArray_FromStringAndSize(string s)
         {
-            using var ptr = new StrPtr(s, Encoding.UTF8);
+            using var ptr = new StrPtr(s);
             return PyByteArray_FromStringAndSize(ptr.RawPointer, checked((nint)ptr.ByteCount));
         }
 
@@ -1300,7 +1303,7 @@ namespace Python.Runtime
 
         internal static NewReference PyUnicode_InternFromString(string s)
         {
-            using var ptr = new StrPtr(s, Encoding.UTF8);
+            using var ptr = new StrPtr(s);
             return Delegates.PyUnicode_InternFromString(ptr);
         }
 
@@ -1375,7 +1378,7 @@ namespace Python.Runtime
 
         internal static BorrowedReference PyDict_GetItemString(BorrowedReference pointer, string key)
         {
-            using var keyStr = new StrPtr(key, Encoding.UTF8);
+            using var keyStr = new StrPtr(key);
             return Delegates.PyDict_GetItemString(pointer, keyStr);
         }
 
@@ -1391,7 +1394,7 @@ namespace Python.Runtime
         /// </summary>
         internal static int PyDict_SetItemString(BorrowedReference dict, string key, BorrowedReference value)
         {
-            using var keyPtr = new StrPtr(key, Encoding.UTF8);
+            using var keyPtr = new StrPtr(key);
             return Delegates.PyDict_SetItemString(dict, keyPtr, value);
         }
 
@@ -1400,7 +1403,7 @@ namespace Python.Runtime
 
         internal static int PyDict_DelItemString(BorrowedReference pointer, string key)
         {
-            using var keyPtr = new StrPtr(key, Encoding.UTF8);
+            using var keyPtr = new StrPtr(key);
             return Delegates.PyDict_DelItemString(pointer, keyPtr);
         }
 
@@ -1515,7 +1518,7 @@ namespace Python.Runtime
 
         internal static NewReference PyModule_New(string name)
         {
-            using var namePtr = new StrPtr(name, Encoding.UTF8);
+            using var namePtr = new StrPtr(name);
             return Delegates.PyModule_New(namePtr);
         }
 
@@ -1529,7 +1532,7 @@ namespace Python.Runtime
         /// <returns>Return -1 on error, 0 on success.</returns>
         internal static int PyModule_AddObject(BorrowedReference module, string name, StolenReference value)
         {
-            using var namePtr = new StrPtr(name, Encoding.UTF8);
+            using var namePtr = new StrPtr(name);
             IntPtr valueAddr = value.DangerousGetAddressOrNull();
             int res = Delegates.PyModule_AddObject(module, namePtr, valueAddr);
             // We can't just exit here because the reference is stolen only on success.
@@ -1547,7 +1550,7 @@ namespace Python.Runtime
 
         internal static NewReference PyImport_ImportModule(string name)
         {
-            using var namePtr = new StrPtr(name, Encoding.UTF8);
+            using var namePtr = new StrPtr(name);
             return Delegates.PyImport_ImportModule(namePtr);
         }
 
@@ -1556,7 +1559,7 @@ namespace Python.Runtime
 
         internal static BorrowedReference PyImport_AddModule(string name)
         {
-            using var namePtr = new StrPtr(name, Encoding.UTF8);
+            using var namePtr = new StrPtr(name);
             return Delegates.PyImport_AddModule(namePtr);
         }
 
@@ -1584,13 +1587,13 @@ namespace Python.Runtime
 
         internal static BorrowedReference PySys_GetObject(string name)
         {
-            using var namePtr = new StrPtr(name, Encoding.UTF8);
+            using var namePtr = new StrPtr(name);
             return Delegates.PySys_GetObject(namePtr);
         }
 
         internal static int PySys_SetObject(string name, BorrowedReference ob)
         {
-            using var namePtr = new StrPtr(name, Encoding.UTF8);
+            using var namePtr = new StrPtr(name);
             return Delegates.PySys_SetObject(namePtr, ob);
         }
 
@@ -1689,7 +1692,7 @@ namespace Python.Runtime
 
         internal static void PyErr_SetString(BorrowedReference ob, string message)
         {
-            using var msgPtr = new StrPtr(message, Encoding.UTF8);
+            using var msgPtr = new StrPtr(message);
             Delegates.PyErr_SetString(ob, msgPtr);
         }
 

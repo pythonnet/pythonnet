@@ -344,6 +344,20 @@ def test_clr_add_reference():
     with pytest.raises(FileNotFoundException):
         AddReference("somethingtotallysilly")
 
+
+def test_clr_add_reference_bad_path():
+    import sys
+    from clr import AddReference
+    from System.IO import FileNotFoundException
+    bad_path = "hello\0world"
+    sys.path.append(bad_path)
+    try:
+        with pytest.raises(FileNotFoundException):
+            AddReference("test_clr_add_reference_bad_path")
+    finally:
+        sys.path.remove(bad_path)
+
+
 def test_clr_get_clr_type():
     """Test clr.GetClrType()."""
     from clr import GetClrType

@@ -237,6 +237,7 @@ namespace Python.Runtime
                         }
                     }
                 }
+
                 return self.m.Invoke(target is null ? BorrowedReference.Null : target, args, kw, self.info.UnsafeValue);
             }
             finally

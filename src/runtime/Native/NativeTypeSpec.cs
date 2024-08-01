@@ -17,7 +17,7 @@ namespace Python.Runtime.Native
         {
             if (spec is null) throw new ArgumentNullException(nameof(spec));
 
-            this.Name = new StrPtr(spec.Name, Encoding.UTF8);
+            this.Name = new StrPtr(spec.Name);
             this.BasicSize = spec.BasicSize;
             this.ItemSize = spec.ItemSize;
             this.Flags = (int)spec.Flags;

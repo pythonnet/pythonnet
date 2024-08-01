@@ -28,7 +28,8 @@ namespace Python.EmbeddingTest
             const string name = "nÁmæ";
             const string docStr = "dÁcæ";
 
-            using var doc = new StrPtr(docStr, Encoding.UTF8);
+            using var doc = new StrPtr(docStr);
+
             var spec = new TypeSpec(
                 name: name,
                 basicSize: Util.ReadInt32(Runtime.Runtime.PyBaseObjectType, TypeOffset.tp_basicsize),

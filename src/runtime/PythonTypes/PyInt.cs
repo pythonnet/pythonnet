@@ -9,7 +9,7 @@ namespace Python.Runtime
     /// Represents a Python integer object.
     /// See the documentation at https://docs.python.org/3/c-api/long.html
     /// </summary>
-    public class PyInt : PyNumber, IFormattable
+    public partial class PyInt : PyNumber, IFormattable
     {
         internal PyInt(in StolenReference ptr) : base(ptr)
         {
