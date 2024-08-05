@@ -281,6 +281,7 @@ namespace Python.Runtime
 
             TryCollectingGarbage(MaxCollectRetriesOnShutdown, forceBreakLoops: true,
                                  obj: true, derived: false, buffer: false);
+            CLRObject.creationBlocked = true;
 
             NullGCHandles(ExtensionType.loadedExtensions);
             ClassManager.RemoveClasses();
@@ -357,7 +358,6 @@ namespace Python.Runtime
                 {
                     NullGCHandles(CLRObject.reflectedObjects);
                     CLRObject.reflectedObjects.Clear();
-                    CLRObject.creationBlocked = true;
                 }
             }
             return false;
