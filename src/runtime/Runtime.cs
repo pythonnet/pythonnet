@@ -158,6 +158,7 @@ namespace Python.Runtime
             ClassManager.Reset();
             ClassDerivedObject.Reset();
             TypeManager.Initialize();
+            CLRObject.creationBlocked = false;
             _typesInitialized = true;
 
             // Initialize modules that depend on the runtime class.
@@ -278,6 +279,10 @@ namespace Python.Runtime
             ClearClrModules();
             RemoveClrRootModule();
 
+            TryCollectingGarbage(MaxCollectRetriesOnShutdown, forceBreakLoops: true,
+                                 obj: true, derived: false, buffer: false);
+            CLRObject.creationBlocked = true;
+
             NullGCHandles(ExtensionType.loadedExtensions);
             ClassManager.RemoveClasses();
             TypeManager.RemoveTypes();
@@ -295,8 +300,7 @@ namespace Python.Runtime
             PyObjectConversions.Reset();
 
             PyGC_Collect();
-            bool everythingSeemsCollected = TryCollectingGarbage(MaxCollectRetriesOnShutdown,
-                                                                 forceBreakLoops: true);
+            bool everythingSeemsCollected = TryCollectingGarbage(MaxCollectRetriesOnShutdown);
             Debug.Assert(everythingSeemsCollected);
 
             Finalizer.Shutdown();
@@ -328,7 +332,8 @@ namespace Python.Runtime
 
         const int MaxCollectRetriesOnShutdown = 20;
         internal static int _collected;
-        static bool TryCollectingGarbage(int runs, bool forceBreakLoops)
+        static bool TryCollectingGarbage(int runs, bool forceBreakLoops,
+                                         bool obj = true, bool derived = true, bool buffer = true)
         {
             if (runs <= 0) throw new ArgumentOutOfRangeException(nameof(runs));
 
@@ -341,7 +346,9 @@ namespace Python.Runtime
                     GC.Collect();
                     GC.WaitForPendingFinalizers();
                     pyCollected += PyGC_Collect();
-                    pyCollected += Finalizer.Instance.DisposeAll();
+                    pyCollected += Finalizer.Instance.DisposeAll(disposeObj: obj,
+                                                                 disposeDerived: derived,
+                                                                 disposeBuffer: buffer);
                 }
                 if (Volatile.Read(ref _collected) == 0 && pyCollected == 0)
                 {

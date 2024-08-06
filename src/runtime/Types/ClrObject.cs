@@ -11,10 +11,15 @@ namespace Python.Runtime
     {
         internal readonly object inst;
 
+        internal static bool creationBlocked = false;
+
         // "borrowed" references
         internal static readonly HashSet<IntPtr> reflectedObjects = new();
         static NewReference Create(object ob, BorrowedReference tp)
         {
+            if (creationBlocked)
+                throw new InvalidOperationException("Reflected objects should not be created anymore.");
+
             Debug.Assert(tp != null);
             var py = Runtime.PyType_GenericAlloc(tp, 0);
 
@@ -61,6 +66,9 @@ namespace Python.Runtime
 
         protected override void OnLoad(BorrowedReference ob, Dictionary<string, object?>? context)
         {
+            if (creationBlocked)
+                throw new InvalidOperationException("Reflected objects should not be loaded anymore.");
+
             base.OnLoad(ob, context);
             GCHandle gc = GCHandle.Alloc(this);
             SetGCHandle(ob, gc);
