@@ -339,6 +339,23 @@ def call(func):
             Assert.AreEqual(TestExceptionMessage, error.Message);
         }
 
+        [Test(Description = "Tests encoding of an object that explicitly implements an interface.")]
+        public void ExplicitObjectInterfaceEncoded()
+        {
+            var obj = new ExplicitInterfaceObject();
+            using var scope = Py.CreateScope();
+            scope.Exec(@"
+def call(obj):
+  return dir(obj)
+");
+            var callFunc = scope.Get("call");
+            // explicitly pass an interface (but not a generic type argument) to simulate a scenario where the type is not know at build time
+            var callArg = obj.ToPythonAs(typeof(IObjectInterface));
+            var members = callFunc.Invoke(callArg).As<string[]>();
+            CollectionAssert.Contains(members, nameof(IObjectInterface.MemberFromInterface));
+            CollectionAssert.DoesNotContain(members, nameof(ExplicitInterfaceObject.MemberFromObject));
+        }
+
         [Test]
         public void DateTimeDecoded()
         {
@@ -532,5 +549,17 @@ DateTimeDecoder.Setup()
             value = (T)(object)dt;
             return true;
         }
+    }
+
+    interface IObjectInterface
+    {
+        int MemberFromInterface { get; }
+    }
+
+    class ExplicitInterfaceObject : IObjectInterface
+    {
+        int IObjectInterface.MemberFromInterface { get; }
+
+        public int MemberFromObject { get; }
     }
 }

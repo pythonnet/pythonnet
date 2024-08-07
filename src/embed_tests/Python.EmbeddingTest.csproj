@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>net472;net6.0</TargetFrameworks>
+    <RollForward>LatestMajor</RollForward>
     <AssemblyOriginatorKeyFile>..\pythonnet.snk</AssemblyOriginatorKeyFile>
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
