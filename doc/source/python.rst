@@ -149,6 +149,26 @@ addition to the usual application base and the GAC (if applicable). To ensure
 that you can import an assembly, put the directory containing the assembly in
 ``sys.path``.
 
+.. note::
+    All dependencies of the assembly you're loading need to be findable throught PYTHONPATH (``sys.path``) as well.
+    If any dependency cannot be found, you will get import errors. To ensure all dependencies are available, its advisable to build
+    using ``dotnet publish -o /path/to/yourproject/bin`` or equivalent, which will store all required DLLs in the folder specified with ``-o``.
+
+You can use ``assembly.GetExportedTypes()`` to check which assembly you could not load. It will raise a error for files it could not find.
+If everything is found, it may print ``System.Type[]`` or a list of types:
+
+.. code:: python
+
+   t = clr.AddReference("libNOM.io")
+   try:
+       print(t.GetExportedTypes())
+   except Exception as e:
+       print(
+           "Error loading assembly, this assembly may not be found in sys.path:\n\t",
+           e.Message,)
+       exit()
+
+
 Interacting with .NET
 ---------------------
 
