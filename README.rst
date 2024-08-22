@@ -85,6 +85,7 @@ Example
 
    static void Main(string[] args)
    {
+       Runtime.PythonDLL = "python38.dll";
        PythonEngine.Initialize();
        using (Py.GIL())
        {
