@@ -83,8 +83,8 @@ namespace Python.Runtime
 
             var freePtr = Util.ReadIntPtr(type, TypeOffset.tp_free);
             Debug.Assert(freePtr != IntPtr.Zero);
-            var free = (delegate* unmanaged[Cdecl]<StolenReference, void>)freePtr;
-            free(ob);
+            var free = (delegate* unmanaged[Cdecl]<ref StolenReference, void>)freePtr;
+            free(ref ob);
 
             Runtime.XDecref(StolenReference.DangerousFromPointer(type.DangerousGetAddress()));
         }

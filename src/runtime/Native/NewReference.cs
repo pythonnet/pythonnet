@@ -124,7 +124,7 @@ namespace Python.Runtime
         /// </summary>
         [Pure]
         public static NewReference DangerousFromPointer(IntPtr pointer)
-            => new() { pointer = pointer};
+            => new NewReference { pointer = pointer };
 
         [Pure]
         internal static IntPtr DangerousGetAddressOrNull(in NewReference reference) => reference.pointer;

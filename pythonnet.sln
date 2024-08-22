@@ -48,6 +48,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{142A6752
 		Directory.Build.props = Directory.Build.props
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NonCopyableAnalyzer", "tools\NonCopyableAnalyzer\NonCopyableAnalyzer.csproj", "{FE20DBEA-F4F9-4280-AD5E-82B82AE32DDF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -187,11 +189,32 @@ Global
 		{35CBBDEB-FC07-4D04-9D3E-F88FC180110B}.TraceAlloc|x64.Build.0 = Debug|Any CPU
 		{35CBBDEB-FC07-4D04-9D3E-F88FC180110B}.TraceAlloc|x86.ActiveCfg = Debug|Any CPU
 		{35CBBDEB-FC07-4D04-9D3E-F88FC180110B}.TraceAlloc|x86.Build.0 = Debug|Any CPU
+		{FE20DBEA-F4F9-4280-AD5E-82B82AE32DDF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FE20DBEA-F4F9-4280-AD5E-82B82AE32DDF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FE20DBEA-F4F9-4280-AD5E-82B82AE32DDF}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{FE20DBEA-F4F9-4280-AD5E-82B82AE32DDF}.Debug|x64.Build.0 = Debug|Any CPU
+		{FE20DBEA-F4F9-4280-AD5E-82B82AE32DDF}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{FE20DBEA-F4F9-4280-AD5E-82B82AE32DDF}.Debug|x86.Build.0 = Debug|Any CPU
+		{FE20DBEA-F4F9-4280-AD5E-82B82AE32DDF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FE20DBEA-F4F9-4280-AD5E-82B82AE32DDF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FE20DBEA-F4F9-4280-AD5E-82B82AE32DDF}.Release|x64.ActiveCfg = Release|Any CPU
+		{FE20DBEA-F4F9-4280-AD5E-82B82AE32DDF}.Release|x64.Build.0 = Release|Any CPU
+		{FE20DBEA-F4F9-4280-AD5E-82B82AE32DDF}.Release|x86.ActiveCfg = Release|Any CPU
+		{FE20DBEA-F4F9-4280-AD5E-82B82AE32DDF}.Release|x86.Build.0 = Release|Any CPU
+		{FE20DBEA-F4F9-4280-AD5E-82B82AE32DDF}.TraceAlloc|Any CPU.ActiveCfg = Debug|Any CPU
+		{FE20DBEA-F4F9-4280-AD5E-82B82AE32DDF}.TraceAlloc|Any CPU.Build.0 = Debug|Any CPU
+		{FE20DBEA-F4F9-4280-AD5E-82B82AE32DDF}.TraceAlloc|x64.ActiveCfg = Debug|Any CPU
+		{FE20DBEA-F4F9-4280-AD5E-82B82AE32DDF}.TraceAlloc|x64.Build.0 = Debug|Any CPU
+		{FE20DBEA-F4F9-4280-AD5E-82B82AE32DDF}.TraceAlloc|x86.ActiveCfg = Debug|Any CPU
+		{FE20DBEA-F4F9-4280-AD5E-82B82AE32DDF}.TraceAlloc|x86.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C8845072-C642-4858-8627-27E862AD21BB}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{FE20DBEA-F4F9-4280-AD5E-82B82AE32DDF} = {BC426F42-8494-4AA5-82C9-5109ACD97BD1}
 	EndGlobalSection
 EndGlobal
