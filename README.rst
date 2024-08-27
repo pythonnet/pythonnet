@@ -85,6 +85,8 @@ Example
 
    static void Main(string[] args)
    {
+       // The Python library can also be set with the `PYTHONNET_PYDLL` env var
+       // or dynamically with a library like https://github.com/losttech/WhichPython
        Runtime.PythonDLL = "python38.dll";
        PythonEngine.Initialize();
        using (Py.GIL())
