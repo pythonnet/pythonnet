@@ -149,7 +149,27 @@ namespace Python.Runtime
                 case Runtime.Py_GE:
                     co1 = (CLRObject)GetManagedObject(ob)!;
                     co2 = GetManagedObject(other) as CLRObject;
-                    if (co1 == null || co2 == null)
+
+                    object co2Inst = null;
+                    // The object comparing against is not a managed object. It could still be a Python object
+                    // that can be compared against (e.g. comparing against a Python string)
+                    if (co2 == null)
+                    {
+                        if (other != null)
+                        {
+                            using var pyCo2 = new PyObject(other);
+                            if (Converter.ToManagedValue(pyCo2, typeof(object), out var result, false))
+                            {
+                                co2Inst = result;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        co2Inst = co2.inst;
+                    }
+
+                    if (co1 == null || co2Inst == null)
                     {
                         return Exceptions.RaiseTypeError("Cannot get managed object");
                     }
@@ -161,7 +181,7 @@ namespace Python.Runtime
                     }
                     try
                     {
-                        int cmp = co1Comp.CompareTo(co2.inst);
+                        int cmp = co1Comp.CompareTo(co2Inst);
 
                         BorrowedReference pyCmp;
                         if (cmp < 0)
