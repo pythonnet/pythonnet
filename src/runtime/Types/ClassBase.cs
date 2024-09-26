@@ -128,14 +128,13 @@ namespace Python.Runtime
                     }
 
                     co1 = (CLRObject)GetManagedObject(ob)!;
-                    co2 = GetManagedObject(other) as CLRObject;
-                    if (null == co2)
+                    var o2 = GetSecondCompareOperandInstance(other);
+                    if (null == o2)
                     {
                         return new NewReference(pyfalse);
                     }
 
                     object o1 = co1.inst;
-                    object o2 = co2.inst;
 
                     if (Equals(o1, o2))
                     {
@@ -148,26 +147,7 @@ namespace Python.Runtime
                 case Runtime.Py_GT:
                 case Runtime.Py_GE:
                     co1 = (CLRObject)GetManagedObject(ob)!;
-                    co2 = GetManagedObject(other) as CLRObject;
-
-                    object co2Inst = null;
-                    // The object comparing against is not a managed object. It could still be a Python object
-                    // that can be compared against (e.g. comparing against a Python string)
-                    if (co2 == null)
-                    {
-                        if (other != null)
-                        {
-                            using var pyCo2 = new PyObject(other);
-                            if (Converter.ToManagedValue(pyCo2, typeof(object), out var result, false))
-                            {
-                                co2Inst = result;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        co2Inst = co2.inst;
-                    }
+                    var co2Inst = GetSecondCompareOperandInstance(other);
 
                     if (co1 == null || co2Inst == null)
                     {
@@ -226,6 +206,32 @@ namespace Python.Runtime
                 default:
                     return new NewReference(Runtime.PyNotImplemented);
             }
+        }
+
+        private static object GetSecondCompareOperandInstance(BorrowedReference other)
+        {
+            var co2 = GetManagedObject(other) as CLRObject;
+
+            object co2Inst = null;
+            // The object comparing against is not a managed object. It could still be a Python object
+            // that can be compared against (e.g. comparing against a Python string)
+            if (co2 == null)
+            {
+                if (other != null)
+                {
+                    using var pyCo2 = new PyObject(other);
+                    if (Converter.ToManagedValue(pyCo2, typeof(object), out var result, false))
+                    {
+                        co2Inst = result;
+                    }
+                }
+            }
+            else
+            {
+                co2Inst = co2.inst;
+            }
+
+            return co2Inst;
         }
 
         /// <summary>
