@@ -95,6 +95,9 @@ namespace Python.Runtime
         {
             CLRObject co1;
             CLRObject? co2;
+            object co1Inst;
+            object co2Inst;
+            NewReference error;
             BorrowedReference tp = Runtime.PyObject_TYPE(ob);
             var cls = (ClassBase)GetManagedObject(tp)!;
             // C# operator methods take precedence over IComparable.
@@ -127,16 +130,14 @@ namespace Python.Runtime
                         return new NewReference(pytrue);
                     }
 
-                    co1 = (CLRObject)GetManagedObject(ob)!;
-                    var o2 = GetSecondCompareOperandInstance(other);
-                    if (null == o2)
+                    GetSecondCompareOperandInstance(ob, other, out co1, out co2, out co1Inst, out co2Inst, out error);
+
+                    if (co2Inst == null)
                     {
                         return new NewReference(pyfalse);
                     }
 
-                    object o1 = co1.inst;
-
-                    if (Equals(o1, o2))
+                    if (Equals(co1Inst, co2Inst))
                     {
                         return new NewReference(pytrue);
                     }
@@ -146,14 +147,14 @@ namespace Python.Runtime
                 case Runtime.Py_LE:
                 case Runtime.Py_GT:
                 case Runtime.Py_GE:
-                    co1 = (CLRObject)GetManagedObject(ob)!;
-                    var co2Inst = GetSecondCompareOperandInstance(other);
+                    GetSecondCompareOperandInstance(ob, other, out co1, out co2, out co1Inst, out co2Inst, out error);
 
-                    if (co1 == null || co2Inst == null)
+                    if (!error.IsNone() && !error.IsNull())
                     {
                         return Exceptions.RaiseTypeError("Cannot get managed object");
                     }
-                    var co1Comp = co1.inst as IComparable;
+
+                    var co1Comp = co1Inst as IComparable;
                     if (co1Comp == null)
                     {
                         Type co1Type = co1.GetType();
@@ -208,22 +209,36 @@ namespace Python.Runtime
             }
         }
 
-        private static object GetSecondCompareOperandInstance(BorrowedReference other)
+        private static void GetSecondCompareOperandInstance(BorrowedReference left, BorrowedReference right,
+            out CLRObject co1, out CLRObject co2, out object co1Inst, out object co2Inst, out NewReference error)
         {
-            var co2 = GetManagedObject(other) as CLRObject;
+            co1Inst = null;
+            co2Inst = null;
+            error = new NewReference(Runtime.PyNone);
 
-            object co2Inst = null;
+            co1 = (CLRObject)GetManagedObject(left)!;
+            co2 = GetManagedObject(right) as CLRObject;
+
+            var co2IsValid = true;
             // The object comparing against is not a managed object. It could still be a Python object
             // that can be compared against (e.g. comparing against a Python string)
             if (co2 == null)
             {
-                if (other != null)
+                if (right != null)
                 {
-                    using var pyCo2 = new PyObject(other);
+                    using var pyCo2 = new PyObject(right);
                     if (Converter.ToManagedValue(pyCo2, typeof(object), out var result, false))
                     {
                         co2Inst = result;
                     }
+                    else
+                    {
+                        co2IsValid = false;
+                    }
+                }
+                else
+                {
+                    co2IsValid = false;
                 }
             }
             else
@@ -231,7 +246,12 @@ namespace Python.Runtime
                 co2Inst = co2.inst;
             }
 
-            return co2Inst;
+            if (co1 == null || !co2IsValid)
+            {
+                error = Exceptions.RaiseTypeError("Cannot get managed object");
+            }
+
+            co1Inst = co1.inst;
         }
 
         /// <summary>
