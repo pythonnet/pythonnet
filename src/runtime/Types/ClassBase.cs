@@ -94,8 +94,6 @@ namespace Python.Runtime
         public static NewReference tp_richcompare(BorrowedReference ob, BorrowedReference other, int op)
         {
             CLRObject co1;
-            CLRObject? co2;
-            object co1Inst;
             object co2Inst;
             NewReference error;
             BorrowedReference tp = Runtime.PyObject_TYPE(ob);
@@ -130,9 +128,7 @@ namespace Python.Runtime
                         return new NewReference(pytrue);
                     }
 
-                    TryGetSecondCompareOperandInstance(ob, other, out co1, out co2Inst);
-
-                    if (co2Inst == null)
+                    if (!TryGetSecondCompareOperandInstance(ob, other, out co1, out co2Inst))
                     {
                         return new NewReference(pyfalse);
                     }
