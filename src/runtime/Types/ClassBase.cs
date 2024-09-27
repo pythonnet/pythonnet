@@ -94,7 +94,7 @@ namespace Python.Runtime
         public static NewReference tp_richcompare(BorrowedReference ob, BorrowedReference other, int op)
         {
             CLRObject co1;
-            CLRObject? co2;
+            object co2Inst;
             BorrowedReference tp = Runtime.PyObject_TYPE(ob);
             var cls = (ClassBase)GetManagedObject(tp)!;
             // C# operator methods take precedence over IComparable.
@@ -127,17 +127,12 @@ namespace Python.Runtime
                         return new NewReference(pytrue);
                     }
 
-                    co1 = (CLRObject)GetManagedObject(ob)!;
-                    co2 = GetManagedObject(other) as CLRObject;
-                    if (null == co2)
+                    if (!TryGetSecondCompareOperandInstance(ob, other, out co1, out co2Inst))
                     {
                         return new NewReference(pyfalse);
                     }
 
-                    object o1 = co1.inst;
-                    object o2 = co2.inst;
-
-                    if (Equals(o1, o2))
+                    if (Equals(co1.inst, co2Inst))
                     {
                         return new NewReference(pytrue);
                     }
@@ -147,12 +142,11 @@ namespace Python.Runtime
                 case Runtime.Py_LE:
                 case Runtime.Py_GT:
                 case Runtime.Py_GE:
-                    co1 = (CLRObject)GetManagedObject(ob)!;
-                    co2 = GetManagedObject(other) as CLRObject;
-                    if (co1 == null || co2 == null)
+                    if (!TryGetSecondCompareOperandInstance(ob, other, out co1, out co2Inst))
                     {
                         return Exceptions.RaiseTypeError("Cannot get managed object");
                     }
+
                     var co1Comp = co1.inst as IComparable;
                     if (co1Comp == null)
                     {
@@ -161,7 +155,7 @@ namespace Python.Runtime
                     }
                     try
                     {
-                        int cmp = co1Comp.CompareTo(co2.inst);
+                        int cmp = co1Comp.CompareTo(co2Inst);
 
                         BorrowedReference pyCmp;
                         if (cmp < 0)
@@ -206,6 +200,38 @@ namespace Python.Runtime
                 default:
                     return new NewReference(Runtime.PyNotImplemented);
             }
+        }
+
+        private static bool TryGetSecondCompareOperandInstance(BorrowedReference left, BorrowedReference right, out CLRObject co1, out object co2Inst)
+        {
+            co2Inst = null;
+
+            co1 = (CLRObject)GetManagedObject(left)!;
+            if (co1 == null)
+            {
+                return false;
+            }
+
+            var co2 = GetManagedObject(right) as CLRObject;
+
+            // The object comparing against is not a managed object. It could still be a Python object
+            // that can be compared against (e.g. comparing against a Python string)
+            if (co2 == null)
+            {
+                if (right != null)
+                {
+                    using var pyCo2 = new PyObject(right);
+                    if (Converter.ToManagedValue(pyCo2, typeof(object), out var result, false))
+                    {
+                        co2Inst = result;
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            co2Inst = co2.inst;
+            return true;
         }
 
         /// <summary>
