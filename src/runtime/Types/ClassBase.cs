@@ -95,7 +95,6 @@ namespace Python.Runtime
         {
             CLRObject co1;
             object co2Inst;
-            NewReference error;
             BorrowedReference tp = Runtime.PyObject_TYPE(ob);
             var cls = (ClassBase)GetManagedObject(tp)!;
             // C# operator methods take precedence over IComparable.
