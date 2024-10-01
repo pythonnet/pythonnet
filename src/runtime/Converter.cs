@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security;
@@ -880,11 +881,48 @@ namespace Python.Runtime
         /// Convert a Python value to a correctly typed managed array instance.
         /// The Python value must support the Python iterator protocol or and the
         /// items in the sequence must be convertible to the target array type.
+        /// If the Python value supports the buffer protocol the underlying buffer
+        /// will be copied directly.
         /// </summary>
         private static bool ToArray(BorrowedReference value, Type obType, out object? result, bool setError)
         {
             Type elementType = obType.GetElementType();
             result = null;
+
+            // structs can also be blittable but for the standard usecases this suffices
+            var isBlittable = elementType.IsPrimitive && elementType != typeof(char) && elementType != typeof(bool);
+           if (isBlittable && Runtime.PyObject_GetBuffer(value, out var view, (int)PyBUF.CONTIG_RO) == 0)
+            {
+                GCHandle ptr;
+                try
+                {
+                    var shape = new IntPtr[view.ndim];
+                    Marshal.Copy(view.shape, shape, 0, view.ndim);
+                    Array arr = Array.CreateInstance(elementType, shape.Select(x => (long)x).ToArray());
+                    ptr = GCHandle.Alloc(arr, GCHandleType.Pinned);
+                    var addr = ptr.AddrOfPinnedObject();
+                    unsafe
+                    {
+                        Buffer.MemoryCopy((void*)view.buf, (void*)addr, arr.Length * Marshal.SizeOf(elementType), view.len);
+                    }
+
+                    result = arr;
+                    return true;
+                }
+                finally
+                {
+                    if (ptr.IsAllocated)
+                    {
+                        ptr.Free();
+                    }
+
+                    Runtime.PyBuffer_Release(ref view);
+                }
+            }
+            else
+            {
+                Exceptions.Clear();
+            }
 
             using var IterObject = Runtime.PyObject_GetIter(value);
             if (IterObject.IsNull())
