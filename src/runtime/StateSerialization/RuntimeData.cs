@@ -18,11 +18,19 @@ namespace Python.Runtime
 
         public readonly static Func<IFormatter> DefaultFormatterFactory = () =>
         {
-            try
+            var fw = RuntimeInformation.FrameworkDescription;
+            if (fw.StartsWith(".NET Framework") || fw.StartsWith("Mono"))
             {
-                return new BinaryFormatter();
+                try
+                {
+                    return new BinaryFormatter();
+                }
+                catch
+                {
+                    return new NoopFormatter();
+                }
             }
-            catch
+            else
             {
                 return new NoopFormatter();
             }
