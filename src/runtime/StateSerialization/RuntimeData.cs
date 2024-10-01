@@ -16,21 +16,23 @@ namespace Python.Runtime
     public static class RuntimeData
     {
 
-        public readonly static Func<IFormatter> DefaultFormatterFactory = () =>
+        public readonly static Func<IFormatter?> DefaultFormatterFactory = () =>
         {
             try
             {
-                return new BinaryFormatter();
+                var fw = RuntimeInformation.FrameworkDescription;
+                if (fw.StartsWith(".NET Framework") || fw.StartsWith("Mono"))
+                {
+                    return new BinaryFormatter();
+                }
             }
-            catch
-            {
-                return new NoopFormatter();
-            }
+            catch {}
+            return null;
         };
 
-        private static Func<IFormatter> _formatterFactory { get; set; } = DefaultFormatterFactory;
+        private static Func<IFormatter?> _formatterFactory { get; set; } = DefaultFormatterFactory;
 
-        public static Func<IFormatter> FormatterFactory
+        public static Func<IFormatter?> FormatterFactory
         {
             get => _formatterFactory;
             set
@@ -82,6 +84,14 @@ namespace Python.Runtime
 
         internal static void Stash()
         {
+            ClearCLRData();
+
+            IFormatter? formatter = CreateFormatter();
+
+            if (formatter == null)
+                // No formatter defined, exit early
+                return;
+
             var runtimeStorage = new PythonNetState
             {
                 Metatype = MetaType.SaveRuntimeData(),
@@ -91,7 +101,6 @@ namespace Python.Runtime
                 SharedObjects = SaveRuntimeDataObjects(),
             };
 
-            IFormatter formatter = CreateFormatter();
             var ms = new MemoryStream();
             formatter.Serialize(ms, runtimeStorage);
 
@@ -102,11 +111,10 @@ namespace Python.Runtime
             Marshal.WriteIntPtr(mem, (IntPtr)ms.Length);
             Marshal.Copy(data, 0, mem + IntPtr.Size, (int)ms.Length);
 
-            ClearCLRData();
-
             using NewReference capsule = PyCapsule_New(mem, IntPtr.Zero, IntPtr.Zero);
             int res = PySys_SetObject("clr_data", capsule.BorrowOrThrow());
             PythonException.ThrowIfIsNotZero(res);
+
             PostStashHook?.Invoke();
         }
 
@@ -124,6 +132,12 @@ namespace Python.Runtime
 
         private static void RestoreRuntimeDataImpl()
         {
+            IFormatter? formatter = CreateFormatter();
+
+            if (formatter == null)
+                // No formatter defined, exit early
+                return;
+
             PreRestoreHook?.Invoke();
             BorrowedReference capsule = PySys_GetObject("clr_data");
             if (capsule.IsNull)
@@ -135,7 +149,6 @@ namespace Python.Runtime
             byte[] data = new byte[length];
             Marshal.Copy(mem + IntPtr.Size, data, 0, length);
             var ms = new MemoryStream(data);
-            var formatter = CreateFormatter();
             var storage = (PythonNetState)formatter.Deserialize(ms);
 
             PyCLRMetaType = MetaType.RestoreRuntimeData(storage.Metatype);
@@ -373,9 +386,8 @@ namespace Python.Runtime
             return new MemoryStream(buffer, writable:false);
         }
 
-        internal static IFormatter CreateFormatter()
+        internal static IFormatter? CreateFormatter()
         {
-
             if (FormatterType != null)
             {
                 return (IFormatter)Activator.CreateInstance(FormatterType);
