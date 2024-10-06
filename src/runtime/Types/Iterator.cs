@@ -46,6 +46,6 @@ namespace Python.Runtime
             return Converter.ToPython(item, self.elemType);
         }
 
-        public static NewReference tp_iter(BorrowedReference ob) => new (ob);
+        public static NewReference tp_iter(BorrowedReference ob) => new NewReference(ob);
     }
 }

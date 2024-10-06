@@ -232,5 +232,6 @@ namespace Python.Runtime
         }
 
         public override TypeCode GetTypeCode() => TypeCode.Int64;
+        public override int GetHashCode() => ((PyObject)this).GetHashCode();
     }
 }
