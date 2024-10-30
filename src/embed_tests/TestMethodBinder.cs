@@ -71,6 +71,7 @@ class PythonModel(TestMethodBinder.CSharpModel):
         public void SetUp()
         {
             PythonEngine.Initialize();
+            using var _ = Py.GIL();
 
             try
             {
@@ -80,10 +81,7 @@ class PythonModel(TestMethodBinder.CSharpModel):
             {
             }
 
-            using (Py.GIL())
-            {
-                module = PyModule.FromString("module", testModule).GetAttr("PythonModel").Invoke();
-            }
+            module = PyModule.FromString("module", testModule).GetAttr("PythonModel").Invoke();
         }
 
         [OneTimeTearDown]
@@ -922,6 +920,55 @@ def call_method(instance):
             });
 
             Assert.AreEqual("Overload 3", instance.CalledMethodMessage);
+
+            Assert.IsFalse(Exceptions.ErrorOccurred());
+        }
+
+        public class CSharpClass2
+        {
+            public string CalledMethodMessage { get; private set; }
+
+            public void Method()
+            {
+                CalledMethodMessage = "Overload 1";
+            }
+
+            public void Method(CSharpClass csharpClassArgument, decimal decimalArgument = 1.2m, PyObject pyObjectKArgument = null)
+            {
+                CalledMethodMessage = "Overload 2";
+            }
+
+            public void Method(PyObject pyObjectArgument, decimal decimalArgument = 1.2m, object objectArgument = null)
+            {
+                CalledMethodMessage = "Overload 3";
+            }
+
+            // This must be matched when passing just a single argument and it's a PyObject,
+            // event though the PyObject kwarg in the second overload has more precedence.
+            // But since it will not be passed, this overload must be called.
+            public void Method(PyObject pyObjectArgument, decimal decimalArgument = 1.2m, int intArgument = 0)
+            {
+                CalledMethodMessage = "Overload 4";
+            }
+        }
+
+        [Test]
+        public void PyObjectArgsHavePrecedenceOverOtherTypes()
+        {
+            using var _ = Py.GIL();
+
+            var instance = new CSharpClass2();
+            using var pyInstance = instance.ToPython();
+            using var pyArg = new CSharpClass().ToPython();
+
+            Assert.DoesNotThrow(() =>
+            {
+                // We are passing a PyObject and not using the named arguments,
+                // that overload must be called without converting the PyObject to CSharpClass
+                pyInstance.InvokeMethod("Method", pyArg);
+            });
+
+            Assert.AreEqual("Overload 4", instance.CalledMethodMessage);
 
             Assert.IsFalse(Exceptions.ErrorOccurred());
         }

@@ -326,16 +326,18 @@ namespace Python.Runtime
             int val = mi.IsStatic ? 3000 : 0;
             int num = pi.Length;
 
+            var isOperatorMethod = OperatorMethod.IsOperatorMethod(methodInformation.MethodBase);
+
             val += mi.IsGenericMethod ? 1 : 0;
             for (var i = 0; i < num; i++)
             {
-                val += ArgPrecedence(pi[i].ParameterType, methodInformation);
+                val += ArgPrecedence(pi[i].ParameterType, isOperatorMethod);
             }
 
             var info = mi as MethodInfo;
             if (info != null)
             {
-                val += ArgPrecedence(info.ReturnType, methodInformation);
+                val += ArgPrecedence(info.ReturnType, isOperatorMethod);
                 if (mi.DeclaringType == mi.ReflectedType)
                 {
                     val += methodInformation.IsOriginal ? 0 : 300000;
@@ -350,9 +352,35 @@ namespace Python.Runtime
         }
 
         /// <summary>
+        /// Gets the precedence of a method's arguments, considering only those arguments that have been matched,
+        /// that is, those that are not default values.
+        /// </summary>
+        private static int GetMatchedArgumentsPrecedence(MethodInformation method, int matchedPositionalArgsCount, IEnumerable<string> matchedKwargsNames)
+        {
+            var isOperatorMethod = OperatorMethod.IsOperatorMethod(method.MethodBase);
+            var pi = method.ParameterInfo;
+            var val = 0;
+            for (var i = 0; i < pi.Length; i++)
+            {
+                if (i < matchedPositionalArgsCount || matchedKwargsNames.Contains(pi[i].Name))
+                {
+                    val += ArgPrecedence(pi[i].ParameterType, isOperatorMethod);
+                }
+            }
+
+            var mi = method.MethodBase;
+            var info = mi as MethodInfo;
+            if (info != null)
+            {
+                val += ArgPrecedence(info.ReturnType, isOperatorMethod);
+            }
+            return val;
+        }
+
+        /// <summary>
         /// Return a precedence value for a particular Type object.
         /// </summary>
-        internal static int ArgPrecedence(Type t, MethodInformation mi)
+        internal static int ArgPrecedence(Type t, bool isOperatorMethod)
         {
             Type objectType = typeof(object);
             if (t == objectType)
@@ -360,9 +388,9 @@ namespace Python.Runtime
                 return 3000;
             }
 
-            if (t.IsAssignableFrom(typeof(PyObject)) && !OperatorMethod.IsOperatorMethod(mi.MethodBase))
+            if (t.IsAssignableFrom(typeof(PyObject)) && !isOperatorMethod)
             {
-                return -1;
+                return -3000;
             }
 
             if (t.IsArray)
@@ -372,7 +400,7 @@ namespace Python.Runtime
                 {
                     return 2500;
                 }
-                return 100 + ArgPrecedence(e, mi);
+                return 100 + ArgPrecedence(e, isOperatorMethod);
             }
 
             TypeCode tc = Type.GetTypeCode(t);
@@ -452,6 +480,12 @@ namespace Python.Runtime
             var methods = info == null ? GetMethods()
                 : new List<MethodInformation>(1) { new MethodInformation(info, true) };
 
+            if (methods.Any(m => m.MethodBase.Name.StartsWith("History")))
+            {
+
+            }
+
+            int pyArgCount = (int)Runtime.PyTuple_Size(args);
             var matches = new List<MatchedMethod>(methods.Count);
             List<MatchedMethod> matchesUsingImplicitConversion = null;
 
@@ -463,7 +497,6 @@ namespace Python.Runtime
                 var pi = methodInformation.ParameterInfo;
                 // Avoid accessing the parameter names property unless necessary
                 var paramNames = hasNamedArgs ? methodInformation.ParameterNames : Array.Empty<string>();
-                int pyArgCount = (int)Runtime.PyTuple_Size(args);
 
                 // Special case for operators
                 bool isOperator = OperatorMethod.IsOperatorMethod(mi);
@@ -719,7 +752,26 @@ namespace Python.Runtime
                 var matchesTouse = matches.Count > 0 ? matches : matchesUsingImplicitConversion;
 
                 // The best match would be the one with the most named arguments matched
-                var bestMatch = matchesTouse.MaxBy(x => x.KwargsMatched);
+                var maxKwargsMatched = matchesTouse.Max(x => x.KwargsMatched);
+                // Don't materialize the enumerable, just enumerate twice if necessary to avoid creating a collection instance.
+                var bestMatches = matchesTouse.Where(x => x.KwargsMatched == maxKwargsMatched);
+                var bestMatchesCount = bestMatches.Count();
+
+                MatchedMethod bestMatch;
+                // Multiple best matches, we can still resolve the ambiguity because
+                // some method might take precedence if it received PyObject instances.
+                // So let's get the best match by the precedence of the actual passed arguments,
+                // without considering optional arguments without a passed value
+                if (bestMatchesCount > 1)
+                {
+                    bestMatch = bestMatches.MinBy(x => GetMatchedArgumentsPrecedence(methods.First(m => m.MethodBase == x.Method), pyArgCount,
+                        kwArgDict?.Keys ?? Enumerable.Empty<string>()));
+                }
+                else
+                {
+                    bestMatch = bestMatches.First();
+                }
+
                 var margs = bestMatch.ManagedArgs;
                 var outs = bestMatch.Outs;
                 var mi = bestMatch.Method;
