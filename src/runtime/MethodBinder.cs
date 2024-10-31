@@ -718,7 +718,7 @@ namespace Python.Runtime
                         }
                     }
 
-                    var match = new MatchedMethod(kwargsMatched, margs, outs, mi);
+                    var match = new MatchedMethod(kwargsMatched, margs, outs, methodInformation);
                     if (usedImplicitConversion)
                     {
                         if (matchesUsingImplicitConversion == null)
@@ -750,7 +750,7 @@ namespace Python.Runtime
                     .GroupBy(x => x.KwargsMatched)
                     .OrderByDescending(x => x.Key)
                     .First()
-                    .MinBy(x => GetMatchedArgumentsPrecedence(methods.First(m => m.MethodBase == x.Method), pyArgCount, kwArgDict?.Keys));
+                    .MinBy(x => GetMatchedArgumentsPrecedence(x.MethodInformation, pyArgCount, kwArgDict?.Keys));
 
                 var margs = bestMatch.ManagedArgs;
                 var outs = bestMatch.Outs;
@@ -1116,14 +1116,15 @@ namespace Python.Runtime
             public int KwargsMatched { get; }
             public object?[] ManagedArgs { get; }
             public int Outs { get; }
-            public MethodBase Method { get; }
+            public MethodInformation MethodInformation { get; }
+            public MethodBase Method => MethodInformation.MethodBase;
 
-            public MatchedMethod(int kwargsMatched, object?[] margs, int outs, MethodBase mb)
+            public MatchedMethod(int kwargsMatched, object?[] margs, int outs, MethodInformation methodInformation)
             {
                 KwargsMatched = kwargsMatched;
                 ManagedArgs = margs;
                 Outs = outs;
-                Method = mb;
+                MethodInformation = methodInformation;
             }
         }
 
