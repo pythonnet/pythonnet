@@ -4,7 +4,6 @@ using Python.Runtime;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Diagnostics;
-using static Python.Runtime.Py;
 
 namespace Python.EmbeddingTest
 {
