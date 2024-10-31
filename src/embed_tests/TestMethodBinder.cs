@@ -967,6 +967,20 @@ def call_method(instance):
                 pyInstance.InvokeMethod("Method", pyArg);
             });
 
+            // With the first named argument
+            Assert.DoesNotThrow(() =>
+            {
+                using var kwargs = Py.kw("decimalArgument", 1.234m);
+                pyInstance.InvokeMethod("Method", new[] { pyArg }, kwargs);
+            });
+
+            // Snake case version
+            Assert.DoesNotThrow(() =>
+            {
+                using var kwargs = Py.kw("decimal_argument", 1.234m);
+                pyInstance.InvokeMethod("method", new[] { pyArg }, kwargs);
+            });
+
             Assert.AreEqual("Overload 4", instance.CalledMethodMessage);
 
             Assert.IsFalse(Exceptions.ErrorOccurred());

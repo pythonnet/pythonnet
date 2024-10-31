@@ -362,7 +362,7 @@ namespace Python.Runtime
             var val = 0;
             for (var i = 0; i < pi.Length; i++)
             {
-                if (i < matchedPositionalArgsCount || matchedKwargsNames.Contains(pi[i].Name))
+                if (i < matchedPositionalArgsCount || matchedKwargsNames.Contains(method.ParameterNames[i]))
                 {
                     val += ArgPrecedence(pi[i].ParameterType, isOperatorMethod);
                 }
@@ -479,11 +479,6 @@ namespace Python.Runtime
             // Fetch our methods we are going to attempt to match and bind too.
             var methods = info == null ? GetMethods()
                 : new List<MethodInformation>(1) { new MethodInformation(info, true) };
-
-            if (methods.Any(m => m.MethodBase.Name.StartsWith("History")))
-            {
-
-            }
 
             int pyArgCount = (int)Runtime.PyTuple_Size(args);
             var matches = new List<MatchedMethod>(methods.Count);
