@@ -937,7 +937,7 @@ def call_method(instance):
                 CalledMethodMessage = "Overload 1";
             }
 
-            public void Method(CSharpClass csharpClassArgument, decimal decimalArgument = 1.2m, PyObject pyObjectKArgument = null)
+            public void Method(CSharpClass csharpClassArgument, decimal decimalArgument = 1.2m, PyObject pyObjectKwArgument = null)
             {
                 CalledMethodMessage = "Overload 2";
             }
@@ -996,6 +996,56 @@ def call_method(instance):
 
             Assert.AreEqual("Overload 4", instance.CalledMethodMessage);
             Assert.IsFalse(Exceptions.ErrorOccurred());
+        }
+
+        [Test]
+        public void OtherTypesHavePrecedenceOverPyObjectArgsIfMoreArgsAreMatched()
+        {
+            using var _ = Py.GIL();
+
+            var instance = new CSharpClass2();
+            using var pyInstance = instance.ToPython();
+            using var pyArg = new CSharpClass().ToPython();
+
+            Assert.DoesNotThrow(() =>
+            {
+                using var kwargs = Py.kw("pyObjectKwArgument", new CSharpClass2());
+                pyInstance.InvokeMethod("Method", new[] { pyArg }, kwargs);
+            });
+
+            Assert.AreEqual("Overload 2", instance.CalledMethodMessage);
+            Assert.IsFalse(Exceptions.ErrorOccurred());
+            instance.Clear();
+
+            Assert.DoesNotThrow(() =>
+            {
+                using var kwargs = Py.kw("py_object_kw_argument", new CSharpClass2());
+                pyInstance.InvokeMethod("method", new[] { pyArg }, kwargs);
+            });
+
+            Assert.AreEqual("Overload 2", instance.CalledMethodMessage);
+            Assert.IsFalse(Exceptions.ErrorOccurred());
+            instance.Clear();
+
+            Assert.DoesNotThrow(() =>
+            {
+                using var kwargs = Py.kw("objectArgument", "somestring");
+                pyInstance.InvokeMethod("Method", new[] { pyArg }, kwargs);
+            });
+
+            Assert.AreEqual("Overload 3", instance.CalledMethodMessage);
+            Assert.IsFalse(Exceptions.ErrorOccurred());
+            instance.Clear();
+
+            Assert.DoesNotThrow(() =>
+            {
+                using var kwargs = Py.kw("object_argument", "somestring");
+                pyInstance.InvokeMethod("method", new[] { pyArg }, kwargs);
+            });
+
+            Assert.AreEqual("Overload 3", instance.CalledMethodMessage);
+            Assert.IsFalse(Exceptions.ErrorOccurred());
+            instance.Clear();
         }
 
         [Test]
