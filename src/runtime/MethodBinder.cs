@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using System.Reflection;
 using System.Text;
 
@@ -321,21 +320,45 @@ namespace Python.Runtime
         /// </remarks>
         private static int GetPrecedence(MethodInformation methodInformation)
         {
+            return GetMatchedArgumentsPrecedence(methodInformation, null, null);
+        }
+
+        /// <summary>
+        /// Gets the precedence of a method's arguments, considering only those arguments that have been matched,
+        /// that is, those that are not default values.
+        /// </summary>
+        private static int GetMatchedArgumentsPrecedence(MethodInformation methodInformation, int? matchedPositionalArgsCount, IEnumerable<string> matchedKwargsNames)
+        {
             ParameterInfo[] pi = methodInformation.ParameterInfo;
             var mi = methodInformation.MethodBase;
             int val = mi.IsStatic ? 3000 : 0;
-            int num = pi.Length;
+            var isOperatorMethod = OperatorMethod.IsOperatorMethod(methodInformation.MethodBase);
 
             val += mi.IsGenericMethod ? 1 : 0;
-            for (var i = 0; i < num; i++)
+
+            if (!matchedPositionalArgsCount.HasValue)
             {
-                val += ArgPrecedence(pi[i].ParameterType, methodInformation);
+                for (var i = 0; i < pi.Length; i++)
+                {
+                    val += ArgPrecedence(pi[i].ParameterType, isOperatorMethod);
+                }
+            }
+            else
+            {
+                matchedKwargsNames ??= Array.Empty<string>();
+                for (var i = 0; i < pi.Length; i++)
+                {
+                    if (i < matchedPositionalArgsCount || matchedKwargsNames.Contains(methodInformation.ParameterNames[i]))
+                    {
+                        val += ArgPrecedence(pi[i].ParameterType, isOperatorMethod);
+                    }
+                }
             }
 
             var info = mi as MethodInfo;
             if (info != null)
             {
-                val += ArgPrecedence(info.ReturnType, methodInformation);
+                val += ArgPrecedence(info.ReturnType, isOperatorMethod);
                 if (mi.DeclaringType == mi.ReflectedType)
                 {
                     val += methodInformation.IsOriginal ? 0 : 300000;
@@ -352,7 +375,7 @@ namespace Python.Runtime
         /// <summary>
         /// Return a precedence value for a particular Type object.
         /// </summary>
-        internal static int ArgPrecedence(Type t, MethodInformation mi)
+        internal static int ArgPrecedence(Type t, bool isOperatorMethod)
         {
             Type objectType = typeof(object);
             if (t == objectType)
@@ -360,7 +383,7 @@ namespace Python.Runtime
                 return 3000;
             }
 
-            if (t.IsAssignableFrom(typeof(PyObject)) && !OperatorMethod.IsOperatorMethod(mi.MethodBase))
+            if (t.IsAssignableFrom(typeof(PyObject)) && !isOperatorMethod)
             {
                 return -1;
             }
@@ -372,7 +395,7 @@ namespace Python.Runtime
                 {
                     return 2500;
                 }
-                return 100 + ArgPrecedence(e, mi);
+                return 100 + ArgPrecedence(e, isOperatorMethod);
             }
 
             TypeCode tc = Type.GetTypeCode(t);
@@ -452,6 +475,7 @@ namespace Python.Runtime
             var methods = info == null ? GetMethods()
                 : new List<MethodInformation>(1) { new MethodInformation(info, true) };
 
+            int pyArgCount = (int)Runtime.PyTuple_Size(args);
             var matches = new List<MatchedMethod>(methods.Count);
             List<MatchedMethod> matchesUsingImplicitConversion = null;
 
@@ -463,7 +487,6 @@ namespace Python.Runtime
                 var pi = methodInformation.ParameterInfo;
                 // Avoid accessing the parameter names property unless necessary
                 var paramNames = hasNamedArgs ? methodInformation.ParameterNames : Array.Empty<string>();
-                int pyArgCount = (int)Runtime.PyTuple_Size(args);
 
                 // Special case for operators
                 bool isOperator = OperatorMethod.IsOperatorMethod(mi);
@@ -695,7 +718,7 @@ namespace Python.Runtime
                         }
                     }
 
-                    var match = new MatchedMethod(kwargsMatched, margs, outs, mi);
+                    var match = new MatchedMethod(kwargsMatched, margs, outs, methodInformation);
                     if (usedImplicitConversion)
                     {
                         if (matchesUsingImplicitConversion == null)
@@ -718,8 +741,17 @@ namespace Python.Runtime
                 // We favor matches that do not use implicit conversion
                 var matchesTouse = matches.Count > 0 ? matches : matchesUsingImplicitConversion;
 
-                // The best match would be the one with the most named arguments matched
-                var bestMatch = matchesTouse.MaxBy(x => x.KwargsMatched);
+                // The best match would be the one with the most named arguments matched.
+                // But if multiple matches have the same max number of named arguments matched,
+                // we solve the ambiguity by taking the one with the highest precedence but only
+                // considering the actual arguments passed, ignoring the optional arguments for
+                // which the default values were used
+                var bestMatch = matchesTouse
+                    .GroupBy(x => x.KwargsMatched)
+                    .OrderByDescending(x => x.Key)
+                    .First()
+                    .MinBy(x => GetMatchedArgumentsPrecedence(x.MethodInformation, pyArgCount, kwArgDict?.Keys));
+
                 var margs = bestMatch.ManagedArgs;
                 var outs = bestMatch.Outs;
                 var mi = bestMatch.Method;
@@ -1084,14 +1116,15 @@ namespace Python.Runtime
             public int KwargsMatched { get; }
             public object?[] ManagedArgs { get; }
             public int Outs { get; }
-            public MethodBase Method { get; }
+            public MethodInformation MethodInformation { get; }
+            public MethodBase Method => MethodInformation.MethodBase;
 
-            public MatchedMethod(int kwargsMatched, object?[] margs, int outs, MethodBase mb)
+            public MatchedMethod(int kwargsMatched, object?[] margs, int outs, MethodInformation methodInformation)
             {
                 KwargsMatched = kwargsMatched;
                 ManagedArgs = margs;
                 Outs = outs;
-                Method = mb;
+                MethodInformation = methodInformation;
             }
         }
 

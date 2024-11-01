@@ -4,7 +4,6 @@ using Python.Runtime;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Diagnostics;
-using static Python.Runtime.Py;
 
 namespace Python.EmbeddingTest
 {
@@ -71,6 +70,7 @@ class PythonModel(TestMethodBinder.CSharpModel):
         public void SetUp()
         {
             PythonEngine.Initialize();
+            using var _ = Py.GIL();
 
             try
             {
@@ -80,10 +80,7 @@ class PythonModel(TestMethodBinder.CSharpModel):
             {
             }
 
-            using (Py.GIL())
-            {
-                module = PyModule.FromString("module", testModule).GetAttr("PythonModel").Invoke();
-            }
+            module = PyModule.FromString("module", testModule).GetAttr("PythonModel").Invoke();
         }
 
         [OneTimeTearDown]
@@ -924,6 +921,131 @@ def call_method(instance):
             Assert.AreEqual("Overload 3", instance.CalledMethodMessage);
 
             Assert.IsFalse(Exceptions.ErrorOccurred());
+        }
+
+        public class CSharpClass2
+        {
+            public string CalledMethodMessage { get; private set; } = string.Empty;
+
+            public void Clear()
+            {
+                CalledMethodMessage = string.Empty;
+            }
+
+            public void Method()
+            {
+                CalledMethodMessage = "Overload 1";
+            }
+
+            public void Method(CSharpClass csharpClassArgument, decimal decimalArgument = 1.2m, PyObject pyObjectKwArgument = null)
+            {
+                CalledMethodMessage = "Overload 2";
+            }
+
+            public void Method(PyObject pyObjectArgument, decimal decimalArgument = 1.2m, object objectArgument = null)
+            {
+                CalledMethodMessage = "Overload 3";
+            }
+
+            // This must be matched when passing just a single argument and it's a PyObject,
+            // event though the PyObject kwarg in the second overload has more precedence.
+            // But since it will not be passed, this overload must be called.
+            public void Method(PyObject pyObjectArgument, decimal decimalArgument = 1.2m, int intArgument = 0)
+            {
+                CalledMethodMessage = "Overload 4";
+            }
+        }
+
+        [Test]
+        public void PyObjectArgsHavePrecedenceOverOtherTypes()
+        {
+            using var _ = Py.GIL();
+
+            var instance = new CSharpClass2();
+            using var pyInstance = instance.ToPython();
+            using var pyArg = new CSharpClass().ToPython();
+
+            Assert.DoesNotThrow(() =>
+            {
+                // We are passing a PyObject and not using the named arguments,
+                // that overload must be called without converting the PyObject to CSharpClass
+                pyInstance.InvokeMethod("Method", pyArg);
+            });
+
+            Assert.AreEqual("Overload 4", instance.CalledMethodMessage);
+            Assert.IsFalse(Exceptions.ErrorOccurred());
+            instance.Clear();
+
+            // With the first named argument
+            Assert.DoesNotThrow(() =>
+            {
+                using var kwargs = Py.kw("decimalArgument", 1.234m);
+                pyInstance.InvokeMethod("Method", new[] { pyArg }, kwargs);
+            });
+
+            Assert.AreEqual("Overload 4", instance.CalledMethodMessage);
+            Assert.IsFalse(Exceptions.ErrorOccurred());
+            instance.Clear();
+
+            // Snake case version
+            Assert.DoesNotThrow(() =>
+            {
+                using var kwargs = Py.kw("decimal_argument", 1.234m);
+                pyInstance.InvokeMethod("method", new[] { pyArg }, kwargs);
+            });
+
+            Assert.AreEqual("Overload 4", instance.CalledMethodMessage);
+            Assert.IsFalse(Exceptions.ErrorOccurred());
+        }
+
+        [Test]
+        public void OtherTypesHavePrecedenceOverPyObjectArgsIfMoreArgsAreMatched()
+        {
+            using var _ = Py.GIL();
+
+            var instance = new CSharpClass2();
+            using var pyInstance = instance.ToPython();
+            using var pyArg = new CSharpClass().ToPython();
+
+            Assert.DoesNotThrow(() =>
+            {
+                using var kwargs = Py.kw("pyObjectKwArgument", new CSharpClass2());
+                pyInstance.InvokeMethod("Method", new[] { pyArg }, kwargs);
+            });
+
+            Assert.AreEqual("Overload 2", instance.CalledMethodMessage);
+            Assert.IsFalse(Exceptions.ErrorOccurred());
+            instance.Clear();
+
+            Assert.DoesNotThrow(() =>
+            {
+                using var kwargs = Py.kw("py_object_kw_argument", new CSharpClass2());
+                pyInstance.InvokeMethod("method", new[] { pyArg }, kwargs);
+            });
+
+            Assert.AreEqual("Overload 2", instance.CalledMethodMessage);
+            Assert.IsFalse(Exceptions.ErrorOccurred());
+            instance.Clear();
+
+            Assert.DoesNotThrow(() =>
+            {
+                using var kwargs = Py.kw("objectArgument", "somestring");
+                pyInstance.InvokeMethod("Method", new[] { pyArg }, kwargs);
+            });
+
+            Assert.AreEqual("Overload 3", instance.CalledMethodMessage);
+            Assert.IsFalse(Exceptions.ErrorOccurred());
+            instance.Clear();
+
+            Assert.DoesNotThrow(() =>
+            {
+                using var kwargs = Py.kw("object_argument", "somestring");
+                pyInstance.InvokeMethod("method", new[] { pyArg }, kwargs);
+            });
+
+            Assert.AreEqual("Overload 3", instance.CalledMethodMessage);
+            Assert.IsFalse(Exceptions.ErrorOccurred());
+            instance.Clear();
         }
 
         [Test]
