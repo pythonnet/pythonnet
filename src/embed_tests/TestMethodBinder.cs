@@ -925,7 +925,12 @@ def call_method(instance):
 
         public class CSharpClass2
         {
-            public string CalledMethodMessage { get; private set; }
+            public string CalledMethodMessage { get; private set; } = string.Empty;
+
+            public void Clear()
+            {
+                CalledMethodMessage = string.Empty;
+            }
 
             public void Method()
             {
@@ -967,12 +972,20 @@ def call_method(instance):
                 pyInstance.InvokeMethod("Method", pyArg);
             });
 
+            Assert.AreEqual("Overload 4", instance.CalledMethodMessage);
+            Assert.IsFalse(Exceptions.ErrorOccurred());
+            instance.Clear();
+
             // With the first named argument
             Assert.DoesNotThrow(() =>
             {
                 using var kwargs = Py.kw("decimalArgument", 1.234m);
                 pyInstance.InvokeMethod("Method", new[] { pyArg }, kwargs);
             });
+
+            Assert.AreEqual("Overload 4", instance.CalledMethodMessage);
+            Assert.IsFalse(Exceptions.ErrorOccurred());
+            instance.Clear();
 
             // Snake case version
             Assert.DoesNotThrow(() =>
@@ -982,7 +995,6 @@ def call_method(instance):
             });
 
             Assert.AreEqual("Overload 4", instance.CalledMethodMessage);
-
             Assert.IsFalse(Exceptions.ErrorOccurred());
         }
 
