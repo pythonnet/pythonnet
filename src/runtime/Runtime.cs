@@ -719,20 +719,6 @@ namespace Python.Runtime
         internal static PyThreadState* PyGILState_GetThisThreadState() => Delegates.PyGILState_GetThisThreadState();
 
 
-        public static int Py_Main(int argc, string[] argv)
-        {
-            var marshaler = StrArrayMarshaler.GetInstance(null);
-            var argvPtr = marshaler.MarshalManagedToNative(argv);
-            try
-            {
-                return Delegates.Py_Main(argc, argvPtr);
-            }
-            finally
-            {
-                marshaler.CleanUpNativeData(argvPtr);
-            }
-        }
-
         internal static void PyEval_InitThreads() => Delegates.PyEval_InitThreads();
 
 
