@@ -170,7 +170,7 @@ namespace Python.Runtime
             }
             else
             {
-                PyCLRMetaType = MetaType.Initialize();
+                PyCLRMetaType = PyCLRMetaType ?? MetaType.Initialize();
                 ImportHook.Initialize();
             }
             Exceptions.Initialize();
@@ -288,9 +288,12 @@ namespace Python.Runtime
             TypeManager.RemoveTypes();
             _typesInitialized = false;
 
-            MetaType.Release();
-            PyCLRMetaType.Dispose();
-            PyCLRMetaType = null!;
+            if (RuntimeData.HasStashData())
+            {
+                MetaType.Release();
+                PyCLRMetaType.Dispose();
+                PyCLRMetaType = null!;
+            }
 
             Exceptions.Shutdown();
             PythonEngine.InteropConfiguration.Dispose();
