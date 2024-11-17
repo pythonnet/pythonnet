@@ -11,14 +11,10 @@
     <VersionSuffix Condition="$(FullVersion.Contains('-'))">$(FullVersion.Split('-', 2)[1])</VersionSuffix>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-    <PackageReference Include="Microsoft.Net.Compilers.Toolset" Version="4.0.1">
+    <PackageReference Include="Microsoft.CSharp" Version="4.*" />
+    <PackageReference Include="Microsoft.Net.Compilers.Toolset" Version="4.*">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="NonCopyableAnalyzer" Version="0.7.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
 </Project>

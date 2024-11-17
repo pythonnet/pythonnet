@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Python.Runtime
 {
@@ -9,12 +10,13 @@ namespace Python.Runtime
     /// situations (specifically, calling functions through Python
     /// type structures) where we need to call functions indirectly.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     internal unsafe class NativeCall
     {
         public static void CallDealloc(IntPtr fp, StolenReference a1)
         {
-            var d = (delegate* unmanaged[Cdecl]<StolenReference, void>)fp;
-            d(a1);
+            var d = (delegate* unmanaged[Cdecl]<IntPtr, void>)fp;
+            d(a1.DangerousGetAddress());
         }
 
         public static NewReference Call_3(IntPtr fp, BorrowedReference a1, BorrowedReference a2, BorrowedReference a3)
