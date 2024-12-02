@@ -1410,6 +1410,62 @@ class TestGetPublicDynamicObjectPropertyThrowsPythonException:
             }
         }
 
+        public class ThrowingDynamicFixture : DynamicFixture
+        {
+            public override bool TryGetMember(GetMemberBinder binder, out object result)
+            {
+                if (!base.TryGetMember(binder, out result))
+                {
+                    throw new InvalidOperationException("Member not found");
+                }
+                return true;
+            }
+        }
+
+        [Test]
+        public void TestHasAttrShouldNotThrowIfAttributeIsNotPresentForDynamicClassObjects()
+        {
+            using var _ = Py.GIL();
+
+            dynamic module = PyModule.FromString("TestHasAttrShouldNotThrowIfAttributeIsNotPresentForDynamicClassObjects", @"
+from clr import AddReference
+AddReference(""Python.EmbeddingTest"")
+AddReference(""System"")
+
+from Python.EmbeddingTest import TestPropertyAccess
+
+class TestDynamicClass(TestPropertyAccess.ThrowingDynamicFixture):
+    def __init__(self):
+        self.test_attribute = 11;
+
+def has_attribute(obj, attribute):
+    return hasattr(obj, attribute)
+");
+
+            dynamic fixture = module.GetAttr("TestDynamicClass")();
+            dynamic hasAttribute = module.GetAttr("has_attribute");
+
+            var hasAttributeResult = false;
+            Assert.DoesNotThrow(() =>
+            {
+                hasAttributeResult = hasAttribute(fixture, "test_attribute");
+            });
+            Assert.IsTrue(hasAttributeResult);
+
+            var attribute = 0;
+            Assert.DoesNotThrow(() =>
+            {
+                attribute = fixture.test_attribute.As<int>();
+            });
+            Assert.AreEqual(11, attribute);
+
+            Assert.DoesNotThrow(() =>
+            {
+                hasAttributeResult = hasAttribute(fixture, "non_existent_attribute");
+            });
+            Assert.IsFalse(hasAttributeResult);
+        }
+
         public interface IModel
         {
             void InvokeModel();

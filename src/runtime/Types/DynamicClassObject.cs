@@ -88,7 +88,12 @@ namespace Python.Runtime
                 catch (Exception exception)
                 {
                     Exceptions.Clear();
-                    Exceptions.SetError(exception);
+                    // tp_getattro should call PyObject_GenericGetAttr (which we already did)
+                    // which must throw AttributeError if the attribute is not found (see https://docs.python.org/3/c-api/object.html#c.PyObject_GenericGetAttr)
+                    // So if we are throwing anything, it must be AttributeError.
+                    // e.g hasattr uses this method to check if the attribute exists. If we throw anything other than AttributeError,
+                    // hasattr will throw instead of catching and returning False.
+                    Exceptions.SetError(Exceptions.AttributeError, exception.Message);
                 }
             }
 
