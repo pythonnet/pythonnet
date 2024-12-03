@@ -1420,6 +1420,16 @@ class TestGetPublicDynamicObjectPropertyThrowsPythonException:
                 }
                 return true;
             }
+
+            public override bool TrySetMember(SetMemberBinder binder, object value)
+            {
+                if (value is PyObject pyValue && PyString.IsStringType(pyValue))
+                {
+                    throw new InvalidOperationException("Cannot set string value");
+        }
+
+                return base.TrySetMember(binder, value);
+            }
         }
 
         [Test]
@@ -1430,7 +1440,6 @@ class TestGetPublicDynamicObjectPropertyThrowsPythonException:
             dynamic module = PyModule.FromString("TestHasAttrShouldNotThrowIfAttributeIsNotPresentForDynamicClassObjects", @"
 from clr import AddReference
 AddReference(""Python.EmbeddingTest"")
-AddReference(""System"")
 
 from Python.EmbeddingTest import TestPropertyAccess
 
@@ -1464,6 +1473,40 @@ def has_attribute(obj, attribute):
                 hasAttributeResult = hasAttribute(fixture, "non_existent_attribute");
             });
             Assert.IsFalse(hasAttributeResult);
+        }
+
+        [Test]
+        public void TestSetAttrShouldThrowPythonExceptionOnFailure()
+        {
+            using var _ = Py.GIL();
+
+            dynamic module = PyModule.FromString("TestHasAttrShouldNotThrowIfAttributeIsNotPresentForDynamicClassObjects", @"
+from clr import AddReference
+AddReference(""Python.EmbeddingTest"")
+
+from Python.EmbeddingTest import TestPropertyAccess
+
+class TestDynamicClass(TestPropertyAccess.ThrowingDynamicFixture):
+    pass
+
+def set_attribute(obj):
+    obj.int_attribute = 11
+
+def set_string_attribute(obj):
+    obj.string_attribute = 'string'
+");
+
+            dynamic fixture = module.GetAttr("TestDynamicClass")();
+
+            dynamic setAttribute = module.GetAttr("set_attribute");
+            Assert.DoesNotThrow(() => setAttribute(fixture));
+
+            dynamic setStringAttribute = module.GetAttr("set_string_attribute");
+            var exception = Assert.Throws<PythonException>(() => setStringAttribute(fixture));
+            Assert.AreEqual("Cannot set string value", exception.Message);
+
+            using var expectedExceptionType = new PyType(Exceptions.AttributeError);
+            Assert.AreEqual(expectedExceptionType, exception.Type);
         }
 
         public interface IModel
