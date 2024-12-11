@@ -25,11 +25,14 @@ public unsafe partial class Runtime
             PyThreadState_Get = (delegate* unmanaged[Cdecl]<PyThreadState*>)GetFunctionByName(nameof(PyThreadState_Get), GetUnmanagedDll(_PythonDll));
             try
             {
-                _PyThreadState_UncheckedGet = (delegate* unmanaged[Cdecl]<PyThreadState*>)GetFunctionByName(nameof(_PyThreadState_UncheckedGet), GetUnmanagedDll(_PythonDll));
+                // Up until Python 3.13, this function was private and named
+                // slightly differently.
+                PyThreadState_GetUnchecked = (delegate* unmanaged[Cdecl]<PyThreadState*>)GetFunctionByName("_PyThreadState_UncheckedGet", GetUnmanagedDll(_PythonDll));
             }
             catch (MissingMethodException)
             {
-                // Not supported in Python 3.13 anymore
+
+                PyThreadState_GetUnchecked = (delegate* unmanaged[Cdecl]<PyThreadState*>)GetFunctionByName(nameof(PyThreadState_GetUnchecked), GetUnmanagedDll(_PythonDll));
             }
             try
             {
@@ -320,7 +323,7 @@ public unsafe partial class Runtime
         internal static delegate* unmanaged[Cdecl]<PyThreadState*, void> Py_EndInterpreter { get; }
         internal static delegate* unmanaged[Cdecl]<PyInterpreterState*, PyThreadState*> PyThreadState_New { get; }
         internal static delegate* unmanaged[Cdecl]<PyThreadState*> PyThreadState_Get { get; }
-        internal static delegate* unmanaged[Cdecl]<PyThreadState*> _PyThreadState_UncheckedGet { get; }
+        internal static delegate* unmanaged[Cdecl]<PyThreadState*> PyThreadState_GetUnchecked { get; }
         internal static delegate* unmanaged[Cdecl]<int> PyGILState_Check { get; }
         internal static delegate* unmanaged[Cdecl]<PyGILState> PyGILState_Ensure { get; }
         internal static delegate* unmanaged[Cdecl]<PyGILState, void> PyGILState_Release { get; }
