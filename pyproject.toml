@@ -34,6 +34,17 @@ classifiers = [
 
 dynamic = ["version"]
 
+[dependency-groups]
+dev = [
+    "pytest >= 6",
+    "find_libpython >= 0.3.0",
+]
+
+test = [
+    "numpy",
+    "psutil"
+]
+
 [[project.authors]]
 name = "The Contributors of the Python.NET Project"
 email = "pythonnet@python.org"
