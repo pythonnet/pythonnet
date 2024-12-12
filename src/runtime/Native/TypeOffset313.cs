@@ -75,8 +75,14 @@ namespace Python.Runtime
         public int tp_version_tag  { get; private set; }
         public int tp_finalize  { get; private set; }
         public int tp_vectorcall  { get; private set; }
+        // This is an error in our generator:
+        //
+        // The fields below are actually not pointers (like we incorrectly
+        // assume for all other fields) but instead a char (1 byte) and a short
+        // (2 bytes). By dropping one of the fields, we still get the correct
+        // overall size of the struct.
         public int tp_watched  { get; private set; }
-        public int tp_versions_used  { get; private set; }
+        // public int tp_versions_used  { get; private set; }
         public int am_await  { get; private set; }
         public int am_aiter  { get; private set; }
         public int am_anext  { get; private set; }
