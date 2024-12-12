@@ -10,7 +10,7 @@ license = {text = "MIT"}
 readme = "README.rst"
 
 dependencies = [
-    "clr_loader>=0.2.6,<0.3.0"
+    "clr_loader>=0.2.7,<0.3.0"
 ]
 
 requires-python = ">=3.7, <3.14"
@@ -34,6 +34,15 @@ classifiers = [
 ]
 
 dynamic = ["version"]
+
+[dependency-groups]
+dev = [
+    "pytest >= 6",
+    "find_libpython >= 0.3.0",
+    "numpy >=2 ; python_version >= '3.10'",
+    "numpy <2 ; python_version < '3.10'",
+    "psutil"
+]
 
 [[project.authors]]
 name = "The Contributors of the Python.NET Project"
