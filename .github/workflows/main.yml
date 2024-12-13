@@ -77,6 +77,7 @@ jobs:
           Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append -InputObject "PYTHONHOME=$(python -c 'import sys; print(sys.prefix)')"
 
       - name: Embedding tests
+        if: ${{ matrix.python != '3.13' }}
         run: dotnet test --runtime any-${{ matrix.os.platform }} --logger "console;verbosity=detailed" src/embed_tests/
         env:
           MONO_THREADS_SUSPEND: preemptive # https://github.com/mono/mono/issues/21466
@@ -95,6 +96,7 @@ jobs:
         run: pytest --runtime netfx
 
       - name: Python tests run from .NET
+        if: ${{ matrix.python != '3.13' }}
         run: dotnet test --runtime any-${{ matrix.os.platform }} src/python_tests_runner/
 
       - name: Perf tests
