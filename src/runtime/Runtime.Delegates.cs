@@ -23,7 +23,17 @@ public unsafe partial class Runtime
             Py_EndInterpreter = (delegate* unmanaged[Cdecl]<PyThreadState*, void>)GetFunctionByName(nameof(Py_EndInterpreter), GetUnmanagedDll(_PythonDll));
             PyThreadState_New = (delegate* unmanaged[Cdecl]<PyInterpreterState*, PyThreadState*>)GetFunctionByName(nameof(PyThreadState_New), GetUnmanagedDll(_PythonDll));
             PyThreadState_Get = (delegate* unmanaged[Cdecl]<PyThreadState*>)GetFunctionByName(nameof(PyThreadState_Get), GetUnmanagedDll(_PythonDll));
-            _PyThreadState_UncheckedGet = (delegate* unmanaged[Cdecl]<PyThreadState*>)GetFunctionByName(nameof(_PyThreadState_UncheckedGet), GetUnmanagedDll(_PythonDll));
+            try
+            {
+                // Up until Python 3.13, this function was private and named
+                // slightly differently.
+                PyThreadState_GetUnchecked = (delegate* unmanaged[Cdecl]<PyThreadState*>)GetFunctionByName("_PyThreadState_UncheckedGet", GetUnmanagedDll(_PythonDll));
+            }
+            catch (MissingMethodException)
+            {
+
+                PyThreadState_GetUnchecked = (delegate* unmanaged[Cdecl]<PyThreadState*>)GetFunctionByName(nameof(PyThreadState_GetUnchecked), GetUnmanagedDll(_PythonDll));
+            }
             try
             {
                 PyGILState_Check = (delegate* unmanaged[Cdecl]<int>)GetFunctionByName(nameof(PyGILState_Check), GetUnmanagedDll(_PythonDll));
@@ -313,7 +323,7 @@ public unsafe partial class Runtime
         internal static delegate* unmanaged[Cdecl]<PyThreadState*, void> Py_EndInterpreter { get; }
         internal static delegate* unmanaged[Cdecl]<PyInterpreterState*, PyThreadState*> PyThreadState_New { get; }
         internal static delegate* unmanaged[Cdecl]<PyThreadState*> PyThreadState_Get { get; }
-        internal static delegate* unmanaged[Cdecl]<PyThreadState*> _PyThreadState_UncheckedGet { get; }
+        internal static delegate* unmanaged[Cdecl]<PyThreadState*> PyThreadState_GetUnchecked { get; }
         internal static delegate* unmanaged[Cdecl]<int> PyGILState_Check { get; }
         internal static delegate* unmanaged[Cdecl]<PyGILState> PyGILState_Ensure { get; }
         internal static delegate* unmanaged[Cdecl]<PyGILState, void> PyGILState_Release { get; }

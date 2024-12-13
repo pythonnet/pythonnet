@@ -32,7 +32,13 @@ jobs:
             platform: x64
             instance: macos-13
 
-        python: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
+        python: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+
+        # This fails in pytest with:
+        # CSC : error CS4023: /platform:anycpu32bitpreferred can only be used with /t:exe, /t:winexe and /t:appcontainerexe [D:\a\pythonnet\pythonnet\src\runtime\Python.Runtime.csproj]
+        exclude:
+          - os: { category: windows, platform: x86 }
+            python: ["3.13"]
 
     steps:
       - name: Set Environment on macOS
@@ -77,6 +83,7 @@ jobs:
           Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append -InputObject "PYTHONHOME=$(python -c 'import sys; print(sys.prefix)')"
 
       - name: Embedding tests
+        if: ${{ matrix.python != '3.13' }}
         run: dotnet test --runtime any-${{ matrix.os.platform }} --logger "console;verbosity=detailed" src/embed_tests/
         env:
           MONO_THREADS_SUSPEND: preemptive # https://github.com/mono/mono/issues/21466
@@ -95,6 +102,7 @@ jobs:
         run: pytest --runtime netfx
 
       - name: Python tests run from .NET
+        if: ${{ matrix.python != '3.13' }}
         run: dotnet test --runtime any-${{ matrix.os.platform }} src/python_tests_runner/
 
       - name: Perf tests
