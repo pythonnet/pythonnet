@@ -55,6 +55,7 @@ Sources = "https://github.com/pythonnet/pythonnet"
 [tool.setuptools]
 zip-safe = false
 py-modules = ["clr"]
+license-files = []
 
 [tool.setuptools.dynamic.version]
 file = "version.txt"
