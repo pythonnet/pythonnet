@@ -8,6 +8,9 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 ## Unreleased
 
 ### Added
+
+-  Support for Python 3.13 (#2454)
+
 ### Changed
 ### Fixed
 
