@@ -5,14 +5,11 @@ project adheres to [Semantic Versioning][].
 
 This document follows the conventions laid out in [Keep a CHANGELOG][].
 
-## Unreleased
+## [3.0.5](https://github.com/pythonnet/pythonnet/releases/tag/v3.0.5) - 2024-12-13
 
 ### Added
 
 -  Support for Python 3.13 (#2454)
-
-### Changed
-### Fixed
 
 
 ## [3.0.4](https://github.com/pythonnet/pythonnet/releases/tag/v3.0.4) - 2024-09-19
