@@ -54,6 +54,11 @@ namespace Python.Runtime
             list.Add(m);
         }
 
+        internal void AddRange(IEnumerable<MethodBase> methods)
+        {
+            list.AddRange(methods.Select(m => new MaybeMethodBase(m)));
+        }
+
         /// <summary>
         /// Given a sequence of MethodInfo and a sequence of types, return the
         /// MethodInfo that matches the signature represented by those types.
