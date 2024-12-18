@@ -497,14 +497,8 @@ namespace Python.Runtime
             // Add value to argument list
             Runtime.PyTuple_SetItem(real.Borrow(), i, v);
 
-            cls.indexer.SetItem(ob, real.Borrow());
-
-            if (Exceptions.ErrorOccurred())
-            {
-                return -1;
-            }
-
-            return 0;
+            using var result = cls.indexer.SetItem(ob, real.Borrow());
+            return result.IsNull() ? -1 : 0;
         }
 
         static NewReference tp_call_impl(BorrowedReference ob, BorrowedReference args, BorrowedReference kw)
