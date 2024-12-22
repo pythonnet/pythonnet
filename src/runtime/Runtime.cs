@@ -678,7 +678,7 @@ namespace Python.Runtime
         /// </summary>
         /// <param name="ob">PyObject Ptr</param>
 
-        internal static void Py_DecRef(StolenReference ob) => Delegates.Py_DecRef(ob);
+        internal static void Py_DecRef(StolenReference ob) => Delegates.Py_DecRef(ob.AnalyzerWorkaround());
 
 
         internal static void Py_Initialize() => Delegates.Py_Initialize();
@@ -1445,7 +1445,7 @@ namespace Python.Runtime
 
         internal static BorrowedReference PyList_GetItem(BorrowedReference pointer, nint index) => Delegates.PyList_GetItem(pointer, index);
 
-        internal static int PyList_SetItem(BorrowedReference pointer, nint index, StolenReference value) => Delegates.PyList_SetItem(pointer, index, value);
+        internal static int PyList_SetItem(BorrowedReference pointer, nint index, StolenReference value) => Delegates.PyList_SetItem(pointer, index, value.AnalyzerWorkaround());
 
         internal static int PyList_Insert(BorrowedReference pointer, nint index, BorrowedReference value) => Delegates.PyList_Insert(pointer, index, value);
 
@@ -1483,7 +1483,7 @@ namespace Python.Runtime
             return PyTuple_SetItem(pointer, index, newRef.Steal());
         }
 
-        internal static int PyTuple_SetItem(BorrowedReference pointer, nint index, StolenReference value) => Delegates.PyTuple_SetItem(pointer, index, value);
+        internal static int PyTuple_SetItem(BorrowedReference pointer, nint index, StolenReference value) => Delegates.PyTuple_SetItem(pointer, index, value.AnalyzerWorkaround());
 
         internal static NewReference PyTuple_GetSlice(BorrowedReference pointer, nint start, nint end) => Delegates.PyTuple_GetSlice(pointer, start, end);
 
@@ -1643,7 +1643,7 @@ namespace Python.Runtime
         internal static NewReference PyObject_GenericGetDict(BorrowedReference o) => PyObject_GenericGetDict(o, IntPtr.Zero);
         internal static NewReference PyObject_GenericGetDict(BorrowedReference o, IntPtr context) => Delegates.PyObject_GenericGetDict(o, context);
 
-        internal static void PyObject_GC_Del(StolenReference ob) => Delegates.PyObject_GC_Del(ob);
+        internal static void PyObject_GC_Del(StolenReference ob) => Delegates.PyObject_GC_Del(ob.AnalyzerWorkaround());
 
 
         internal static bool PyObject_GC_IsTracked(BorrowedReference ob)
@@ -1706,7 +1706,7 @@ namespace Python.Runtime
         internal static void PyErr_Fetch(out NewReference type, out NewReference val, out NewReference tb) => Delegates.PyErr_Fetch(out type, out val, out tb);
 
 
-        internal static void PyErr_Restore(StolenReference type, StolenReference val, StolenReference tb) => Delegates.PyErr_Restore(type, val, tb);
+        internal static void PyErr_Restore(StolenReference type, StolenReference val, StolenReference tb) => Delegates.PyErr_Restore(type.AnalyzerWorkaround(), val.AnalyzerWorkaround(), tb.AnalyzerWorkaround());
 
 
         internal static void PyErr_Clear() => Delegates.PyErr_Clear();
@@ -1724,7 +1724,7 @@ namespace Python.Runtime
         /// Set the cause associated with the exception to cause. Use NULL to clear it. There is no type check to make sure that cause is either an exception instance or None. This steals a reference to cause.
         /// </summary>
         internal static void PyException_SetCause(BorrowedReference ex, StolenReference cause)
-            => Delegates.PyException_SetCause(ex, cause);
+            => Delegates.PyException_SetCause(ex, cause.AnalyzerWorkaround());
         internal static int PyException_SetTraceback(BorrowedReference ex, BorrowedReference tb)
             => Delegates.PyException_SetTraceback(ex, tb);
 
