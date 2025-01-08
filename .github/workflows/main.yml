@@ -37,8 +37,10 @@ jobs:
         # This fails in pytest with:
         # CSC : error CS4023: /platform:anycpu32bitpreferred can only be used with /t:exe, /t:winexe and /t:appcontainerexe [D:\a\pythonnet\pythonnet\src\runtime\Python.Runtime.csproj]
         exclude:
-          - os: { category: windows, platform: x86 }
-            python: ["3.13"]
+          - os: 
+              category: windows
+              platform: x86
+            python: "3.13"
 
     steps:
       - name: Set Environment on macOS
