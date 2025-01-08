@@ -59,7 +59,7 @@
 -   Peter Kese ([@pkese](https://github.com/pkese))
 -   Raphael Nestler ([@rnestler](https://github.com/rnestler))
 -   Rickard Holmberg ([@rickardraysearch](https://github.com/rickardraysearch))
--   Roberto pastor Muela ([@RobPasMue](https://github.com/RobPasMue))
+-   Roberto Pastor Muela ([@RobPasMue](https://github.com/RobPasMue))
 -   Sam Winstanley ([@swinstanley](https://github.com/swinstanley))
 -   Sean Freitag ([@cowboygneox](https://github.com/cowboygneox))
 -   Serge Weinstock ([@sweinst](https://github.com/sweinst))
