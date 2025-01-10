@@ -129,7 +129,7 @@ class MutableSequenceTests(SequenceTests):
     def test_delitem(self):
         arr = self.get_copy()
         exp_lst = list(arr)[:-1]
-        del arr[-1]
+        del arr[len(arr) - 1]
         assert list(arr) == exp_lst
 
     @pytest.mark.xfail(reason='Known to crash', run=False)
@@ -143,16 +143,16 @@ class MutableSequenceTests(SequenceTests):
     def test_insert(self):
         arr = self.get_copy()
         length = len(arr)
-        arr.insert(1, 333)
+        arr.insert(1, self.vtype(333))
         assert len(arr) == length + 1
-        assert arr[1] == 333
+        assert arr[1] == self.vtype(333)
 
     def test_append(self):
         arr = self.get_copy()
         orig_length = len(arr)
-        arr.append(444)
+        arr.append(self.vtype(444))
         assert len(arr) == orig_length + 1
-        assert arr[orig_length] == 444
+        assert arr[orig_length] == self.vtype(444)
 
     @pytest.mark.xfail(reason='Known to crash', run=False)
     def test_pop(self):
@@ -200,7 +200,7 @@ class MutableSequenceTests(SequenceTests):
     def test_iadd(self):
         arr = self.get_copy()
         orig_length = len(arr)
-        arr += [777, 888]
+        arr += [self.vtype(777), self.vtype(888)]
         assert exactly_equal(arr[orig_length    ], self.vtype(777))
         assert exactly_equal(arr[orig_length + 1], self.vtype(888))
         assert len(arr) == orig_length + 2
