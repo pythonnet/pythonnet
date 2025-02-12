@@ -64,6 +64,13 @@ Embedding Python in .NET
    (internal, derived from ``MissingMethodException``) upon calling ``Initialize``.
    Typical values are ``python38.dll`` (Windows), ``libpython3.8.dylib`` (Mac),
    ``libpython3.8.so`` (most other Unix-like operating systems).
+.. code-block:: csharp
+
+    // Do Initialize python dll like that (windows example)
+    Runtime.PythonDLL = @"python313.dll";
+    // Do Not Initialize python dll like that (windows example)
+    Runtime.PythonDLL = @"C:\Users\*******\AppData\Local\Programs\Python\Python313\python313.dll";
+
 -  Then call ``PythonEngine.Initialize()``. If you plan to use Python objects from
    multiple threads, also call ``PythonEngine.BeginAllowThreads()``.
 -  All calls to python should be inside a
