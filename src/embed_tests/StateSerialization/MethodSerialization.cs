@@ -33,6 +33,10 @@ public class MethodSerialization
     {
         using var buf = new MemoryStream();
         var formatter = RuntimeData.CreateFormatter();
+
+        if (formatter == null)
+            Assert.Inconclusive("Failed to create formatter for state serialization");
+
         formatter.Serialize(buf, item);
         buf.Position = 0;
         return (T)formatter.Deserialize(buf);
