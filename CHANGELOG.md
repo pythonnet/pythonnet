@@ -11,6 +11,8 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 -  Support `del obj[...]` for types derived from `IList<T>` and `IDictionary<K, V>`
 -  Support for .NET Framework 4.6.1 (#2701)
+-  Add context manager protocol for .NET IDisposable types, allowing use of `with` statements
+   for IDisposable objects (#2568)
 
 ### Changed
 ### Fixed
