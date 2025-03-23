@@ -9,7 +9,7 @@
 -   Barton Cline ([@BartonCline](https://github.com/BartonCline))
 -   Brian Lloyd ([@brianlloyd](https://github.com/brianlloyd))
 -   David Anthoff ([@davidanthoff](https://github.com/davidanthoff))
--   Denis Akhiyarov ([@denfromufa](https://github.com/denfromufa))
+-   Denis Akhiyarov ([@den-run-ai](https://github.com/den-run-ai))
 -   Tony Roberts ([@tonyroberts](https://github.com/tonyroberts))
 -   Victor Uriarte ([@vmuriart](https://github.com/vmuriart))
 
