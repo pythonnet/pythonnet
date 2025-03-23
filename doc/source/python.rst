@@ -479,6 +479,34 @@ Python idioms:
    for item in domain.GetAssemblies():
        name = item.GetName()
 
+Using Context Managers (IDisposable)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.NET types that implement ``IDisposable`` can be used with Python's context manager
+protocol using the standard ``with`` statement. This automatically calls the object's
+``Dispose()`` method when exiting the ``with`` block:
+
+.. code:: python
+
+   from System.IO import MemoryStream, StreamWriter
+
+   # Use a MemoryStream as a context manager
+   with MemoryStream() as stream:
+       # The stream is automatically disposed when exiting the with block
+       writer = StreamWriter(stream)
+       writer.Write("Hello, context manager!")
+       writer.Flush()
+       
+       # Do something with the stream
+       stream.Position = 0
+       # ...
+
+   # After exiting the with block, the stream is disposed
+   # Attempting to use it here would raise an exception
+
+This works for any .NET type that implements ``IDisposable``, making resource
+management much cleaner and safer in Python code.
+
 Type Conversion
 ---------------
 
