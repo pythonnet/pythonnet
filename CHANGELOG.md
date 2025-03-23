@@ -8,6 +8,9 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 ## Unreleased
 
 ### Added
+
+- Add context manager protocol for .NET IDisposable types, allowing use of `with` statements for IDisposable objects (#9c73c35)
+
 ### Changed
 ### Fixed
 
