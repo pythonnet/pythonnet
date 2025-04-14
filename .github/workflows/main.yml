@@ -64,11 +64,6 @@ jobs:
           python-version: ${{ matrix.python }}
           enable-cache: true
 
-      - name: Install dependencies
-        run: |
-          uv venv --python ${{ matrix.python }}
-          uv sync
-
       - name: Set Python DLL path and PYTHONHOME (non Windows)
         if: ${{ matrix.os.category != 'windows' }}
         run: |
