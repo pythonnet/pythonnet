@@ -58,7 +58,7 @@ jobs:
           dotnet-version: '6.0.x'
 
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v5
         with:
           architecture: ${{ matrix.os.platform }}
           python-version: ${{ matrix.python }}
