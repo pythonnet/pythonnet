@@ -67,33 +67,33 @@ jobs:
       - name: Set Python DLL path and PYTHONHOME (non Windows)
         if: ${{ matrix.os.category != 'windows' }}
         run: |
-          echo PYTHONNET_PYDLL=$(find_libpython) >> $GITHUB_ENV
+          echo PYTHONNET_PYDLL=$(uv run find_libpython) >> $GITHUB_ENV
 
       - name: Set Python DLL path and PYTHONHOME (Windows)
         if: ${{ matrix.os.category == 'windows' }}
         run: |
-          Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append -InputObject "PYTHONNET_PYDLL=$(find_libpython)"
+          Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append -InputObject "PYTHONNET_PYDLL=$(uv run find_libpython)"
 
       - name: Embedding tests
-        run: dotnet test --runtime any-${{ matrix.os.platform }} --logger "console;verbosity=detailed" src/embed_tests/
+        run: uv run dotnet test --runtime any-${{ matrix.os.platform }} --logger "console;verbosity=detailed" src/embed_tests/
         env:
           MONO_THREADS_SUSPEND: preemptive # https://github.com/mono/mono/issues/21466
 
       - name: Python Tests (Mono)
         if: ${{ matrix.os.category != 'windows' }}
-        run: pytest --runtime mono
+        run: uv run pytest --runtime mono
 
       # TODO: Run these tests on Windows x86
       - name: Python Tests (.NET Core)
         if: ${{ matrix.os.platform == 'x64' }}
-        run: pytest --runtime coreclr
+        run: uv run pytest --runtime coreclr
 
       - name: Python Tests (.NET Framework)
         if: ${{ matrix.os.category == 'windows' }}
-        run: pytest --runtime netfx
+        run: uv run pytest --runtime netfx
 
       - name: Python tests run from .NET
-        run: dotnet test --runtime any-${{ matrix.os.platform }} src/python_tests_runner/
+        run: uv run dotnet test --runtime any-${{ matrix.os.platform }} src/python_tests_runner/
 
       - name: Perf tests
         if: ${{ (matrix.python == '3.8') && (matrix.os.platform == 'x64') }}
