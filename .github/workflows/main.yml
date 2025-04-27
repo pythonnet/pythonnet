@@ -68,7 +68,7 @@ jobs:
       - name: Set Python DLL path and PYTHONHOME (non Windows)
         if: ${{ matrix.os.category != 'windows' }}
         run: |
-          echo PYTHONNET_PYDLL=$(find_libpython) >> $GITHUB_ENV
+          echo PYTHONNET_PYDLL=$(uv run find_libpython) >> $GITHUB_ENV
 
       - name: Set Python DLL path and PYTHONHOME (Windows)
         if: ${{ matrix.os.category == 'windows' }}
