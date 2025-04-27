@@ -94,11 +94,11 @@ jobs:
         run: pytest --runtime netfx
 
       - name: Python tests run from .NET
-        run: dotnet test --runtime any-${{ matrix.os.platform }} src/python_tests_runner/
+        run: uv run dotnet test --runtime any-${{ matrix.os.platform }} src/python_tests_runner/
 
       - name: Perf tests
         if: ${{ (matrix.python == '3.8') && (matrix.os.platform == 'x64') }}
         run: |
           uv pip install --force --no-deps --target src/perf_tests/baseline/ pythonnet==2.5.2
-          dotnet test --configuration Release --runtime any-${{ matrix.os.platform }} --logger "console;verbosity=detailed" src/perf_tests/
+          uv run dotnet test --configuration Release --runtime any-${{ matrix.os.platform }} --logger "console;verbosity=detailed" src/perf_tests/
       # TODO: Run mono tests on Windows?
