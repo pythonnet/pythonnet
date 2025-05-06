@@ -9,6 +9,12 @@ using System.Linq;
 namespace Python.Runtime
 {
     using MaybeMethodBase = MaybeMethodBase<MethodBase>;
+
+    public delegate void MethodBinderCoerceBindDelegate(
+        Dictionary<string, PyObject> arguments,
+        MethodBase[] methods,
+        ref MethodBase? foundBinding);
+
     /// <summary>
     /// A MethodBinder encapsulates information about a (possibly overloaded)
     /// managed method, and is responsible for selecting the right method given
@@ -516,7 +522,7 @@ namespace Python.Runtime
                     }
                 }
 
-                return new Binding(mi, target, margs, outs);
+                return CoerceResult(new Binding(mi, target, margs, outs));
             }
             else if (matchGenerics && isGeneric)
             {
@@ -528,7 +534,7 @@ namespace Python.Runtime
                 MethodInfo[] overloads = MatchParameters(methods, types);
                 if (overloads.Length != 0)
                 {
-                    return Bind(inst, args, kwargDict, overloads, matchGenerics: false);
+                    return CoerceResult(Bind(inst, args, kwargDict, overloads, matchGenerics: false));
                 }
             }
             if (mismatchedMethods.Count > 0)
@@ -537,6 +543,19 @@ namespace Python.Runtime
                 Exceptions.SetError(aggregateException);
             }
             return null;
+
+            Binding? CoerceResult(Binding? binding)
+            {
+                if (binding is not null)
+                {
+                    var foundMethod = binding.info;
+                    MethodBinderEvents.CoerceBind?.Invoke(kwargDict, methods, ref foundMethod);
+                    if (foundMethod is null)
+                        return null;
+                }
+
+                return binding;
+            }
         }
 
         static AggregateException GetAggregateException(IEnumerable<MismatchedMethod> mismatchedMethods)
@@ -1067,5 +1086,10 @@ namespace Python.Runtime
                     return null;
             }
         }
+    }
+
+    public static class MethodBinderEvents
+    {
+        public static MethodBinderCoerceBindDelegate? CoerceBind;
     }
 }
