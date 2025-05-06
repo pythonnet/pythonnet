@@ -10,6 +10,16 @@ namespace Python.Runtime
 {
     using MaybeMethodBase = MaybeMethodBase<MethodBase>;
 
+    /// <summary>
+    /// Delegate for custom coercion logic during Python method binding.
+    /// </summary>
+    /// <param name="arguments">A dictionary containing the Python arguments passed to the method.</param>
+    /// <param name="methods">An array of method overloads being considered for binding.</param>
+    /// <param name="foundBinding">
+    /// A reference to the method that was successfully bound. This can be modified by the delegate
+    /// to override the default binding logic. The delegate can set this to null to disable the method call
+    /// and report an error.
+    /// </param>
     public delegate void MethodBinderCoerceBindDelegate(
         Dictionary<string, PyObject> arguments,
         MethodBase[] methods,
@@ -1088,8 +1098,14 @@ namespace Python.Runtime
         }
     }
 
+    /// <summary>
+    /// Provides events related to method binding in the MethodBinder class.
+    /// </summary>
     public static class MethodBinderEvents
     {
+        /// <summary>
+        /// Event triggered to allow custom coercion logic during method binding.
+        /// </summary>
         public static MethodBinderCoerceBindDelegate? CoerceBind;
     }
 }
