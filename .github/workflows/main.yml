@@ -37,7 +37,7 @@ jobs:
         # This fails in pytest with:
         # CSC : error CS4023: /platform:anycpu32bitpreferred can only be used with /t:exe, /t:winexe and /t:appcontainerexe [D:\a\pythonnet\pythonnet\src\runtime\Python.Runtime.csproj]
         exclude:
-          - os: 
+          - os:
               category: windows
               platform: x86
             python: "3.13"
@@ -55,7 +55,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: '6.0.x'
+          dotnet-version: '8.0.x'
 
       - name: Set up Python ${{ matrix.python }}
         uses: actions/setup-python@v2
