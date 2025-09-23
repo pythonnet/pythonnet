@@ -15,18 +15,43 @@ namespace Python.Runtime
 {
     public static class RuntimeData
     {
+        //TODO: put it in a utility class instead of inside the RuntimeData Class.
+        private static Version? GetNetVersion(string verToCheck)
+        {
+            // Examples:
+            // ".NET 8.0.0"
+            // ".NET 9.0.0"
+            // ".NET Framework 4.8.1"
+            // ".NET Core 3.1.32"
+            string desc = RuntimeInformation.FrameworkDescription;
+            if (desc.StartsWith(verToCheck, StringComparison.OrdinalIgnoreCase))
+            {
+                var verStr = desc.Split(' ').Last();
+                if (Version.TryParse(verStr, out var ver))
+                    return ver;
+            }
+            return null;
+        }
 
         public readonly static Func<IFormatter> DefaultFormatterFactory = () =>
         {
-            try
+            //The issue here is that just instancing BynaryFormatter doesn't solve the problem.
+            //you need to use it to generate the exception.
+            /*try
             {
                 return new BinaryFormatter();
             }
             catch
             {
                 return new NoopFormatter();
+            }*/
+            var ver = GetNetVersion(".NET");
+            if(ver != null && ver.Major >= 9) {
+                return new NoopFormatter();
+            } else {
+                return new BinaryFormatter();
             }
-        };
+        }
 
         private static Func<IFormatter> _formatterFactory { get; set; } = DefaultFormatterFactory;
 
