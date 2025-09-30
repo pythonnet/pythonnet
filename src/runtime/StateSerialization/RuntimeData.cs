@@ -51,7 +51,7 @@ namespace Python.Runtime
             } else {
                 return new BinaryFormatter();
             }
-        }
+        };
 
         private static Func<IFormatter> _formatterFactory { get; set; } = DefaultFormatterFactory;
 
