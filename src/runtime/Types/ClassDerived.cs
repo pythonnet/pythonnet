@@ -198,12 +198,15 @@ namespace Python.Runtime
 
             // Override any properties explicitly overridden in python
             var pyProperties = new HashSet<string>();
+            var dictKeys = new HashSet<string>();
             if (py_dict != null && Runtime.PyDict_Check(py_dict))
             {
                 using var dict = new PyDict(py_dict);
                 using var keys = dict.Keys();
                 foreach (PyObject pyKey in keys)
                 {
+                    var keyString = pyKey.As<string>();
+                    dictKeys.Add(keyString);
                     using var value = dict[pyKey];
                     if (value.HasAttr("_clr_property_type_"))
                     {
@@ -239,11 +242,18 @@ namespace Python.Runtime
                     continue;
                 }
 
+                // if the name of the method is not in the dict keys, then the method is not explicitly
+                // declared in the python code and we dont need to add it here.
+                bool isDeclared = dictKeys.Contains(method.Name);
+                if (!isDeclared)
+                    continue;
+
                 // keep track of the virtual methods redirected to the python instance
                 virtualMethods.Add(method.Name);
 
+
                 // override the virtual method to call out to the python method, if there is one.
-                AddVirtualMethod(method, baseType, typeBuilder);
+                AddVirtualMethod(method, baseType, typeBuilder, isDeclared);
             }
 
             // Add any additional methods and properties explicitly exposed from Python.
@@ -271,34 +281,42 @@ namespace Python.Runtime
                 }
             }
 
-            // add the destructor so the python object created in the constructor gets destroyed
-            MethodBuilder methodBuilder = typeBuilder.DefineMethod("Finalize",
-                MethodAttributes.Family |
-                MethodAttributes.Virtual |
-                MethodAttributes.HideBySig,
-                CallingConventions.Standard,
-                typeof(void),
-                Type.EmptyTypes);
-            ILGenerator il = methodBuilder.GetILGenerator();
-            il.Emit(OpCodes.Ldarg_0);
+
+            // only add finalizer if it has not allready been added on a base type.
+            // otherwise PyFinalize will be called multiple times for the same object,
+            // causing an access violation exception on some platforms.
+            // to see if this is the case, we can check if the base type is a IPythonDerivedType if so, it already
+            // has the finalizer.
+            if (typeof(IPythonDerivedType).IsAssignableFrom(baseType) == false)
+            {
+                // add the destructor so the python object created in the constructor gets destroyed
+                MethodBuilder methodBuilder = typeBuilder.DefineMethod("Finalize",
+                    MethodAttributes.Family |
+                    MethodAttributes.Virtual |
+                    MethodAttributes.HideBySig,
+                    CallingConventions.Standard,
+                    typeof(void),
+                    Type.EmptyTypes);
+                ILGenerator il = methodBuilder.GetILGenerator();
+                il.Emit(OpCodes.Ldarg_0);
 #pragma warning disable CS0618 // PythonDerivedType is for internal use only
-            il.Emit(OpCodes.Call, typeof(PythonDerivedType).GetMethod(nameof(PyFinalize)));
+                il.Emit(OpCodes.Call, typeof(PythonDerivedType).GetMethod(nameof(PyFinalize)));
 #pragma warning restore CS0618 // PythonDerivedType is for internal use only
-            il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Call, baseClass.GetMethod("Finalize", BindingFlags.NonPublic | BindingFlags.Instance));
-            il.Emit(OpCodes.Ret);
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Call, baseClass.GetMethod("Finalize", BindingFlags.NonPublic | BindingFlags.Instance));
+                il.Emit(OpCodes.Ret);
+            }
 
             Type type = typeBuilder.CreateType();
 
-            // scan the assembly so the newly added class can be imported
+            // scan the assembly so the newly added class can be imported.
             Assembly assembly = Assembly.GetAssembly(type);
             AssemblyManager.ScanAssembly(assembly);
 
-            // FIXME: assemblyBuilder not used
-            AssemblyBuilder assemblyBuilder = assemblyBuilders[assemblyName];
-
             return type;
         }
+
+
 
         /// <summary>
         /// Add a constructor override that calls the python ctor after calling the base type constructor.
@@ -368,7 +386,8 @@ namespace Python.Runtime
         /// <param name="method">virtual method to be overridden</param>
         /// <param name="baseType">Python callable object</param>
         /// <param name="typeBuilder">TypeBuilder for the new type the method is to be added to</param>
-        private static void AddVirtualMethod(MethodInfo method, Type baseType, TypeBuilder typeBuilder)
+        /// <param name="isDeclared"></param>
+        private static void AddVirtualMethod(MethodInfo method, Type baseType, TypeBuilder typeBuilder, bool isDeclared)
         {
             ParameterInfo[] parameters = method.GetParameters();
             Type[] parameterTypes = (from param in parameters select param.ParameterType).ToArray();
@@ -720,12 +739,15 @@ namespace Python.Runtime
             {
                 var disposeList = new List<PyObject>();
                 PyGILState gs = Runtime.PyGILState_Ensure();
+
+
                 try
                 {
                     using var pyself = new PyObject(self.CheckRun());
                     using PyObject method = pyself.GetAttr(methodName, Runtime.None);
                     if (method.Reference != Runtime.PyNone)
                     {
+
                         // if the method hasn't been overridden then it will be a managed object
                         ManagedType? managedMethod = ManagedType.GetManagedObject(method.Reference);
                         if (null == managedMethod)
