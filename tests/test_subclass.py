@@ -9,7 +9,7 @@
 import System
 import pytest
 from Python.Test import (IInterfaceTest, SubClassTest, EventArgsTest,
-                         FunctionsTest, IGenericInterface, GenericVirtualMethodTest, SimpleClass, ISayHello1)
+                         FunctionsTest, IGenericInterface, GenericVirtualMethodTest, SimpleClass, SimpleClass2, ISayHello1)
 from System.Collections.Generic import List
 
 
@@ -355,7 +355,7 @@ def test_multi_level_subclass():
     exception if a method was not implemented in the middle of the tree.
     """
     import clr
-    class DualSubClass0(ISayHello1, SimpleClass):
+    class DualSubClass0(ISayHello1, SimpleClass2):
         __namespace__ = "Test"
         def SayHello(self):
             return "hello"

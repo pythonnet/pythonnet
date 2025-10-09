@@ -396,7 +396,7 @@ namespace Python.Runtime
             string? baseMethodName = null;
             if (!method.IsAbstract)
             {
-                baseMethodName = "_" + baseType.Name + "__" + method.Name;
+                baseMethodName = "_" + method.DeclaringType.Name + "__" + method.Name;
                 MethodBuilder baseMethodBuilder = typeBuilder.DefineMethod(baseMethodName,
                     MethodAttributes.Public |
                     MethodAttributes.Final |

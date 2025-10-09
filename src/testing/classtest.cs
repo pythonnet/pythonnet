@@ -76,4 +76,9 @@ namespace Python.Test
             return "!";
         }
     }
+
+    public class SimpleClass2 : SimpleClass
+    {
+        // this class does not override SayGoodbye.
+    }
 }
