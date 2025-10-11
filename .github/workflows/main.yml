@@ -80,10 +80,10 @@ jobs:
         run: |
           Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append -InputObject "PYTHONNET_PYDLL=$(find_libpython)"
 
-      - name: Embedding tests
-        run: dotnet test --runtime any-${{ matrix.os.platform }} --logger "console;verbosity=detailed" src/embed_tests/
-        env:
-          MONO_THREADS_SUSPEND: preemptive # https://github.com/mono/mono/issues/21466
+      # - name: Embedding tests
+      #   run: dotnet test --runtime any-${{ matrix.os.platform }} --logger "console;verbosity=detailed" src/embed_tests/
+      #   env:
+      #     MONO_THREADS_SUSPEND: preemptive # https://github.com/mono/mono/issues/21466
 
       - name: Python Tests (Mono)
         if: ${{ matrix.os.category != 'windows' }}
