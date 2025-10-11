@@ -70,12 +70,12 @@ jobs:
       - name: Set Python DLL path and PYTHONHOME (non Windows)
         if: ${{ matrix.os.category != 'windows' }}
         run: |
-          echo PYTHONNET_PYDLL=$(uv run find_libpython) >> $GITHUB_ENV
+          echo PYTHONNET_PYDLL=$(find_libpython) >> $GITHUB_ENV
 
       - name: Set Python DLL path and PYTHONHOME (Windows)
         if: ${{ matrix.os.category == 'windows' }}
         run: |
-          Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append -InputObject "PYTHONNET_PYDLL=$(uv run find_libpython)"
+          Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append -InputObject "PYTHONNET_PYDLL=$(find_libpython)"
 
       - name: Embedding tests
         run: dotnet test --runtime any-${{ matrix.os.platform }} --logger "console;verbosity=detailed" src/embed_tests/
@@ -96,4 +96,4 @@ jobs:
         run: pytest --runtime netfx
 
       - name: Python tests run from .NET
-        run: uv run dotnet test --runtime any-${{ matrix.os.platform }} src/python_tests_runner/
+        run: dotnet test --runtime any-${{ matrix.os.platform }} src/python_tests_runner/
