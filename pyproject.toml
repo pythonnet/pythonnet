@@ -37,10 +37,10 @@ dynamic = ["version"]
 [dependency-groups]
 dev = [
     "pytest >= 6",
-    "find_libpython >= 0.3.0",
+    "find-libpython>=0.3.0",
     "numpy >=2 ; python_version >= '3.10'",
     "numpy <2 ; python_version < '3.10'",
-    "psutil"
+    "psutil",
 ]
 
 [[project.authors]]
