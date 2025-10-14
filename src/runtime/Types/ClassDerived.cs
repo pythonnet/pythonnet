@@ -253,7 +253,7 @@ namespace Python.Runtime
 
 
                 // override the virtual method to call out to the python method, if there is one.
-                AddVirtualMethod(method, baseType, typeBuilder, isDeclared);
+                AddVirtualMethod(method, typeBuilder);
             }
 
             // Add any additional methods and properties explicitly exposed from Python.
@@ -384,10 +384,8 @@ namespace Python.Runtime
         /// and calls it, otherwise fall back to the base class method.
         /// </summary>
         /// <param name="method">virtual method to be overridden</param>
-        /// <param name="baseType">Python callable object</param>
         /// <param name="typeBuilder">TypeBuilder for the new type the method is to be added to</param>
-        /// <param name="isDeclared"></param>
-        private static void AddVirtualMethod(MethodInfo method, Type baseType, TypeBuilder typeBuilder, bool isDeclared)
+        private static void AddVirtualMethod(MethodInfo method, TypeBuilder typeBuilder)
         {
             ParameterInfo[] parameters = method.GetParameters();
             Type[] parameterTypes = (from param in parameters select param.ParameterType).ToArray();
