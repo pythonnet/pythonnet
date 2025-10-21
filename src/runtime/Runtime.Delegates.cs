@@ -31,7 +31,6 @@ public unsafe partial class Runtime
             }
             catch (MissingMethodException)
             {
-
                 PyThreadState_GetUnchecked = (delegate* unmanaged[Cdecl]<PyThreadState*>)GetFunctionByName(nameof(PyThreadState_GetUnchecked), GetUnmanagedDll(_PythonDll));
             }
             try
@@ -276,6 +275,15 @@ public unsafe partial class Runtime
             PyThreadState_SetAsyncExcLP64 = (delegate* unmanaged[Cdecl]<ulong, BorrowedReference, int>)GetFunctionByName("PyThreadState_SetAsyncExc", GetUnmanagedDll(_PythonDll));
             PyType_GetSlot = (delegate* unmanaged[Cdecl]<BorrowedReference, TypeSlotID, IntPtr>)GetFunctionByName(nameof(PyType_GetSlot), GetUnmanagedDll(_PythonDll));
             PyType_FromSpecWithBases = (delegate* unmanaged[Cdecl]<in NativeTypeSpec, BorrowedReference, NewReference>)GetFunctionByName(nameof(PyType_FromSpecWithBases), GetUnmanagedDll(PythonDLL));
+
+            PyConfig_InitPythonConfig = (delegate* unmanaged[Cdecl]<IntPtr, void>)GetFunctionByName(nameof(PyConfig_InitPythonConfig), GetUnmanagedDll(_PythonDll));
+            PyConfig_InitIsolatedConfig = (delegate* unmanaged[Cdecl]<IntPtr, void>)GetFunctionByName(nameof(PyConfig_InitIsolatedConfig), GetUnmanagedDll(_PythonDll));
+            PyConfig_SetString = (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, PyStatus>)GetFunctionByName(nameof(PyConfig_SetString), GetUnmanagedDll(_PythonDll));
+
+            Py_InitializeFromConfig = (delegate* unmanaged[Cdecl]<IntPtr, PyStatus>)GetFunctionByName(nameof(Py_InitializeFromConfig), GetUnmanagedDll(_PythonDll));
+            PyConfig_Clear = (delegate* unmanaged[Cdecl]<IntPtr, void>)GetFunctionByName(nameof(PyConfig_Clear), GetUnmanagedDll(_PythonDll));
+            PyStatus_Exception = (delegate* unmanaged[Cdecl]<PyStatus, int>)GetFunctionByName(nameof(PyStatus_Exception), GetUnmanagedDll(_PythonDll));
+            Py_ExitStatusException = (delegate* unmanaged[Cdecl]<PyStatus, void>)GetFunctionByName(nameof(Py_ExitStatusException), GetUnmanagedDll(_PythonDll));
 
             try
             {
@@ -548,5 +556,12 @@ public unsafe partial class Runtime
         internal static delegate* unmanaged[Cdecl]<int> _Py_IsFinalizing { get; }
         internal static IntPtr PyType_Type { get; }
         internal static int* Py_NoSiteFlag { get; }
+        internal static delegate* unmanaged[Cdecl]<IntPtr, void> PyConfig_InitPythonConfig { get; }
+        internal static delegate* unmanaged[Cdecl]<IntPtr, void> PyConfig_InitIsolatedConfig { get; }
+        internal static delegate* unmanaged[Cdecl]<IntPtr, IntPtr, PyStatus> PyConfig_SetString { get; }
+        internal static delegate* unmanaged[Cdecl]<IntPtr, PyStatus> Py_InitializeFromConfig { get; }
+        internal static delegate* unmanaged[Cdecl]<IntPtr, void> PyConfig_Clear { get; }
+        internal static delegate* unmanaged[Cdecl]<PyStatus, int> PyStatus_Exception { get; }
+        internal static delegate* unmanaged[Cdecl]<PyStatus, void> Py_ExitStatusException { get; }
     }
 }
