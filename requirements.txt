@@ -11,4 +11,4 @@ pycparser
 clr-loader==0.2.*
 
 # Discover libpython
-find_libpython==0.3.*
+find_libpython>=0.3,<0.6
