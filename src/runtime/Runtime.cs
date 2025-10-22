@@ -159,11 +159,7 @@ namespace Python.Runtime
             // Initialize modules that depend on the runtime class.
             AssemblyManager.Initialize();
             OperatorMethod.Initialize();
-            if (RuntimeData.HasStashData())
-            {
-                RuntimeData.RestoreRuntimeData();
-            }
-            else
+            if (!RuntimeData.RestoreRuntimeData())
             {
                 PyCLRMetaType = MetaType.Initialize();
                 ImportHook.Initialize();

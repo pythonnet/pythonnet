@@ -112,11 +112,11 @@ namespace Python.Runtime
             PostStashHook?.Invoke();
         }
 
-        internal static void RestoreRuntimeData()
+        internal static bool RestoreRuntimeData()
         {
             try
             {
-                RestoreRuntimeDataImpl();
+                return RestoreRuntimeDataImpl();
             }
             finally
             {
@@ -124,13 +124,13 @@ namespace Python.Runtime
             }
         }
 
-        private static void RestoreRuntimeDataImpl()
+        private static bool RestoreRuntimeDataImpl()
         {
             PreRestoreHook?.Invoke();
             BorrowedReference capsule = PySys_GetObject("clr_data");
             if (capsule.IsNull)
             {
-                return;
+                return false;
             }
             IntPtr mem = PyCapsule_GetPointer(capsule, IntPtr.Zero);
             int length = (int)Marshal.ReadIntPtr(mem);
@@ -138,21 +138,21 @@ namespace Python.Runtime
             Marshal.Copy(mem + IntPtr.Size, data, 0, length);
             var ms = new MemoryStream(data);
             var formatter = CreateFormatter();
-            var storage = (PythonNetState)formatter.Deserialize(ms);
 
-            PyCLRMetaType = MetaType.RestoreRuntimeData(storage.Metatype);
+            if (formatter.Deserialize(ms) is PythonNetState storage)
+            {
+                PyCLRMetaType = MetaType.RestoreRuntimeData(storage.Metatype);
 
-            TypeManager.RestoreRuntimeData(storage.Types);
-            ClassManager.RestoreRuntimeData(storage.Classes);
+                TypeManager.RestoreRuntimeData(storage.Types);
+                ClassManager.RestoreRuntimeData(storage.Classes);
 
-            RestoreRuntimeDataObjects(storage.SharedObjects);
+                RestoreRuntimeDataObjects(storage.SharedObjects);
 
-            ImportHook.RestoreRuntimeData(storage.ImportHookState);
-        }
+                ImportHook.RestoreRuntimeData(storage.ImportHookState);
+                return true;
+            }
 
-        public static bool HasStashData()
-        {
-            return !PySys_GetObject("clr_data").IsNull;
+            return false;
         }
 
         public static void ClearStash()
