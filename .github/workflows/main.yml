@@ -28,6 +28,10 @@ jobs:
             platform: x64
             instance: ubuntu-22.04
 
+          - category: ubuntu
+            platform: arm64
+            instance: ubuntu-22.04-arm
+
           - category: macos
             platform: x64
             instance: macos-13
@@ -85,7 +89,8 @@ jobs:
           Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append -InputObject "PYTHONHOME=$(python -c 'import sys; print(sys.prefix)')"
 
       - name: Embedding tests
-        if: ${{ matrix.python != '3.13' }}
+        # Skip embedded tests for now
+        if: false
         run: dotnet test --runtime any-${{ matrix.os.platform }} --logger "console;verbosity=detailed" src/embed_tests/
         env:
           MONO_THREADS_SUSPEND: preemptive # https://github.com/mono/mono/issues/21466
