@@ -28,6 +28,10 @@ jobs:
             platform: x64
             instance: ubuntu-22.04
 
+          - category: ubuntu
+            platform: arm64
+            instance: ubuntu-22.04-arm
+
           - category: macos
             platform: x64
             instance: macos-13
