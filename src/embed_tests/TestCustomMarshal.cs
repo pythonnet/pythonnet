@@ -6,18 +6,6 @@ namespace Python.EmbeddingTest
 {
     public class TestCustomMarshal
     {
-        [OneTimeSetUp]
-        public void SetUp()
-        {
-            PythonEngine.Initialize();
-        }
-
-        [OneTimeTearDown]
-        public void Dispose()
-        {
-            PythonEngine.Shutdown();
-        }
-
         [Test]
         public static void GetManagedStringTwice()
         {
@@ -27,9 +15,9 @@ namespace Python.EmbeddingTest
             string s1 = Runtime.Runtime.GetManagedString(op.BorrowOrThrow());
             string s2 = Runtime.Runtime.GetManagedString(op.Borrow());
 
-            Assert.AreEqual(1, Runtime.Runtime.Refcount32(op.Borrow()));
-            Assert.AreEqual(expected, s1);
-            Assert.AreEqual(expected, s2);
+            Assert.That(Runtime.Runtime.Refcount32(op.Borrow()), Is.EqualTo(1));
+            Assert.That(s1, Is.EqualTo(expected));
+            Assert.That(s2, Is.EqualTo(expected));
         }
     }
 }

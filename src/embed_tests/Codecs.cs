@@ -8,18 +8,6 @@ namespace Python.EmbeddingTest {
 
     public class Codecs
     {
-        [SetUp]
-        public void SetUp()
-        {
-            PythonEngine.Initialize();
-        }
-
-        [TearDown]
-        public void Dispose()
-        {
-            PythonEngine.Shutdown();
-        }
-
         [Test]
         public void TupleConversionsGeneric()
         {
