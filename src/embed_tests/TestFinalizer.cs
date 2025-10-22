@@ -17,7 +17,6 @@ namespace Python.EmbeddingTest
         public void SetUp()
         {
             _oldThreshold = Finalizer.Instance.Threshold;
-            PythonEngine.Initialize();
             Exceptions.Clear();
         }
 
@@ -25,7 +24,6 @@ namespace Python.EmbeddingTest
         public void TearDown()
         {
             Finalizer.Instance.Threshold = _oldThreshold;
-            PythonEngine.Shutdown();
         }
 
         private static void FullGCCollect()
@@ -38,7 +36,7 @@ namespace Python.EmbeddingTest
         [Obsolete("GC tests are not guaranteed")]
         public void CollectBasicObject()
         {
-            Assert.IsTrue(Finalizer.Instance.Enable);
+            Assert.That(Finalizer.Instance.Enable, Is.True);
 
             Finalizer.Instance.Threshold = 1;
             bool called = false;
@@ -49,7 +47,7 @@ namespace Python.EmbeddingTest
                 called = true;
             };
 
-            Assert.IsFalse(called, "The event handler was called before it was installed");
+            Assert.That(called, Is.False, "The event handler was called before it was installed");
             Finalizer.Instance.BeforeCollect += handler;
 
             IntPtr pyObj = MakeAGarbage(out var shortWeak, out var longWeak);
@@ -60,10 +58,10 @@ namespace Python.EmbeddingTest
                 "The referenced object is alive although it should have been collected",
                 shortWeak
             );
-            Assert.IsTrue(
+            Assert.That(
                 longWeak.IsAlive,
-                "The reference object is not alive although it should still be",
-                longWeak
+                Is.True,
+                $"The reference object is not alive although it should still be"
             );
 
             {
@@ -83,7 +81,7 @@ namespace Python.EmbeddingTest
             {
                 Finalizer.Instance.BeforeCollect -= handler;
             }
-            Assert.IsTrue(called, "The event handler was not called during finalization");
+            Assert.That(called, Is.True, "The event handler was not called during finalization");
             Assert.GreaterOrEqual(objectCount, 1);
         }
 
@@ -93,10 +91,11 @@ namespace Python.EmbeddingTest
         {
             IntPtr op = MakeAGarbage(out var shortWeak, out var longWeak);
             FullGCCollect();
-            Assert.IsFalse(shortWeak.IsAlive);
+            Assert.That(shortWeak.IsAlive, Is.False);
             List<IntPtr> garbage = Finalizer.Instance.GetCollectedObjects();
             Assert.IsNotEmpty(garbage, "The garbage object should be collected");
-            Assert.IsTrue(garbage.Contains(op),
+            Assert.That(garbage.Contains(op),
+                Is.True,
                 "Garbage should contains the collected object");
 
             PythonEngine.Shutdown();
@@ -133,7 +132,7 @@ namespace Python.EmbeddingTest
                 handle = obj.Handle;
             });
             garbageGen.Start();
-            Assert.IsTrue(garbageGen.Join(TimeSpan.FromSeconds(5)), "Garbage creation timed out");
+            Assert.That(garbageGen.Join(TimeSpan.FromSeconds(5)), Is.True, "Garbage creation timed out");
             shortWeak = @short;
             longWeak = @long;
             return handle;
@@ -209,8 +208,8 @@ namespace Python.EmbeddingTest
             Finalizer.IncorrectRefCntHandler handler = (s, e) =>
             {
                 called = true;
-                Assert.AreEqual(ptr, e.Handle);
-                Assert.AreEqual(2, e.ImpactedObjects.Count);
+                Assert.That(e.Handle, Is.EqualTo(ptr));
+                Assert.That(e.ImpactedObjects.Count, Is.EqualTo(2));
                 // Fix for this test, don't do this on general environment
 #pragma warning disable CS0618 // Type or member is obsolete
                 Runtime.Runtime.XIncref(e.Reference);
@@ -223,7 +222,7 @@ namespace Python.EmbeddingTest
                 ptr = CreateStringGarbage();
                 FullGCCollect();
                 Assert.Throws<Finalizer.IncorrectRefCountException>(() => Finalizer.Instance.Collect());
-                Assert.IsTrue(called);
+                Assert.That(called, Is.True);
             }
             finally
             {
