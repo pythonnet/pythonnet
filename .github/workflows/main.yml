@@ -62,7 +62,7 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python }}
           architecture: ${{ matrix.os.platform }}
