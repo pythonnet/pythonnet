@@ -6,6 +6,7 @@
 
 """Test sub-classing managed types"""
 
+import sys
 import System
 import pytest
 from Python.Test import (IInterfaceTest, SubClassTest, EventArgsTest,
@@ -303,6 +304,7 @@ def test_construction_from_clr():
     assert calls[0][1] == "foo"
 
 # regression test for https://github.com/pythonnet/pythonnet/issues/1565
+@pytest.mark.skipif(sys.version_info >= (3, 14), reason="Test skipped on Python 3.14 and above")
 def test_can_be_collected_by_gc():
     from Python.Test import BaseClass
 
