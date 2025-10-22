@@ -20,6 +20,10 @@
 
   <ItemGroup>
     <PackageReference Include="NUnit" Version="3.*" />
+    <PackageReference Include="NUnit.Analyzers" Version="4.10.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="NUnit3TestAdapter" Version="5.*">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

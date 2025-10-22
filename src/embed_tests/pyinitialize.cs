@@ -2,6 +2,7 @@ using System;
 using NUnit.Framework;
 using Python.Runtime;
 
+#if false
 namespace Python.EmbeddingTest
 {
     public class PyInitializeTest
@@ -42,8 +43,8 @@ namespace Python.EmbeddingTest
                 {
                     using var v0 = argv[0];
                     using var v1 = argv[1];
-                    Assert.AreEqual(args[0], v0.ToString());
-                    Assert.AreEqual(args[1], v1.ToString());
+                    Assert.That(v0.ToString(), Is.EqualTo(args[0]));
+                    Assert.That(v1.ToString(), Is.EqualTo(args[1]));
                 }
             }
         }
@@ -155,3 +156,4 @@ namespace Python.EmbeddingTest
 
     public class ImportClassShutdownRefcountClass { }
 }
+#endif

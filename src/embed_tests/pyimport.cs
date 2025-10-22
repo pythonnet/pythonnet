@@ -21,28 +21,28 @@ namespace Python.EmbeddingTest
     /// </remarks>
     public class PyImportTest
     {
+        string TestPath;
+
         [OneTimeSetUp]
         public void SetUp()
         {
-            PythonEngine.Initialize();
-
             /* Append the tests directory to sys.path
              * using reflection to circumvent the private
              * modifiers placed on most Runtime methods. */
-            string testPath = Path.Combine(TestContext.CurrentContext.TestDirectory, "fixtures");
-            TestContext.Out.WriteLine(testPath);
+            TestPath = Path.Combine(TestContext.CurrentContext.TestDirectory, "fixtures");
+            TestContext.Out.WriteLine(TestPath);
 
-            using var str = Runtime.Runtime.PyString_FromString(testPath);
-            Assert.IsFalse(str.IsNull());
+            using var str = Runtime.Runtime.PyString_FromString(TestPath);
+            Assert.That(str.IsNull(), Is.False);
             BorrowedReference path = Runtime.Runtime.PySys_GetObject("path");
-            Assert.IsFalse(path.IsNull);
+            Assert.That(path.IsNull, Is.False);
             Runtime.Runtime.PyList_Append(path, str.Borrow());
         }
 
         [OneTimeTearDown]
         public void Dispose()
         {
-            PythonEngine.Shutdown();
+            // TODO Undo the above
         }
 
         /// <summary>
@@ -89,7 +89,7 @@ namespace Python.EmbeddingTest
                 path = @"C:\Windows\System32\kernel32.dll";
             }
 
-            Assert.IsTrue(File.Exists(path), $"Test DLL {path} does not exist!");
+            Assert.That(File.Exists(path), Is.True, $"Test DLL {path} does not exist!");
 
             string code = $@"
 import clr

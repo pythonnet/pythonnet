@@ -4,7 +4,7 @@
     <AssemblyCopyright>Copyright (c) 2006-2025 The Contributors of the Python.NET Project</AssemblyCopyright>
     <AssemblyCompany>pythonnet</AssemblyCompany>
     <AssemblyProduct>Python.NET</AssemblyProduct>
-    <LangVersion>10.0</LangVersion>
+    <LangVersion>12.0</LangVersion>
     <IsPackable>false</IsPackable>
     <FullVersion>$([System.IO.File]::ReadAllText("$(MSBuildThisFileDirectory)version.txt").Trim())</FullVersion>
     <VersionPrefix>$(FullVersion.Split('-', 2)[0])</VersionPrefix>
