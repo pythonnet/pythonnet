@@ -8,6 +8,12 @@ namespace Python.EmbeddingTest {
 
     public class Codecs
     {
+        [TearDown]
+        public void TearDown()
+        {
+            PyObjectConversions.Reset();
+        }
+
         [Test]
         public void TupleConversionsGeneric()
         {
