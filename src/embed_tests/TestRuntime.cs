@@ -5,6 +5,7 @@ using Python.Runtime;
 
 namespace Python.EmbeddingTest
 {
+    [Ignore("Only works if we can shutdown and re-initialize the Python runtime")]
     public class TestRuntime
     {
         [OneTimeSetUp]

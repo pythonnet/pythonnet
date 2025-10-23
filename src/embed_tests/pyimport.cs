@@ -42,7 +42,8 @@ namespace Python.EmbeddingTest
         [OneTimeTearDown]
         public void Dispose()
         {
-            // TODO Undo the above
+            using var _ = Py.GIL();
+            Py.Import("sys").GetAttr("path").InvokeMethod("remove", new PyString(TestPath));
         }
 
         /// <summary>

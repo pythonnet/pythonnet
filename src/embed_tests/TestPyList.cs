@@ -7,18 +7,6 @@ namespace Python.EmbeddingTest
 {
     public class TestPyList
     {
-        [OneTimeSetUp]
-        public void SetUp()
-        {
-            PythonEngine.Initialize();
-        }
-
-        [OneTimeTearDown]
-        public void Dispose()
-        {
-            PythonEngine.Shutdown();
-        }
-
         [Test]
         public void TestStringIsListType()
         {
