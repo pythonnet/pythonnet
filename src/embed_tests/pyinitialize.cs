@@ -2,9 +2,9 @@ using System;
 using NUnit.Framework;
 using Python.Runtime;
 
-#if false
 namespace Python.EmbeddingTest
 {
+    [Ignore("Only works if we can re-initialize the Python engine")]
     public class PyInitializeTest
     {
         /// <summary>
@@ -156,4 +156,3 @@ namespace Python.EmbeddingTest
 
     public class ImportClassShutdownRefcountClass { }
 }
-#endif

@@ -86,6 +86,7 @@ namespace Python.EmbeddingTest
         }
 
         [Test]
+        [Ignore("Requires explicit shutdown")]
         [Obsolete("GC tests are not guaranteed")]
         public void CollectOnShutdown()
         {
