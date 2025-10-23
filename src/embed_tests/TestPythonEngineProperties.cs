@@ -9,7 +9,6 @@ namespace Python.EmbeddingTest
         [Test]
         public static void GetBuildinfoDoesntCrash()
         {
-            PythonEngine.Initialize();
             using (Py.GIL())
             {
                 string s = PythonEngine.BuildInfo;
@@ -22,7 +21,6 @@ namespace Python.EmbeddingTest
         [Test]
         public static void GetCompilerDoesntCrash()
         {
-            PythonEngine.Initialize();
             using (Py.GIL())
             {
                 string s = PythonEngine.Compiler;
@@ -36,7 +34,6 @@ namespace Python.EmbeddingTest
         [Test]
         public static void GetCopyrightDoesntCrash()
         {
-            PythonEngine.Initialize();
             using (Py.GIL())
             {
                 string s = PythonEngine.Copyright;
@@ -49,7 +46,6 @@ namespace Python.EmbeddingTest
         [Test]
         public static void GetPlatformDoesntCrash()
         {
-            PythonEngine.Initialize();
             using (Py.GIL())
             {
                 string s = PythonEngine.Platform;
@@ -62,7 +58,6 @@ namespace Python.EmbeddingTest
         [Test]
         public static void GetVersionDoesntCrash()
         {
-            PythonEngine.Initialize();
             using (Py.GIL())
             {
                 string s = PythonEngine.Version;
@@ -75,21 +70,17 @@ namespace Python.EmbeddingTest
         [Test]
         public static void GetPythonPathDefault()
         {
-            PythonEngine.Initialize();
             string s = PythonEngine.PythonPath;
 
             StringAssert.Contains("python", s.ToLower());
-            PythonEngine.Shutdown();
         }
 
         [Test]
         public static void GetProgramNameDefault()
         {
-            PythonEngine.Initialize();
             string s = PythonEngine.ProgramName;
 
             Assert.NotNull(s);
-            PythonEngine.Shutdown();
         }
 
         /// <summary>
@@ -101,13 +92,12 @@ namespace Python.EmbeddingTest
         {
             string envPythonHome = Environment.GetEnvironmentVariable("PYTHONHOME") ?? "";
 
-            PythonEngine.Initialize();
             string enginePythonHome = PythonEngine.PythonHome;
 
             Assert.AreEqual(envPythonHome, enginePythonHome);
-            PythonEngine.Shutdown();
         }
 
+        [Ignore("Only works if we can shutdown and re-init the interpreter")]
         [Test]
         public void SetPythonHome()
         {
@@ -130,6 +120,7 @@ namespace Python.EmbeddingTest
             PythonEngine.PythonHome = pythonHomeBackup;
         }
 
+        [Ignore("Only works if we can shutdown and re-init the interpreter")]
         [Test]
         public void SetPythonHomeTwice()
         {
@@ -172,6 +163,7 @@ namespace Python.EmbeddingTest
             PythonEngine.Shutdown();
         }
 
+        [Ignore("Only works if we can shutdown and re-init the interpreter")]
         [Test]
         public void SetProgramName()
         {
@@ -193,6 +185,7 @@ namespace Python.EmbeddingTest
             PythonEngine.ProgramName = programNameBackup;
         }
 
+        [Ignore("Only works if we can shutdown and re-init the interpreter")]
         [Test]
         public void SetPythonPath()
         {

@@ -28,18 +28,6 @@ namespace Python.EmbeddingTest
             }
         }
 
-        [OneTimeSetUp]
-        public void OneTimeSetUp()
-        {
-            PythonEngine.Initialize();
-        }
-
-        [OneTimeTearDown]
-        public void OneTimeTearDown()
-        {
-            PythonEngine.Shutdown();
-        }
-
         /// <summary>
         /// Eval a Python expression and obtain its return value.
         /// </summary>
