@@ -618,6 +618,11 @@ namespace Python.Runtime
             Util.WriteIntPtr(type, TypeOffset.tp_traverse, subtype_traverse);
             Util.WriteIntPtr(type, TypeOffset.tp_clear, subtype_clear);
 
+            // This is a new mechanism in Python 3.14. We should eventually use it to implement
+            // a nicer type check, but for now we just need to ensure that it is set to NULL.
+            if (TypeOffset.ht_token != -1)
+                Util.WriteIntPtr(type, TypeOffset.ht_token, IntPtr.Zero);
+
             InheritSubstructs(type.Reference.DangerousGetAddress());
 
             return type;
