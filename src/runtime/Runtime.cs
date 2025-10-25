@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Collections.Generic;
+using System.IO;
 using Python.Runtime.Native;
 using System.Linq;
 using static System.FormattableString;
@@ -33,7 +34,8 @@ namespace Python.Runtime
         private static string? GetDefaultDllName()
         {
             string dll = Environment.GetEnvironmentVariable("PYTHONNET_PYDLL");
-            if (dll is not null) return dll;
+            if (!string.IsNullOrEmpty(dll))
+                return dll;
 
             string verString = Environment.GetEnvironmentVariable("PYTHONNET_PYVER");
             if (!Version.TryParse(verString, out var version)) return null;
@@ -96,6 +98,42 @@ namespace Python.Runtime
             return runNumber;
         }
 
+        static void EnsureProgramName()
+        {
+            if (!string.IsNullOrEmpty(PythonEngine.ProgramName))
+                return;
+
+            string fromEnv = Environment.GetEnvironmentVariable("PYTHONNET_PYEXE");
+            if (!string.IsNullOrEmpty(fromEnv))
+            {
+                PythonEngine.ProgramName = fromEnv;
+                return;
+            }
+
+            string venv = Environment.GetEnvironmentVariable("VIRTUAL_ENV");
+            if (!string.IsNullOrEmpty(venv))
+            {
+                if (IsWindows)
+                {
+                    var path = Path.Combine(venv, "Scripts", "python.exe");
+                    if (System.IO.File.Exists(path))
+                    {
+                        PythonEngine.ProgramName = path;
+                        return;
+                    }
+                }
+                else
+                {
+                    var path = Path.Combine(venv, "bin", "python");
+                    if (System.IO.File.Exists(path))
+                    {
+                        PythonEngine.ProgramName = path;
+                        return;
+                    }
+                }
+            }
+        }
+
         internal static bool HostedInPython;
         internal static bool ProcessIsTerminating;
 
@@ -117,6 +155,8 @@ namespace Python.Runtime
             );
             if (!interpreterAlreadyInitialized)
             {
+                EnsureProgramName();
+
                 Py_InitializeEx(initSigs ? 1 : 0);
 
                 NewRun();
