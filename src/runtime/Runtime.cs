@@ -19,6 +19,8 @@ namespace Python.Runtime
     /// </summary>
     public unsafe partial class Runtime
     {
+        internal static PythonEnvironment PythonEnvironment = PythonEnvironment.FromEnv();
+
         public static string? PythonDLL
         {
             get => _PythonDll;
@@ -26,34 +28,11 @@ namespace Python.Runtime
             {
                 if (_isInitialized)
                     throw new InvalidOperationException("This property must be set before runtime is initialized");
-                _PythonDll = value;
+                PythonEnvironment.LibPython = value;
             }
         }
 
-        static string? _PythonDll = GetDefaultDllName();
-        private static string? GetDefaultDllName()
-        {
-            string dll = Environment.GetEnvironmentVariable("PYTHONNET_PYDLL");
-            if (!string.IsNullOrEmpty(dll))
-                return dll;
-
-            string verString = Environment.GetEnvironmentVariable("PYTHONNET_PYVER");
-            if (!Version.TryParse(verString, out var version)) return null;
-
-            return GetDefaultDllName(version);
-        }
-
-        private static string GetDefaultDllName(Version version)
-        {
-            string prefix = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "" : "lib";
-            string suffix = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-                ? Invariant($"{version.Major}{version.Minor}")
-                : Invariant($"{version.Major}.{version.Minor}");
-            string ext = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".dll"
-                : RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? ".dylib"
-                : ".so";
-            return prefix + "python" + suffix + ext;
-        }
+        static string? _PythonDll => PythonEnvironment.LibPython;
 
         private static bool _isInitialized = false;
         internal static bool IsInitialized => _isInitialized;
@@ -103,34 +82,10 @@ namespace Python.Runtime
             if (!string.IsNullOrEmpty(PythonEngine.ProgramName))
                 return;
 
-            string fromEnv = Environment.GetEnvironmentVariable("PYTHONNET_PYEXE");
-            if (!string.IsNullOrEmpty(fromEnv))
+            if (PythonEnvironment.IsValid)
             {
-                PythonEngine.ProgramName = fromEnv;
+                PythonEngine.ProgramName = PythonEnvironment.ProgramName!;
                 return;
-            }
-
-            string venv = Environment.GetEnvironmentVariable("VIRTUAL_ENV");
-            if (!string.IsNullOrEmpty(venv))
-            {
-                if (IsWindows)
-                {
-                    var path = Path.Combine(venv, "Scripts", "python.exe");
-                    if (System.IO.File.Exists(path))
-                    {
-                        PythonEngine.ProgramName = path;
-                        return;
-                    }
-                }
-                else
-                {
-                    var path = Path.Combine(venv, "bin", "python");
-                    if (System.IO.File.Exists(path))
-                    {
-                        PythonEngine.ProgramName = path;
-                        return;
-                    }
-                }
             }
         }
 
