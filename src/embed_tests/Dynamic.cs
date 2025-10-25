@@ -8,18 +8,6 @@ namespace Python.EmbeddingTest
 {
     public class DynamicTest
     {
-        [OneTimeSetUp]
-        public void SetUp()
-        {
-            PythonEngine.Initialize();
-        }
-
-        [OneTimeTearDown]
-        public void Dispose()
-        {
-            PythonEngine.Shutdown();
-        }
-
         /// <summary>
         /// Set the attribute of a PyObject with a .NET object.
         /// </summary>

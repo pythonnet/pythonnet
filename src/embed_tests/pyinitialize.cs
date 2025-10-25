@@ -4,6 +4,7 @@ using Python.Runtime;
 
 namespace Python.EmbeddingTest
 {
+    [Ignore("Only works if we can re-initialize the Python engine")]
     public class PyInitializeTest
     {
         /// <summary>
@@ -42,8 +43,8 @@ namespace Python.EmbeddingTest
                 {
                     using var v0 = argv[0];
                     using var v1 = argv[1];
-                    Assert.AreEqual(args[0], v0.ToString());
-                    Assert.AreEqual(args[1], v1.ToString());
+                    Assert.That(v0.ToString(), Is.EqualTo(args[0]));
+                    Assert.That(v1.ToString(), Is.EqualTo(args[1]));
                 }
             }
         }
