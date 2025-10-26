@@ -63,18 +63,21 @@ jobs:
           activate-environment: true
           enable-cache: true
 
-      - name: Embedding tests
-        run: dotnet test --runtime any-${{ matrix.os.platform }} --logger "console;verbosity=detailed" src/embed_tests/
+      - name: Embedding tests (Mono/.NET Framework)
+        run: dotnet test --runtime any-${{ matrix.os.platform }} --framework net472 --logger "console;verbosity=detailed" src/embed_tests/
+        if: always()
         env:
           MONO_THREADS_SUSPEND: preemptive # https://github.com/mono/mono/issues/21466
+
+      - name: Embedding tests (.NET Core)
+        run: dotnet test --runtime any-${{ matrix.os.platform }} --framework net8.0 --logger "console;verbosity=detailed" src/embed_tests/
+        if: always()
 
       - name: Python Tests (Mono)
         if: ${{ matrix.os.category != 'windows' }}
         run: pytest --runtime mono
 
-      # TODO: Run these tests on Windows x86
       - name: Python Tests (.NET Core)
-        if: ${{ matrix.os.platform == 'x64' }}
         run: pytest --runtime coreclr
 
       - name: Python Tests (.NET Framework)
@@ -82,6 +85,4 @@ jobs:
         run: pytest --runtime netfx
 
       - name: Python tests run from .NET
-        run: uv run dotnet test --runtime any-${{ matrix.os.platform }} src/python_tests_runner/
-
-      # TODO: Run mono tests on Windows?
+        run: dotnet test --runtime any-${{ matrix.os.platform }} src/python_tests_runner/
