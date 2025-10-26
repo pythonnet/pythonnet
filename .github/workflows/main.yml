@@ -58,6 +58,7 @@ jobs:
       - name: Set up Python ${{ matrix.python }}
         uses: astral-sh/setup-uv@v6
         with:
+          architecture: ${{ matrix.os.platform }}
           python-version: ${{ matrix.python }}
           activate-environment: true
           enable-cache: true
@@ -77,14 +78,14 @@ jobs:
 
       - name: Python Tests (Mono)
         if: ${{ matrix.os.category != 'windows' }}
-        run: python -m pytest --runtime mono
+        run: pytest --runtime mono
 
       - name: Python Tests (.NET Core)
-        run: python -m pytest --runtime coreclr
+        run: pytest --runtime coreclr
 
       - name: Python Tests (.NET Framework)
         if: ${{ matrix.os.category == 'windows' }}
-        run: python -m pytest --runtime netfx
+        run: pytest --runtime netfx
 
       - name: Python tests run from .NET
         run: dotnet test --runtime any-${{ matrix.os.platform }} src/python_tests_runner/
