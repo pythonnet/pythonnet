@@ -63,6 +63,9 @@ jobs:
           activate-environment: true
           enable-cache: true
 
+      - name: Synchronize the virtual environment
+        run: uv sync
+
       - name: Embedding tests (Mono/.NET Framework)
         run: dotnet test --runtime any-${{ matrix.os.platform }} --framework net472 --logger "console;verbosity=detailed" src/embed_tests/
         if: always()
