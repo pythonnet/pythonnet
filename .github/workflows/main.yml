@@ -58,7 +58,6 @@ jobs:
       - name: Set up Python ${{ matrix.python }}
         uses: astral-sh/setup-uv@v7
         with:
-          architecture: ${{ matrix.os.platform }}
           python-version: ${{ matrix.python }}
           activate-environment: true
           enable-cache: true
