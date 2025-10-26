@@ -78,14 +78,14 @@ jobs:
 
       - name: Python Tests (Mono)
         if: ${{ matrix.os.category != 'windows' }}
-        run: pytest --runtime mono
+        run: python -m pytest --runtime mono
 
       - name: Python Tests (.NET Core)
-        run: pytest --runtime coreclr
+        run: python -m pytest --runtime coreclr
 
       - name: Python Tests (.NET Framework)
         if: ${{ matrix.os.category == 'windows' }}
-        run: pytest --runtime netfx
+        run: python -m pytest --runtime netfx
 
       - name: Python tests run from .NET
         run: dotnet test --runtime any-${{ matrix.os.platform }} src/python_tests_runner/
