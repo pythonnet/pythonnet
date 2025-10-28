@@ -56,7 +56,7 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Set up Python ${{ matrix.python }}
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
         with:
           architecture: ${{ matrix.os.platform }}
           python-version: ${{ matrix.python }}
