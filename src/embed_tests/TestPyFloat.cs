@@ -9,18 +9,6 @@ namespace Python.EmbeddingTest
     /// </remarks>
     public class TestPyFloat
     {
-        [OneTimeSetUp]
-        public void SetUp()
-        {
-            PythonEngine.Initialize();
-        }
-
-        [OneTimeTearDown]
-        public void Dispose()
-        {
-            PythonEngine.Shutdown();
-        }
-
         [Test]
         public void FloatCtor()
         {
@@ -132,14 +120,14 @@ namespace Python.EmbeddingTest
         {
             var v = new PyFloat(42);
 
-            Assert.AreEqual(0, v.CompareTo(42f));
-            Assert.AreEqual(0, v.CompareTo(42d));
+            Assert.That(v.CompareTo(42f), Is.EqualTo(0));
+            Assert.That(v.CompareTo(42d), Is.EqualTo(0));
 
-            Assert.AreEqual(1, v.CompareTo(41f));
-            Assert.AreEqual(1, v.CompareTo(41d));
+            Assert.That(v.CompareTo(41f), Is.EqualTo(1));
+            Assert.That(v.CompareTo(41d), Is.EqualTo(1));
 
-            Assert.AreEqual(-1, v.CompareTo(43f));
-            Assert.AreEqual(-1, v.CompareTo(43d));
+            Assert.That(v.CompareTo(43f), Is.EqualTo(-1));
+            Assert.That(v.CompareTo(43d), Is.EqualTo(-1));
         }
 
         [Test]
@@ -147,11 +135,11 @@ namespace Python.EmbeddingTest
         {
             var v = new PyFloat(42);
 
-            Assert.IsTrue(v.Equals(42f));
-            Assert.IsTrue(v.Equals(42d));
+            Assert.That(v.Equals(42f), Is.True);
+            Assert.That(v.Equals(42d), Is.True);
 
-            Assert.IsFalse(v.Equals(41f));
-            Assert.IsFalse(v.Equals(41d));
+            Assert.That(v.Equals(41f), Is.False);
+            Assert.That(v.Equals(41d), Is.False);
         }
     }
 }

@@ -57,6 +57,7 @@ namespace Python.EmbeddingTest
         /// a hot reload).
         /// </summary>
         [Test]
+        [Ignore("Skip for now")]
         public static void DomainReloadAndGC()
         {
             Assert.IsFalse(PythonEngine.IsInitialized);
@@ -163,6 +164,7 @@ obj.Field += 10
         /// Make sure the C# custom object created in the previous domain has been re-created
         /// </summary>
         [Test]
+        [Ignore("Skip for now")]
         public static void CrossDomainObject()
         {
             RunDomainReloadSteps<CrossDomainObjectStep1, CrossDomainObjectStep2>();

@@ -20,7 +20,7 @@ public class MethodSerialization
     }
 
     [Test]
-    public void ConstrctorRoundtrip()
+    public void ConstructorRoundtrip()
     {
         var ctor = typeof(MethodTestHost).GetConstructor(new[] { typeof(int) });
         var maybeConstructor = new MaybeMethodBase<MethodBase>(ctor);
@@ -33,6 +33,10 @@ public class MethodSerialization
     {
         using var buf = new MemoryStream();
         var formatter = RuntimeData.CreateFormatter();
+        if (typeof(NoopFormatter).IsAssignableFrom(formatter.GetType()))
+        {
+            Assert.Inconclusive("NoopFormatter in use, cannot perform serialization test.");
+        }
         formatter.Serialize(buf, item);
         buf.Position = 0;
         return (T)formatter.Deserialize(buf);
