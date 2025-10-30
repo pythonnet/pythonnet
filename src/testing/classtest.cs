@@ -60,15 +60,4 @@ namespace Python.Test
     internal class InternalClass
     {
     }
-
-    public class SimpleClass
-    {
-        public static void TestObject(object obj)
-        {
-            if ((!(obj is ISayHello1 && obj is SimpleClass)))
-            {
-                throw new Exception("Expected ISayHello and SimpleClass instance");
-            }
-        }
-    }
 }

@@ -7,9 +7,13 @@
 """Test sub-classing managed types"""
 
 import System
+from System import (Console, Attribute, Double)
+from System.Diagnostics import (DebuggerDisplay, DebuggerDisplayAttribute, Debug)
+from System.ComponentModel import (Browsable, BrowsableAttribute)
+from System.Threading import (CancellationToken)
 import pytest
-from Python.Test import (IInterfaceTest, SubClassTest, EventArgsTest,
-                         FunctionsTest, IGenericInterface, GenericVirtualMethodTest, SimpleClass, ISayHello1)
+from Python.Test import (IInterfaceTest, SubClassTest, EventArgsTest, FunctionsTest,IGenericInterface, GenericVirtualMethodTest, ISimpleInterface, SimpleClass, TestAttribute, TestAttributeAttribute, ISimpleInterface2, ISayHello1)
+import Python.Test
 from System.Collections.Generic import List
 
 
@@ -275,6 +279,161 @@ def test_namespace_and_no_init():
     t = TestX()
     assert t.q == 1
 
+def test_virtual_generic_method():
+    class OverloadingSubclass(GenericVirtualMethodTest):
+        __namespace__ = "test_virtual_generic_method_cls"
+    class OverloadingSubclass2(OverloadingSubclass):
+        pass
+    obj = OverloadingSubclass()
+    assert obj.VirtMethod[int](5) == 5
+
+def test_interface_and_class_impl():
+    class OverloadingSubclass(GenericVirtualMethodTest):
+        __namespace__ = "test_virtual_generic_method_cls"
+    class OverloadingSubclass2(OverloadingSubclass):
+        pass
+    obj = OverloadingSubclass()
+    assert obj.VirtMethod[int](5) == 5
+
+def test_interface_and_class_impl2():
+    class DualSubClass(ISimpleInterface, SimpleClass):
+        def Ok(self):
+            return True
+    class DualSubClass2(ISimpleInterface):
+        def Ok(self):
+            return True
+    class DualSubClass3(ISimpleInterface2):
+        def Execute(self, cancellationToken):
+            return 0
+    try:
+        class DualSubClass4(Python.Test.ISimpleInterface3):
+            def Execute(self, cancellationToken):
+                return 0
+        assert False # An exception should be thrown.
+    except AttributeError as ae:
+        assert ("not defined" in str(ae))
+
+    obj = DualSubClass()
+    SimpleClass.TestObject(obj)
+    obj = DualSubClass2()
+    SimpleClass.TestObject(obj)
+
+    obj2 = DualSubClass3();
+    SimpleClass.TestObject(obj2)
+    #obj2.Execute(CancellationToken.None)
+
+def test_class_with_attributes():
+    import clr
+    @clr.attribute(Browsable(False))
+    class ClassWithAttributes(ISimpleInterface, SimpleClass):
+        __clr_attributes__ = [DebuggerDisplay("X: {X}")]
+        @clr.attribute(Browsable(True))
+        def Ok(self):
+            return True
+        @clr.attribute(Browsable(True))
+        @clr.clrmethod(int, [int])
+        def Method1(x):
+            return x
+
+        X = clr.property(Double, 1.0).add_attribute(DebuggerDisplay("Asd"))
+    obj = ClassWithAttributes()
+    tp = obj.GetType()
+    founddisplay = 0
+    foundbrowsable = 0
+    for attr in Attribute.GetCustomAttributes(tp):
+        if isinstance(attr, DebuggerDisplayAttribute):
+            founddisplay = founddisplay + 1
+        if isinstance(attr, BrowsableAttribute):
+            foundbrowsable = foundbrowsable + 1
+    SimpleClass.TestObject(obj)
+    found_display_on_property = 0
+    for attr in Attribute.GetCustomAttributes(tp.GetProperty("X")):
+        if isinstance(attr, DebuggerDisplayAttribute):
+                    found_display_on_property = found_display_on_property + 1
+    found_display_on_method = 0
+    for attr in Attribute.GetCustomAttributes(tp.GetMethod("Method1")):
+            if isinstance(attr, BrowsableAttribute):
+                        found_display_on_method = found_display_on_method + 1
+    assert founddisplay == 1
+    assert found_display_on_property == 1
+    assert found_display_on_method == 1
+    assert foundbrowsable == 1
+    assert obj.X == 1.0
+    SimpleClass.TestObjectProperty(obj, "X", 10.0)
+def test_class_with_advanced_attribute():
+    import clr
+    @clr.attribute(TestAttribute(1, 2, z = "A", W = "B"))
+    class ClassWithAttributes2(ISimpleInterface, SimpleClass):
+        pass
+    @clr.attribute(TestAttributeAttribute, 1, 2, z = "A", W = "B")
+    class ClassWithAttributes3(ISimpleInterface, SimpleClass):
+        X = clr.property(Double, 1.0).add_attribute(TestAttributeAttribute, 1, 2)
+
+    c = ClassWithAttributes2()
+    c2 = ClassWithAttributes3()
+
+def test_subclass_ctor():
+    import clr
+    class SubClass0(SimpleClass):
+        pass
+    class SubClass1(SubClass0):
+        def __init__(self):
+            super().__init__()
+    class SubClass2(SubClass1):
+        __namespace__ = "TestModule"
+        def __init__(self):
+            super().__init__()
+    SimpleClass.TestOnType(SubClass0)
+    SimpleClass.TestOnType(SubClass1)
+    SimpleClass.TestOnType(SubClass2)
+
+def test_more_subclasses():
+    import clr
+    class SubClass0(SimpleClass):
+        pass
+    class SubClass1(SubClass0):
+        X = clr.property(Double, 1.0)
+        def __init__(self):
+            super().__init__()
+            self.Y = 10.0
+            SimpleClass.Pause();
+
+    @clr.attribute(DebuggerDisplay("X"))
+
+    class SubClass2(SubClass1):
+        __namespace__ = "TestModule"
+        def __init__(self):
+            SimpleClass.Pause();
+            super().__init__()
+        def IncrementThing(self):
+            super().IncrementThing()
+            return 6;
+    SimpleClass.TestOnType(SubClass0)
+    SimpleClass.TestOnType(SubClass1)
+    SimpleClass.TestOnType(SubClass2)
+    obj = SimpleClass.InvokeCtor(SubClass2)
+
+    obj2 = SubClass2()
+    tp = obj.GetType()
+    obj.X = 5.0
+    assert obj.Y == 10.0
+    assert obj2.Y == 10.0
+    assert obj.Initialized == True
+    assert obj2.Initialized == True
+    SimpleClass.Test1(obj)
+    obj = None
+    SimpleClass.Test2()
+
+def abstract_test():
+    class abstractClass(SimpleClass):
+        __clr_abstract__ = True
+    failed = False
+    try:
+        abstractClass()
+    except:
+        failed = True
+    assert failed
+
 def test_construction_from_clr():
     import clr
     calls = []
@@ -317,6 +476,29 @@ def test_can_be_collected_by_gc():
 
     import gc
     gc.collect()
+def test_more_subclasses2():
+    import clr
+    class SubClass50(SimpleClass):
+        def __init__(self):
+           super().__init__()
+        def IncrementThing(self):
+           return super().IncrementThing()
+
+    @clr.attribute(DebuggerDisplay("X"))
+
+    class SubClass51(SubClass50):
+        __namespace__ = "TestModule"
+        def __init__(self):
+            super().__init__()
+
+        def IncrementThing(self):
+            return super().IncrementThing() + 10
+    x = SubClass51()
+    print(x.CallIncrementThing())
+    print(x.CallIncrementThing())
+    print(x.CallIncrementThing())
+
+
 
 def test_generic_interface():
     from System import Int32
