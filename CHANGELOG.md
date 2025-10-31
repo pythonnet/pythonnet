@@ -12,6 +12,9 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -  Support `del obj[...]` for types derived from `IList<T>` and `IDictionary<K, V>`
 
 ### Changed
+
+-  Updated clr-loader to v0.2.8
+
 ### Fixed
 
 -  Fixed crash when trying to `del clrObj[...]` for non-arrays
