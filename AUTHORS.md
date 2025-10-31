@@ -36,6 +36,7 @@
 -   David Lassonde ([@lassond](https://github.com/lassond))
 -   David Lechner ([@dlech](https://github.com/dlech))
 -   Dmitriy Se ([@dmitriyse](https://github.com/dmitriyse))
+-   Dmitriy Shepelev ([@DmitriyShepelev](https://github.com/DmitriyShepelev))
 -   Félix Bourbonnais ([@BadSingleton](https://github.com/BadSingleton))
 -   Florian Treurniet ([@ftreurni](https://github.com/ftreurni))
 -   Frank Witscher ([@Frawak](https://github.com/Frawak))
