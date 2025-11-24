@@ -21,7 +21,7 @@ jobs:
           echo "DATE_VER=$(date "+%Y-%m-%d")" >> $GITHUB_ENV
 
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
