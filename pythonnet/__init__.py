@@ -4,6 +4,22 @@ import sys
 from pathlib import Path
 from typing import Dict, Optional, Union, Any
 import clr_loader
+from clr_loader.util.runtime_spec import DotnetCoreRuntimeSpec
+
+# Monkeypatch clr_loader to fix .NET 10 version parsing
+# TODO: Remove this once clr_loader is updated
+def _patched_tfm(self) -> str:
+    parts = self.version.split(".")
+    return f"net{parts[0]}.{parts[1]}"
+
+
+def _patched_floor_version(self) -> str:
+    parts = self.version.split(".")
+    return f"{parts[0]}.{parts[1]}.0"
+
+
+DotnetCoreRuntimeSpec.tfm = property(_patched_tfm)
+DotnetCoreRuntimeSpec.floor_version = property(_patched_floor_version)
 
 __all__ = ["set_runtime", "set_runtime_from_env", "load", "unload", "get_runtime_info"]
 
