@@ -392,7 +392,12 @@ namespace Python.Runtime
                 using var dict = Runtime.PyObject_GenericGetDict(ob);
                 if (Runtime.PyMapping_HasKey(dict.Borrow(), PyIdentifier.__clear_reentry_guard__) != 0)
                     return 0;
-                int res = Runtime.PyDict_SetItem(dict.Borrow(), PyIdentifier.__clear_reentry_guard__, Runtime.None);
+
+                int res = Runtime.PyDict_SetItem(
+                    dict.Borrow(),
+                    PyIdentifier.__clear_reentry_guard__,
+                    Runtime.PyTrue
+                );
                 if (res != 0) return res;
 
                 res = clear(ob);
