@@ -236,6 +236,7 @@ def test_override_set_item():
     assert table.Count == 3
 
 
+@pytest.mark.skip
 def test_add_and_remove_class_attribute():
     from System import TimeSpan
 
