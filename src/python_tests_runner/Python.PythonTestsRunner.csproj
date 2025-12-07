@@ -23,4 +23,12 @@
     </PackageReference>
   </ItemGroup>
 
+  <Target Name="WriteRepoRootFile" AfterTargets="Build">
+    <WriteLinesToFile
+      File="$(OutputPath)tests_location.txt"
+      Lines="$(RepositoryRoot)/tests"
+      Overwrite="true"
+    />
+  </Target>
+
 </Project>
