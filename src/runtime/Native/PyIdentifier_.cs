@@ -22,6 +22,8 @@ namespace Python.Runtime
          static IntPtr f__self__;
          public static BorrowedReference __self__ => new(f__self__);
          static IntPtr f__annotations__;
+         public static BorrowedReference __dictoffset__ => new(f__dictoffset__);
+         static IntPtr f__dictoffset__;
          public static BorrowedReference __annotations__ => new(f__annotations__);
          static IntPtr f__init__;
          public static BorrowedReference __init__ => new(f__init__);
@@ -54,6 +56,7 @@ namespace Python.Runtime
             "__slots__",
             "__self__",
             "__annotations__",
+            "__dictoffset__",
             "__init__",
             "__repr__",
             "__import__",

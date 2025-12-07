@@ -1348,7 +1348,6 @@ def test_special_array_creation():
     assert value.Length == 2
 
 
-@pytest.mark.skip
 def test_array_abuse():
     """Test array abuse."""
     _class = Test.PublicArrayTest
