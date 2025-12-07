@@ -374,6 +374,8 @@ namespace Python.Runtime
             return 0;
         }
 
+        static readonly HashSet<IntPtr> ClearVisited = new();
+
         internal static unsafe int BaseUnmanagedClear(BorrowedReference ob)
         {
             var type = Runtime.PyObject_TYPE(ob);
@@ -385,26 +387,20 @@ namespace Python.Runtime
             }
             var clear = (delegate* unmanaged[Cdecl]<BorrowedReference, int>)clearPtr;
 
-            bool usesSubtypeClear = clearPtr == TypeManager.subtype_clear;
-            if (usesSubtypeClear)
+            if (clearPtr == TypeManager.subtype_clear)
             {
-                // workaround for https://bugs.python.org/issue45266 (subtype_clear)
-                using var dict = Runtime.PyObject_GenericGetDict(ob);
-                if (Runtime.PyMapping_HasKey(dict.Borrow(), PyIdentifier.__clear_reentry_guard__) != 0)
+                var addr = ob.DangerousGetAddress();
+                if (!ClearVisited.Add(addr))
                     return 0;
 
-                int res = Runtime.PyDict_SetItem(
-                    dict.Borrow(),
-                    PyIdentifier.__clear_reentry_guard__,
-                    Runtime.PyTrue
-                );
-                if (res != 0) return res;
-
-                res = clear(ob);
-                Runtime.PyDict_DelItem(dict.Borrow(), PyIdentifier.__clear_reentry_guard__);
+                int res = clear(ob);
+                ClearVisited.Remove(addr);
                 return res;
             }
-            return clear(ob);
+            else
+            {
+                return clear(ob);
+            }
         }
 
         protected override Dictionary<string, object?> OnSave(BorrowedReference ob)

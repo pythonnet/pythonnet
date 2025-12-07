@@ -13,8 +13,6 @@ namespace Python.Runtime
          public static BorrowedReference __doc__ => new(f__doc__);
          static IntPtr f__class__;
          public static BorrowedReference __class__ => new(f__class__);
-         static IntPtr f__clear_reentry_guard__;
-         public static BorrowedReference __clear_reentry_guard__ => new(f__clear_reentry_guard__);
          static IntPtr f__module__;
          public static BorrowedReference __module__ => new(f__module__);
          static IntPtr f__file__;
@@ -51,7 +49,6 @@ namespace Python.Runtime
             "__dict__",
             "__doc__",
             "__class__",
-            "__clear_reentry_guard__",
             "__module__",
             "__file__",
             "__slots__",
