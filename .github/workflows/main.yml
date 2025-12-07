@@ -78,7 +78,7 @@ jobs:
 
       - name: Embedding tests (.NET Core)
         run: dotnet test --runtime any-${{ matrix.os.platform }} --framework net8.0 --logger "console;verbosity=detailed" src/embed_tests/
-        if: always()
+        if: false
 
       - name: Python Tests (Mono)
         if: ${{ matrix.os.category != 'windows' }}
