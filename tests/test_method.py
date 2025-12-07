@@ -2,7 +2,6 @@
 
 """Test CLR method support."""
 
-import sys
 import System
 import pytest
 from Python.Test import MethodTest

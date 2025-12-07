@@ -6,7 +6,6 @@
 
 """Test sub-classing managed types"""
 
-import sys
 import System
 import pytest
 from Python.Test import (IInterfaceTest, SubClassTest, EventArgsTest,
