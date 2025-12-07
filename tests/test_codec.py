@@ -59,7 +59,6 @@ def test_iterable():
     assert 3 == ob.GetLength2(iterable2)
 
 
-@pytest.mark.skip
 def test_sequence():
     Python.Runtime.Codecs.SequenceDecoder.Register()
     ob = ListConversionTester()
@@ -71,7 +70,6 @@ def test_sequence():
     assert 3 == ob.GetLength(tup2)
 
 
-@pytest.mark.skip
 def test_list():
     Python.Runtime.Codecs.SequenceDecoder.Register()
     ob = ListConversionTester()
