@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Collections.Generic;
+using System.IO;
 using Python.Runtime.Native;
 using System.Linq;
 using static System.FormattableString;
@@ -18,6 +19,8 @@ namespace Python.Runtime
     /// </summary>
     public unsafe partial class Runtime
     {
+        internal static PythonEnvironment PythonEnvironment = PythonEnvironment.FromEnv();
+
         public static string? PythonDLL
         {
             get => _PythonDll;
@@ -25,33 +28,11 @@ namespace Python.Runtime
             {
                 if (_isInitialized)
                     throw new InvalidOperationException("This property must be set before runtime is initialized");
-                _PythonDll = value;
+                PythonEnvironment.LibPython = value;
             }
         }
 
-        static string? _PythonDll = GetDefaultDllName();
-        private static string? GetDefaultDllName()
-        {
-            string dll = Environment.GetEnvironmentVariable("PYTHONNET_PYDLL");
-            if (dll is not null) return dll;
-
-            string verString = Environment.GetEnvironmentVariable("PYTHONNET_PYVER");
-            if (!Version.TryParse(verString, out var version)) return null;
-
-            return GetDefaultDllName(version);
-        }
-
-        private static string GetDefaultDllName(Version version)
-        {
-            string prefix = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "" : "lib";
-            string suffix = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-                ? Invariant($"{version.Major}{version.Minor}")
-                : Invariant($"{version.Major}.{version.Minor}");
-            string ext = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".dll"
-                : RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? ".dylib"
-                : ".so";
-            return prefix + "python" + suffix + ext;
-        }
+        static string? _PythonDll => PythonEnvironment.LibPython;
 
         private static bool _isInitialized = false;
         internal static bool IsInitialized => _isInitialized;
@@ -96,6 +77,18 @@ namespace Python.Runtime
             return runNumber;
         }
 
+        static void EnsureProgramName()
+        {
+            if (!string.IsNullOrEmpty(PythonEngine.ProgramName))
+                return;
+
+            if (PythonEnvironment.IsValid)
+            {
+                PythonEngine.ProgramName = PythonEnvironment.ProgramName!;
+                return;
+            }
+        }
+
         internal static bool HostedInPython;
         internal static bool ProcessIsTerminating;
 
@@ -117,6 +110,8 @@ namespace Python.Runtime
             );
             if (!interpreterAlreadyInitialized)
             {
+                EnsureProgramName();
+
                 Py_InitializeEx(initSigs ? 1 : 0);
 
                 NewRun();

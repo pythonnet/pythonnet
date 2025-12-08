@@ -1,11 +1,11 @@
 [build-system]
-requires = ["setuptools>=61", "wheel"]
+requires = ["setuptools>=80"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "pythonnet"
 description = ".NET and Mono integration for Python"
-license = {text = "MIT"}
+license = "MIT"
 
 readme = "README.rst"
 
@@ -13,12 +13,11 @@ dependencies = [
     "clr_loader>=0.2.7,<0.3.0"
 ]
 
-requires-python = ">=3.7, <3.14"
+requires-python = ">=3.10, <3.14"
 
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: C#",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.7",
@@ -38,7 +37,7 @@ dynamic = ["version"]
 [dependency-groups]
 dev = [
     "pytest >= 6",
-    "find_libpython >= 0.3.0",
+    "find_libpython >= 0.3",
     "numpy >=2 ; python_version >= '3.10'",
     "numpy <2 ; python_version < '3.10'",
     "psutil"
@@ -55,7 +54,6 @@ Sources = "https://github.com/pythonnet/pythonnet"
 [tool.setuptools]
 zip-safe = false
 py-modules = ["clr"]
-license-files = []
 
 [tool.setuptools.dynamic.version]
 file = "version.txt"

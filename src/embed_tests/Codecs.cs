@@ -8,16 +8,10 @@ namespace Python.EmbeddingTest {
 
     public class Codecs
     {
-        [SetUp]
-        public void SetUp()
-        {
-            PythonEngine.Initialize();
-        }
-
         [TearDown]
-        public void Dispose()
+        public void TearDown()
         {
-            PythonEngine.Shutdown();
+            PyObjectConversions.Reset();
         }
 
         [Test]

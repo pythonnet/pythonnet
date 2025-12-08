@@ -25,6 +25,7 @@ namespace Python.Runtime
         [NonSerialized]
         internal List<string> dotNetMembers = new();
         internal Indexer? indexer;
+        internal MethodBinder? del;
         internal readonly Dictionary<int, MethodObject> richcompare = new();
         internal MaybeType type;
 
@@ -465,6 +466,11 @@ namespace Python.Runtime
             // with the index arg (method binders expect arg tuples).
             NewReference argsTuple = default;
 
+            if (v.IsNull)
+            {
+                return DelImpl(ob, idx, cls);
+            }
+
             if (!Runtime.PyTuple_Check(idx))
             {
                 argsTuple = Runtime.PyTuple_New(1);
@@ -497,11 +503,43 @@ namespace Python.Runtime
             // Add value to argument list
             Runtime.PyTuple_SetItem(real.Borrow(), i, v);
 
-            cls.indexer.SetItem(ob, real.Borrow());
+            using var result = cls.indexer.SetItem(ob, real.Borrow());
+            return result.IsNull() ? -1 : 0;
+        }
 
-            if (Exceptions.ErrorOccurred())
+        /// Implements __delitem__ (del x[...]) for IList&lt;T&gt; and IDictionary&lt;TKey, TValue&gt;.
+        private static int DelImpl(BorrowedReference ob, BorrowedReference idx, ClassBase cls)
+        {
+            if (cls.del is null)
             {
+                Exceptions.SetError(Exceptions.TypeError, "object does not support item deletion");
                 return -1;
+            }
+
+            if (Runtime.PyTuple_Check(idx))
+            {
+                Exceptions.SetError(Exceptions.TypeError, "multi-index deletion not supported");
+                return -1;
+            }
+
+            using var argsTuple = Runtime.PyTuple_New(1);
+            Runtime.PyTuple_SetItem(argsTuple.Borrow(), 0, idx);
+            using var result = cls.del.Invoke(ob, argsTuple.Borrow(), kw: null);
+            if (result.IsNull())
+                return -1;
+
+            if (Runtime.PyBool_CheckExact(result.Borrow()))
+            {
+                if (Runtime.PyObject_IsTrue(result.Borrow()) != 0)
+                    return 0;
+
+                Exceptions.SetError(Exceptions.KeyError, "key not found");
+                return -1;
+            }
+
+            if (!result.IsNone())
+            {
+                Exceptions.warn("unsupported return type for __delitem__", Exceptions.TypeError);
             }
 
             return 0;

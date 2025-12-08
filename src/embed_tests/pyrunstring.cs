@@ -6,26 +6,14 @@ namespace Python.EmbeddingTest
 {
     public class RunStringTest
     {
-        [OneTimeSetUp]
-        public void SetUp()
-        {
-            PythonEngine.Initialize();
-        }
-
-        [OneTimeTearDown]
-        public void Dispose()
-        {
-            PythonEngine.Shutdown();
-        }
-
         [Test]
         public void TestRunSimpleString()
         {
             int aa = PythonEngine.RunSimpleString("import sys");
-            Assert.AreEqual(0, aa);
+            Assert.That(aa, Is.EqualTo(0));
 
             int bb = PythonEngine.RunSimpleString("import 1234");
-            Assert.AreEqual(-1, bb);
+            Assert.That(bb, Is.EqualTo(-1));
         }
 
         [Test]
@@ -39,7 +27,7 @@ namespace Python.EmbeddingTest
 
             object b = PythonEngine.Eval("sys.attr1 + a + 1", null, locals)
                 .AsManagedObject(typeof(int));
-            Assert.AreEqual(111, b);
+            Assert.That(b, Is.EqualTo(111));
         }
 
         [Test]
@@ -53,7 +41,7 @@ namespace Python.EmbeddingTest
 
             PythonEngine.Exec("c = sys.attr1 + a + 1", null, locals);
             object c = locals.GetItem("c").AsManagedObject(typeof(int));
-            Assert.AreEqual(111, c);
+            Assert.That(c, Is.EqualTo(111));
         }
 
         [Test]
