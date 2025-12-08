@@ -14,6 +14,11 @@
     <None Include="fixtures/**/*.py" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <!-- Drop Reinit test source files for net8.0 and above -->
+  <ItemGroup Condition="'$(TargetFramework)' != 'net472'">
+    <Compile Remove="NeedsReinit/*.cs" />
+  </ItemGroup>
+
   <PropertyGroup>
     <DefineConstants>$(DefineConstants);$(ConfiguredConstants)</DefineConstants>
   </PropertyGroup>

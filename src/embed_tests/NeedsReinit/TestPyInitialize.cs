@@ -2,10 +2,10 @@ using System;
 using NUnit.Framework;
 using Python.Runtime;
 
-namespace Python.EmbeddingTest
+namespace Python.EmbeddingTest.NeedsReinit
 {
-    [Ignore("Only works if we can re-initialize the Python engine")]
-    public class PyInitializeTest
+    [Category("NeedsReinit")]
+    public class TestPyInitialize : StopAndRestartEngine
     {
         /// <summary>
         /// Tests issue with multiple simple Initialize/Shutdowns.
