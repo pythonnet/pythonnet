@@ -210,6 +210,7 @@ namespace Python.Runtime
             // information, including generating the member descriptors
             // that we'll be putting in the Python class __dict__.
 
+            var bindingOptions = BindingManager.GetBindingOptions(type);
             ClassInfo info = GetClassInfo(type, impl);
 
             impl.indexer = info.indexer;
@@ -255,7 +256,7 @@ namespace Python.Runtime
                 if (co.NumCtors > 0 && !co.HasCustomNew())
                 {
                     // Implement Overloads on the class object
-                    if (!CLRModule._SuppressOverloads)
+                    if (!bindingOptions.SuppressOverloads)
                     {
                         // HACK: __init__ points to instance constructors.
                         // When unbound they fully instantiate object, so we get overloads for free from MethodBinding.
@@ -266,7 +267,7 @@ namespace Python.Runtime
                     }
 
                     // don't generate the docstring if one was already set from a DocStringAttribute.
-                    if (!CLRModule._SuppressDocs && doc.IsNull())
+                    if (!bindingOptions.SuppressDocs && doc.IsNull())
                     {
                         doc = co.GetDocString();
                         Runtime.PyDict_SetItem(dict, PyIdentifier.__doc__, doc.Borrow());
