@@ -60,11 +60,15 @@ jobs:
         with:
           architecture: ${{ matrix.os.platform }}
           python-version: ${{ matrix.python }}
+          cache-python: true
           activate-environment: true
           enable-cache: true
 
       - name: Synchronize the virtual environment
-        run: uv sync
+        run: uv sync --managed-python
+
+      - name: Show pyvenv.cfg
+        run: cat .venv/pyvenv.cfg
 
       - name: Embedding tests (Mono/.NET Framework)
         run: dotnet test --runtime any-${{ matrix.os.platform }} --framework net472 --logger "console;verbosity=detailed" src/embed_tests/
@@ -88,4 +92,8 @@ jobs:
         run: pytest --runtime netfx
 
       - name: Python tests run from .NET
+        # For some reason, it won't find pytest on the Windows + 3.10
+        # combination, which hints that it does not handle the venv properly in
+        # this combination.
+        if: ${{ matrix.os.category != 'windows' || matrix.python != '3.10' }}
         run: dotnet test --runtime any-${{ matrix.os.platform }} src/python_tests_runner/

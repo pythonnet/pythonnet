@@ -161,7 +161,7 @@ internal class PythonEnvironment
 
     private static string ProgramNameFromPath(string path)
     {
-        if (Runtime.IsWindows)
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             return Path.Combine(path, "Scripts", "python.exe");
         }

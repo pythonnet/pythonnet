@@ -23,18 +23,6 @@ namespace Python.EmbeddingTest
                 typeof(ulong)
         };
 
-        [OneTimeSetUp]
-        public void SetUp()
-        {
-            PythonEngine.Initialize();
-        }
-
-        [OneTimeTearDown]
-        public void Dispose()
-        {
-            PythonEngine.Shutdown();
-        }
-
         [Test]
         public void TestConvertSingleToManaged(
             [Values(float.PositiveInfinity, float.NegativeInfinity, float.MinValue, float.MaxValue, float.NaN,
@@ -45,8 +33,8 @@ namespace Python.EmbeddingTest
             object convertedValue;
             var converted = Converter.ToManaged(pyFloat, typeof(float), out convertedValue, false);
 
-            Assert.IsTrue(converted);
-            Assert.IsTrue(((float) convertedValue).Equals(testValue));
+            Assert.That(converted, Is.True);
+            Assert.That(((float)convertedValue).Equals(testValue), Is.True);
         }
 
         [Test]
@@ -59,8 +47,8 @@ namespace Python.EmbeddingTest
             object convertedValue;
             var converted = Converter.ToManaged(pyFloat, typeof(double), out convertedValue, false);
 
-            Assert.IsTrue(converted);
-            Assert.IsTrue(((double) convertedValue).Equals(testValue));
+            Assert.That(converted, Is.True);
+            Assert.That(((double)convertedValue).Equals(testValue), Is.True);
         }
 
         [Test]
@@ -79,10 +67,10 @@ namespace Python.EmbeddingTest
                     try
                     {
                         bool res = Converter.ToManaged(s, type, out value, true);
-                        Assert.IsFalse(res);
+                        Assert.That(res, Is.False);
                         var bo = Exceptions.ExceptionMatches(Exceptions.TypeError);
-                        Assert.IsTrue(Exceptions.ExceptionMatches(Exceptions.TypeError)
-                            || Exceptions.ExceptionMatches(Exceptions.ValueError));
+                        Assert.That(Exceptions.ExceptionMatches(Exceptions.TypeError)
+                            || Exceptions.ExceptionMatches(Exceptions.ValueError), Is.True);
                     }
                     finally
                     {
@@ -104,8 +92,8 @@ namespace Python.EmbeddingTest
                     foreach (var type in _numTypes)
                     {
                         bool res = Converter.ToManaged(largeNum.BorrowOrThrow(), type, out value, true);
-                        Assert.IsFalse(res);
-                        Assert.IsTrue(Exceptions.ExceptionMatches(Exceptions.OverflowError));
+                        Assert.That(res, Is.False);
+                        Assert.That(Exceptions.ExceptionMatches(Exceptions.OverflowError), Is.True);
                         Exceptions.Clear();
                     }
                 }
@@ -129,7 +117,7 @@ namespace Python.EmbeddingTest
             const int Const = 42;
             var i = new PyInt(Const);
             var ni = i.As<int?>();
-            Assert.AreEqual(Const, ni);
+            Assert.That(ni, Is.EqualTo(Const));
         }
 
         [Test]
@@ -138,9 +126,9 @@ namespace Python.EmbeddingTest
             BigInteger val = 42;
             var i = new PyInt(val);
             var ni = i.As<BigInteger>();
-            Assert.AreEqual(val, ni);
+            Assert.That(ni, Is.EqualTo(val));
             var nullable = i.As<BigInteger?>();
-            Assert.AreEqual(val, nullable);
+            Assert.That(nullable, Is.EqualTo(val));
         }
 
         [Test]
@@ -148,7 +136,7 @@ namespace Python.EmbeddingTest
         {
             var i = new PyInt(1);
             var ni = (PyObject)i.As<object>();
-            Assert.IsTrue(PythonReferenceComparer.Instance.Equals(i, ni));
+            Assert.That(PythonReferenceComparer.Instance.Equals(i, ni), Is.True);
         }
 
         [Test]
@@ -158,7 +146,7 @@ namespace Python.EmbeddingTest
             list.Append("hello".ToPython());
             list.Append("world".ToPython());
             var back = list.ToPython().As<PyList>();
-            Assert.AreEqual(list.Length(), back.Length());
+            Assert.That(back.Length(), Is.EqualTo(list.Length()));
         }
 
         [Test]
@@ -182,7 +170,7 @@ namespace Python.EmbeddingTest
             const string handlePropertyName = nameof(PyObject.Handle);
 #pragma warning restore CS0612 // Type or member is obsolete
             var proxiedHandle = pyObjectProxy.GetAttr(handlePropertyName).As<IntPtr>();
-            Assert.AreEqual(pyObject.DangerousGetAddressOrNull(), proxiedHandle);
+            Assert.That(proxiedHandle, Is.EqualTo(pyObject.DangerousGetAddressOrNull()));
         }
 
         [Test]
@@ -191,7 +179,7 @@ namespace Python.EmbeddingTest
             int i = 42;
             var pyObject = i.ToPythonAs<IConvertible>();
             var type = pyObject.GetPythonType();
-            Assert.AreEqual(nameof(IConvertible), type.Name);
+            Assert.That(type.Name, Is.EqualTo(nameof(IConvertible)));
         }
 
         // regression for https://github.com/pythonnet/pythonnet/issues/451
@@ -207,7 +195,7 @@ class PyGetListImpl(test.GetListImpl):
             var pyImpl = scope.Get("PyGetListImpl");
             dynamic inst = pyImpl.Invoke();
             List<string> result = inst.GetList();
-            CollectionAssert.AreEqual(new[] { "testing" }, result);
+            Assert.That(result, Is.EqualTo(new[] { "testing" }).AsCollection);
         }
     }
 
