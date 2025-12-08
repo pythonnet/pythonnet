@@ -6,18 +6,6 @@ namespace Python.EmbeddingTest
 {
     public class TestPyTuple
     {
-        [OneTimeSetUp]
-        public void SetUp()
-        {
-            PythonEngine.Initialize();
-        }
-
-        [OneTimeTearDown]
-        public void Dispose()
-        {
-            PythonEngine.Shutdown();
-        }
-
         /// <summary>
         /// Test IsTupleType without having to Initialize a tuple.
         /// PyTuple constructor use IsTupleType. This decouples the tests.

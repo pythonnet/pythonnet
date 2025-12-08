@@ -8,24 +8,31 @@ using System.Text;
 using NUnit.Framework;
 
 using Python.Runtime;
-using Python.Test;
 
 namespace Python.PythonTestsRunner
 {
     public class PythonTestRunner
     {
+        string OriginalDirectory;
+
         [OneTimeSetUp]
         public void SetUp()
         {
             Python.Runtime.Runtime.PythonDLL =
                 "C:\\Python37.2\\python37.dll";
             PythonEngine.Initialize();
+            OriginalDirectory = Environment.CurrentDirectory;
+
+            var codeDir = File.ReadAllText("tests_location.txt").Trim();
+            TestContext.Progress.WriteLine($"Changing working directory to {codeDir}");
+            Environment.CurrentDirectory = codeDir;
         }
 
         [OneTimeTearDown]
         public void Dispose()
         {
             PythonEngine.Shutdown();
+            Environment.CurrentDirectory = OriginalDirectory;
         }
 
         /// <summary>
@@ -55,39 +62,15 @@ namespace Python.PythonTestsRunner
         [TestCaseSource(nameof(PythonTestCases))]
         public void RunPythonTest(string testFile, string testName)
         {
-            // Find the tests directory
-            string folder = typeof(PythonTestRunner).Assembly.Location;
-            while (Path.GetFileName(folder) != "src")
-            {
-                folder = Path.GetDirectoryName(folder);
-            }
-            folder = Path.Combine(folder, "..", "tests");
-            string path = Path.Combine(folder, testFile + ".py");
-            if (!File.Exists(path)) throw new FileNotFoundException("Cannot find test file", path);
+            using dynamic pytest = Py.Import("pytest");
 
-            // We could use 'import' below, but importlib gives more helpful error messages than 'import'
-            // https://docs.python.org/3/library/importlib.html#importing-a-source-file-directly
-            // Because the Python tests sometimes have relative imports, the module name must be inside the tests package
-            PythonEngine.Exec($@"
-import sys
-import os
-sys.path.append(os.path.dirname(r'{folder}'))
-sys.path.append(os.path.join(r'{folder}', 'fixtures'))
-import clr
-clr.AddReference('Python.Test')
-import tests
-module_name = 'tests.{testFile}'
-file_path = r'{path}'
-import importlib.util
-spec = importlib.util.spec_from_file_location(module_name, file_path)
-module = importlib.util.module_from_spec(spec)
-sys.modules[module_name] = module
-try:
-  spec.loader.exec_module(module)
-except ImportError as error:
-  raise ImportError(str(error) + ' when sys.path=' + os.pathsep.join(sys.path))
-module.{testName}()
-");
+            using var args = new PyList();
+            args.Append(new PyString($"{testFile}.py::{testName}"));
+            int res = pytest.main(args);
+            if (res != 0)
+            {
+                Assert.Fail($"Python test {testFile}.{testName} failed");
+            }
         }
     }
 }

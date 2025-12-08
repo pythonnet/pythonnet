@@ -13,6 +13,7 @@ namespace Python.EmbeddingTest
         public void GlobalSetup()
         {
             Finalizer.Instance.ErrorHandler += FinalizerErrorHandler;
+            PythonEngine.Initialize();
         }
 
         private void FinalizerErrorHandler(object sender, Finalizer.ErrorArgs e)

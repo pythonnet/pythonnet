@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Collections.Generic;
+using System.IO;
 using Python.Runtime.Native;
 using System.Linq;
 using static System.FormattableString;
@@ -18,6 +19,8 @@ namespace Python.Runtime
     /// </summary>
     public unsafe partial class Runtime
     {
+        internal static PythonEnvironment PythonEnvironment = PythonEnvironment.FromEnv();
+
         public static string? PythonDLL
         {
             get => _PythonDll;
@@ -25,33 +28,11 @@ namespace Python.Runtime
             {
                 if (_isInitialized)
                     throw new InvalidOperationException("This property must be set before runtime is initialized");
-                _PythonDll = value;
+                PythonEnvironment.LibPython = value;
             }
         }
 
-        static string? _PythonDll = GetDefaultDllName();
-        private static string? GetDefaultDllName()
-        {
-            string dll = Environment.GetEnvironmentVariable("PYTHONNET_PYDLL");
-            if (dll is not null) return dll;
-
-            string verString = Environment.GetEnvironmentVariable("PYTHONNET_PYVER");
-            if (!Version.TryParse(verString, out var version)) return null;
-
-            return GetDefaultDllName(version);
-        }
-
-        private static string GetDefaultDllName(Version version)
-        {
-            string prefix = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "" : "lib";
-            string suffix = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-                ? Invariant($"{version.Major}{version.Minor}")
-                : Invariant($"{version.Major}.{version.Minor}");
-            string ext = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".dll"
-                : RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? ".dylib"
-                : ".so";
-            return prefix + "python" + suffix + ext;
-        }
+        static string? _PythonDll => PythonEnvironment.LibPython;
 
         private static bool _isInitialized = false;
         internal static bool IsInitialized => _isInitialized;
@@ -96,6 +77,18 @@ namespace Python.Runtime
             return runNumber;
         }
 
+        static void EnsureProgramName()
+        {
+            if (!string.IsNullOrEmpty(PythonEngine.ProgramName))
+                return;
+
+            if (PythonEnvironment.IsValid)
+            {
+                PythonEngine.ProgramName = PythonEnvironment.ProgramName!;
+                return;
+            }
+        }
+
         internal static bool HostedInPython;
         internal static bool ProcessIsTerminating;
 
@@ -117,6 +110,8 @@ namespace Python.Runtime
             );
             if (!interpreterAlreadyInitialized)
             {
+                EnsureProgramName();
+
                 Py_InitializeEx(initSigs ? 1 : 0);
 
                 NewRun();
@@ -158,6 +153,7 @@ namespace Python.Runtime
             ClassManager.Reset();
             ClassDerivedObject.Reset();
             TypeManager.Initialize();
+            CLRObject.creationBlocked = false;
             _typesInitialized = true;
 
             // Initialize modules that depend on the runtime class.
@@ -278,6 +274,10 @@ namespace Python.Runtime
             ClearClrModules();
             RemoveClrRootModule();
 
+            TryCollectingGarbage(MaxCollectRetriesOnShutdown, forceBreakLoops: true,
+                                 obj: true, derived: false, buffer: false);
+            CLRObject.creationBlocked = true;
+
             NullGCHandles(ExtensionType.loadedExtensions);
             ClassManager.RemoveClasses();
             TypeManager.RemoveTypes();
@@ -295,8 +295,7 @@ namespace Python.Runtime
             PyObjectConversions.Reset();
 
             PyGC_Collect();
-            bool everythingSeemsCollected = TryCollectingGarbage(MaxCollectRetriesOnShutdown,
-                                                                 forceBreakLoops: true);
+            bool everythingSeemsCollected = TryCollectingGarbage(MaxCollectRetriesOnShutdown);
             Debug.Assert(everythingSeemsCollected);
 
             Finalizer.Shutdown();
@@ -312,7 +311,7 @@ namespace Python.Runtime
                 // Then release the GIL for good, if there is somehting to release
                 // Use the unchecked version as the checked version calls `abort()`
                 // if the current state is NULL.
-                if (_PyThreadState_UncheckedGet() != (PyThreadState*)0)
+                if (PyThreadState_GetUnchecked() != (PyThreadState*)0)
                 {
                     PyEval_SaveThread();
                 }
@@ -328,7 +327,8 @@ namespace Python.Runtime
 
         const int MaxCollectRetriesOnShutdown = 20;
         internal static int _collected;
-        static bool TryCollectingGarbage(int runs, bool forceBreakLoops)
+        static bool TryCollectingGarbage(int runs, bool forceBreakLoops,
+                                         bool obj = true, bool derived = true, bool buffer = true)
         {
             if (runs <= 0) throw new ArgumentOutOfRangeException(nameof(runs));
 
@@ -341,7 +341,9 @@ namespace Python.Runtime
                     GC.Collect();
                     GC.WaitForPendingFinalizers();
                     pyCollected += PyGC_Collect();
-                    pyCollected += Finalizer.Instance.DisposeAll();
+                    pyCollected += Finalizer.Instance.DisposeAll(disposeObj: obj,
+                                                                 disposeDerived: derived,
+                                                                 disposeBuffer: buffer);
                 }
                 if (Volatile.Read(ref _collected) == 0 && pyCollected == 0)
                 {
@@ -698,7 +700,7 @@ namespace Python.Runtime
         internal static PyThreadState* PyThreadState_Get() => Delegates.PyThreadState_Get();
 
 
-        internal static PyThreadState* _PyThreadState_UncheckedGet() => Delegates._PyThreadState_UncheckedGet();
+        internal static PyThreadState* PyThreadState_GetUnchecked() => Delegates.PyThreadState_GetUnchecked();
 
 
         internal static int PyGILState_Check() => Delegates.PyGILState_Check();
@@ -711,20 +713,6 @@ namespace Python.Runtime
 
         internal static PyThreadState* PyGILState_GetThisThreadState() => Delegates.PyGILState_GetThisThreadState();
 
-
-        public static int Py_Main(int argc, string[] argv)
-        {
-            var marshaler = StrArrayMarshaler.GetInstance(null);
-            var argvPtr = marshaler.MarshalManagedToNative(argv);
-            try
-            {
-                return Delegates.Py_Main(argc, argvPtr);
-            }
-            finally
-            {
-                marshaler.CleanUpNativeData(argvPtr);
-            }
-        }
 
         internal static void PyEval_InitThreads() => Delegates.PyEval_InitThreads();
 

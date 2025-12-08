@@ -10,18 +10,6 @@ namespace Python.EmbeddingTest
 {
     public class TestPyType
     {
-        [OneTimeSetUp]
-        public void SetUp()
-        {
-            PythonEngine.Initialize();
-        }
-
-        [OneTimeTearDown]
-        public void Dispose()
-        {
-            PythonEngine.Shutdown();
-        }
-
         [Test]
         public void CanCreateHeapType()
         {

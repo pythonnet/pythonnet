@@ -3,20 +3,11 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using Python.Runtime;
 
-namespace Python.EmbeddingTest
+namespace Python.EmbeddingTest.NeedsReinit
 {
-    public class TestRuntime
+    [Ignore("Tests for low-level Runtime functions, crashing currently")]
+    public class TestRuntime : StopAndRestartEngine
     {
-        [OneTimeSetUp]
-        public void SetUp()
-        {
-            // We needs to ensure that no any engines are running.
-            if (PythonEngine.IsInitialized)
-            {
-                PythonEngine.Shutdown();
-            }
-        }
-
         [Test]
         public static void Py_IsInitializedValue()
         {

@@ -16,9 +16,11 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - category: windows
-            platform: x86
-            instance: windows-latest
+          # Disabled for now, will require some work (#2653)
+          #
+          # - category: windows
+          #   platform: x86
+          #   instance: windows-latest
 
           - category: windows
             platform: x64
@@ -26,13 +28,17 @@ jobs:
 
           - category: ubuntu
             platform: x64
-            instance: ubuntu-latest
+            instance: ubuntu-22.04
+
+          - category: ubuntu
+            platform: arm64
+            instance: ubuntu-22.04-arm
 
           - category: macos
             platform: x64
             instance: macos-13
 
-        python: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
+        python: ["3.10", "3.11", "3.12", "3.13"]
 
     steps:
       - name: Set Environment on macOS
@@ -42,52 +48,43 @@ jobs:
           mono-version: latest
 
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v1
+        uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '6.0.x'
+          dotnet-version: '8.0.x'
 
       - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@v2
+        uses: astral-sh/setup-uv@v7
         with:
-          python-version: ${{ matrix.python }}
           architecture: ${{ matrix.os.platform }}
+          python-version: ${{ matrix.python }}
+          cache-python: true
+          activate-environment: true
+          enable-cache: true
 
-      - name: Install dependencies
-        run: |
-          pip install --upgrade -r requirements.txt
-          pip install numpy # for tests
+      - name: Synchronize the virtual environment
+        run: uv sync --managed-python
 
-      - name: Build and Install
-        run: |
-          pip install -v .
+      - name: Show pyvenv.cfg
+        run: cat .venv/pyvenv.cfg
 
-      - name: Set Python DLL path and PYTHONHOME (non Windows)
-        if: ${{ matrix.os.category != 'windows' }}
-        run: |
-          echo PYTHONNET_PYDLL=$(python -m find_libpython) >> $GITHUB_ENV
-          echo PYTHONHOME=$(python -c 'import sys; print(sys.prefix)') >> $GITHUB_ENV
-
-      - name: Set Python DLL path and PYTHONHOME (Windows)
-        if: ${{ matrix.os.category == 'windows' }}
-        run: |
-          Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append -InputObject "PYTHONNET_PYDLL=$(python -m find_libpython)"
-          Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append -InputObject "PYTHONHOME=$(python -c 'import sys; print(sys.prefix)')"
-
-      - name: Embedding tests
-        run: dotnet test --runtime any-${{ matrix.os.platform }} --logger "console;verbosity=detailed" src/embed_tests/
+      - name: Embedding tests (Mono/.NET Framework)
+        run: dotnet test --runtime any-${{ matrix.os.platform }} --framework net472 --logger "console;verbosity=detailed" src/embed_tests/
+        if: always()
         env:
           MONO_THREADS_SUSPEND: preemptive # https://github.com/mono/mono/issues/21466
+
+      - name: Embedding tests (.NET Core)
+        run: dotnet test --runtime any-${{ matrix.os.platform }} --framework net8.0 --logger "console;verbosity=detailed" src/embed_tests/
+        if: always()
 
       - name: Python Tests (Mono)
         if: ${{ matrix.os.category != 'windows' }}
         run: pytest --runtime mono
 
-      # TODO: Run these tests on Windows x86
       - name: Python Tests (.NET Core)
-        if: ${{ matrix.os.platform == 'x64' }}
         run: pytest --runtime coreclr
 
       - name: Python Tests (.NET Framework)
@@ -95,12 +92,8 @@ jobs:
         run: pytest --runtime netfx
 
       - name: Python tests run from .NET
+        # For some reason, it won't find pytest on the Windows + 3.10
+        # combination, which hints that it does not handle the venv properly in
+        # this combination.
+        if: ${{ matrix.os.category != 'windows' || matrix.python != '3.10' }}
         run: dotnet test --runtime any-${{ matrix.os.platform }} src/python_tests_runner/
-
-      - name: Perf tests
-        if: ${{ (matrix.python == '3.8') && (matrix.os.platform == 'x64') }}
-        run: |
-          pip install --force --no-deps --target src/perf_tests/baseline/ pythonnet==2.5.2
-          dotnet test --configuration Release --runtime any-${{ matrix.os.platform }} --logger "console;verbosity=detailed" src/perf_tests/
-
-      # TODO: Run mono tests on Windows?

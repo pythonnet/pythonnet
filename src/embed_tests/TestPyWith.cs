@@ -6,18 +6,6 @@ namespace Python.EmbeddingTest
 {
     public class TestPyWith
     {
-        [OneTimeSetUp]
-        public void SetUp()
-        {
-            PythonEngine.Initialize();
-        }
-
-        [OneTimeTearDown]
-        public void Dispose()
-        {
-            PythonEngine.Shutdown();
-        }
-
         /// <summary>
         /// Test that exception is raised in context manager that ignores it.
         /// </summary>
