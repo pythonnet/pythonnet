@@ -51,12 +51,6 @@ jobs:
         python: ["3.10", "3.11", "3.12", "3.13"]
 
     steps:
-      - name: Set Environment on macOS
-        uses: maxim-lobanov/setup-xamarin@v1
-        if: ${{ matrix.os.category == 'macos' }}
-        with:
-          mono-version: latest
-
       - name: Checkout code
         uses: actions/checkout@v6
 
@@ -64,6 +58,13 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '8.0.x'
+
+      - name: Install Mono
+        uses: ConorMacBride/install-package@v1.1.0
+        with:
+          brew: mono
+          choco: mono
+          apt: mono-runtime-sgen
 
       - name: Set up Python ${{ matrix.python }}
         uses: astral-sh/setup-uv@v7
@@ -75,9 +76,6 @@ jobs:
 
       - name: Synchronize the virtual environment
         run: uv sync --managed-python
-
-      - name: Show pyvenv.cfg
-        run: cat .venv/pyvenv.cfg
 
       - name: Embedding tests (Mono/.NET Framework)
         run: dotnet test --runtime any-${{ matrix.os.platform }} --framework net472 --logger "console;verbosity=detailed" src/embed_tests/
