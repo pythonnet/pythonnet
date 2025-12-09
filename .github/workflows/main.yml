@@ -75,6 +75,8 @@ jobs:
           activate-environment: true
           enable-cache: true
 
+      - run: dotnet restore
+
       - name: Synchronize the virtual environment
         run: uv sync --managed-python
 
