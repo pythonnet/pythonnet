@@ -36,9 +36,13 @@ jobs:
 
           - category: macos
             platform: x64
-            instance: macos-13
+            instance: macos-14
 
-        python: ["3.10", "3.11", "3.12", "3.13"]
+          - category: macos
+            platform: arm64
+            instance: macos-14-arm64
+
+        python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
 
     steps:
       - name: Set Environment on macOS
