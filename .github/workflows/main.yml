@@ -48,12 +48,9 @@ jobs:
             instance: macos-15
             suffix:   -macos-aarch64-none
 
-          - category: macos
-            platform: arm64
-            instance: macos-14-arm64
-
         python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
-
+    env:
+      NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
