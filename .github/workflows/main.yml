@@ -61,11 +61,9 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Install Mono
-        uses: ConorMacBride/install-package@v1.1.0
+        uses: ./.github/actions/install-mono
         with:
-          brew: mono
-          choco: mono
-          apt: mono-runtime-sgen
+          arch: ${{ matrix.os.platform }}
 
       - name: Set up Python ${{ matrix.python }}
         uses: astral-sh/setup-uv@v7
