@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Security;
 
 using Python.Runtime.StateSerialization;
@@ -33,7 +32,9 @@ namespace Python.Runtime
                                                              BindingFlags.Public |
                                                              BindingFlags.NonPublic;
 
-        internal static Dictionary<MaybeType, ReflectedClrType> cache = new(capacity: 128);
+        internal static Dictionary<MaybeType, ReflectedClrType> cache = new(
+            capacity: 128, comparer: new MaybeTypeComparer()
+        );
         private static readonly Type dtype;
 
         private ClassManager()
