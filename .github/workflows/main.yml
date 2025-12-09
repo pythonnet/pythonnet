@@ -18,25 +18,35 @@ jobs:
         os:
           # Disabled for now, will require some work (#2653)
           #
-          # - category: windows
-          #   platform: x86
-          #   instance: windows-latest
+          - category: windows
+            platform: x86
+            instance: windows-latest
+            suffix:   -windows-x86-none
 
           - category: windows
             platform: x64
             instance: windows-latest
+            suffix:   -windows-x86_64-none
 
           - category: ubuntu
             platform: x64
             instance: ubuntu-22.04
+            suffix:   ""
 
           - category: ubuntu
             platform: arm64
             instance: ubuntu-22.04-arm
+            suffix:   ""
 
           - category: macos
             platform: x64
-            instance: macos-13
+            instance: macos-15
+            suffix:   -macos-x86_64-none
+
+          - category: macos
+            platform: arm64
+            instance: macos-15
+            suffix:   -macos-aarch64-none
 
         python: ["3.10", "3.11", "3.12", "3.13"]
 
@@ -58,8 +68,7 @@ jobs:
       - name: Set up Python ${{ matrix.python }}
         uses: astral-sh/setup-uv@v7
         with:
-          architecture: ${{ matrix.os.platform }}
-          python-version: ${{ matrix.python }}
+          python-version: cpython-${{ matrix.python }}${{ matrix.os.suffix }}
           cache-python: true
           activate-environment: true
           enable-cache: true
