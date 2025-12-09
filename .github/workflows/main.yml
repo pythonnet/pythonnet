@@ -17,11 +17,12 @@ jobs:
       matrix:
         os:
           # Disabled for now, will require some work (#2653)
+          # The main issue is setup-dotnet stubbornly installing for x64 only
           #
-          - category: windows
-            platform: x86
-            instance: windows-latest
-            suffix:   -windows-x86-none
+          # - category: windows
+          #   platform: x86
+          #   instance: windows-latest
+          #   suffix:   -windows-x86-none
 
           - category: windows
             platform: x64
