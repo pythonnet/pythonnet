@@ -9,7 +9,7 @@
 import System
 import pytest
 from Python.Test import (IInterfaceTest, SubClassTest, EventArgsTest,
-                         FunctionsTest, IGenericInterface, GenericVirtualMethodTest, SimpleClass, ISayHello1)
+                         FunctionsTest, IGenericInterface, GenericVirtualMethodTest, SimpleClass, SimpleClass2, ISayHello1)
 from System.Collections.Generic import List
 
 
@@ -339,8 +339,42 @@ def test_virtual_generic_method():
     assert obj.VirtMethod[int](5) == 5
 
 def test_implement_interface_and_class():
+    import clr
     class DualSubClass0(ISayHello1, SimpleClass):
+        __namespace__ = "Test0"
+        def SayHello(self):
+            return "hello"
+
+        @clr.clrmethod(str, [])
+        def SayGoodbye(self):
+            return "bye" + super().SayGoodbye()
+
+def test_multi_level_subclass():
+    """
+    Test multi levels of subclassing. This has shown verious issues, like stack overflow
+    exception if a method was not implemented in the middle of the tree.
+    """
+    import clr
+    class DualSubClass0(ISayHello1, SimpleClass2):
         __namespace__ = "Test"
         def SayHello(self):
             return "hello"
-    obj = DualSubClass0()
+        def SayGoodbye(self):
+            return "bye" + super().SayGoodbye()
+    class DualSubClass1(DualSubClass0):
+        __namespace__ = "Test"
+        def SayHello(self):
+            return super().SayHello() + " hi1"
+    class DualSubClass2(DualSubClass1):
+        __namespace__ = "Test"
+    class DualSubClass3(DualSubClass2):
+        __namespace__ = "Test"
+        def SayHello(self):
+            return super().SayHello() + " hi3"
+        def SayGoodbye(self):
+            return super().SayGoodbye() + "!"
+    obj = DualSubClass3()
+    helloResult = obj.SayHello()
+    goodByeResult = obj.SayGoodbye()
+    assert goodByeResult =="bye!!"
+    assert helloResult == "hello hi1 hi3"
