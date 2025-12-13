@@ -1,0 +1,43 @@
+name: 'Install Mono'
+description: 'Install Mono'
+branding:
+  icon: package
+  color: blue
+inputs:
+  arch:
+    description: Architecture to install for
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Install on macOS (x86_64)
+      if: runner.os == 'macOS' && inputs.arch == 'x64'
+      run: |
+        arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        arch -x86_64 /usr/local/bin/brew install mono
+      shell: sh
+
+    - name: Install on macOS
+      if: runner.os == 'macOS' && inputs.arch != 'x64'
+      run: |
+        brew update
+        brew install mono
+      shell: sh
+
+    - name: Install on Linux
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt update
+        sudo apt install -y mono-runtime-sgen
+      shell: sh
+
+    - name: Install on Windows (x86)
+      if: runner.os == 'Windows' && inputs.arch == 'x86'
+      run: choco install --x86 -y mono
+      shell: sh
+
+    - name: Install on Windows
+      if: runner.os == 'Windows' && inputs.arch != 'x86'
+      run: choco install -y mono
+      shell: sh
+
