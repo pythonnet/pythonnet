@@ -61,18 +61,18 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      - name: Setup upterm session
+        uses: owenthereal/action-upterm@v1
+        if: ${{ matrix.os.category == 'macos' }}
+        with:
+          ## Shut down the server if unconnected after 5 minutes.
+          limit-access-to-actor: true
+          wait-timeout-minutes: 15
+
       - name: Install Mono
         uses: ./.github/actions/install-mono
         with:
           arch: ${{ matrix.os.platform }}
-
-      - name: Setup upterm session
-        uses: owenthereal/action-upterm@v1
-        if: ${{ failure() }}
-        with:
-          ## Shut down the server if unconnected after 5 minutes.
-          limit-access-to-actor: true
-          wait-timeout-minutes: 5
 
       - name: Set up Python ${{ matrix.python }}
         uses: astral-sh/setup-uv@v7
