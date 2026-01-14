@@ -16,6 +16,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 -  Fixed crash when trying to `del clrObj[...]` for non-arrays
 - ci: properly exclude job (#2542)
+-  Fixed conversion of elements when iterating non-generic containers (#2679)
 
 ## [3.0.5](https://github.com/pythonnet/pythonnet/releases/tag/v3.0.5) - 2024-12-13
 

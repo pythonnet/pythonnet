@@ -23,6 +23,7 @@
 -   Avinash Maddikonda ([@SFM61319](https://github.com/SFM61319))
 -   Benoît Hudson ([@benoithudson](https://github.com/benoithudson))
 -   Bradley Friedman ([@leith-bartrich](https://github.com/leith-bartrich))
+-   Brandon Carpenter ([@brandon-avantus](https://github.com/brandon-avantus))
 -   Callum Noble ([@callumnoble](https://github.com/callumnoble))
 -   Christabella Irwanto([@christabella](https://github.com/christabella))
 -   Christian Heimes ([@tiran](https://github.com/tiran))

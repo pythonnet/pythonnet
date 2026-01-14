@@ -5,7 +5,7 @@ import pytest
 
 import System
 from Python.Test import ConversionTest, MethodResolutionInt, UnicodeString, CodecResetter
-from Python.Runtime import PyObjectConversions
+from Python.Runtime import IPyObjectEncoder, PyObjectConversions
 from Python.Runtime.Codecs import RawProxyEncoder
 
 
@@ -755,3 +755,35 @@ def test_explicit_conversion():
         assert int(t(123.4)) == 123
         with pytest.raises(TypeError):
             index(t(123.4))
+
+@pytest.mark.parametrize('container_type', ['generic', 'non-generic'])
+def test_iterator_element_conversion(container_type):
+    """Test iterator element conversion from Python."""
+    from Python.Test import Spam
+
+    try:
+        from Python.Test import IteratorElementEncoder
+    except ImportError:
+        class IteratorElementEncoder(IPyObjectEncoder):
+            __namespace__ = "Python.Test"
+            def CanEncode(self, clr_type):
+                return clr_type.Name == "Spam" and clr_type.Namespace == "Python.Test"
+            def TryEncode(self, clr_object):
+                return clr_object.GetValue()
+
+    spam_encoder = IteratorElementEncoder()
+    PyObjectConversions.RegisterEncoder(spam_encoder)
+
+    values = ["first", "second", "third"]
+    if container_type == 'generic':
+        container = System.Collections.Generic.List[Spam]()
+        for value in values:
+            container.Add(Spam(value))
+    else:
+        container = System.Array[Spam](Spam(v) for v in values)
+
+    assert type(container[0]) is str
+    assert next(iter(container.GetEnumerator())) == container[0]
+    assert list(container.GetEnumerator()) == values
+
+    CodecResetter.Reset()

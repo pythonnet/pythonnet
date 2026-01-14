@@ -43,7 +43,12 @@ namespace Python.Runtime
                 return default;
             }
             object item = self.iter.Current;
-            return Converter.ToPython(item, self.elemType);
+            // Non-generic enumerator elements are typed as System.Object,
+            // in which case the actual object type should be converted.
+            Type elemType = item is null || self.elemType != typeof(object)
+                ? self.elemType
+                : item.GetType();
+            return Converter.ToPython(item, elemType);
         }
 
         public static NewReference tp_iter(BorrowedReference ob) => new (ob);
