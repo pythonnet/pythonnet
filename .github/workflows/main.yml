@@ -53,7 +53,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '10.0.x'
 
       - name: Set up Python ${{ matrix.python }}
         uses: astral-sh/setup-uv@v7
@@ -77,7 +77,7 @@ jobs:
           MONO_THREADS_SUSPEND: preemptive # https://github.com/mono/mono/issues/21466
 
       - name: Embedding tests (.NET Core)
-        run: dotnet test --runtime any-${{ matrix.os.platform }} --framework net8.0 --logger "console;verbosity=detailed" src/embed_tests/
+        run: dotnet test --runtime any-${{ matrix.os.platform }} --framework net10.0 --logger "console;verbosity=detailed" src/embed_tests/
         if: always()
 
       - name: Python Tests (Mono)
