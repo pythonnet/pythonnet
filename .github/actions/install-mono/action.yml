@@ -10,25 +10,41 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Install on macOS (x86_64)
-      if: runner.os == 'macOS' && inputs.arch == 'x64'
-      run: |
-        arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-        arch -x86_64 /usr/local/bin/brew install mono
-      shell: sh
+    - name: Cache on Linux
+      if: runner.os == 'Linux'
+      uses: actions/cache@v5
+      with:
+        path: .apt
+        key: mono-${{ runner.os }}-${{ inputs.arch }}
 
-    - name: Install on macOS
-      if: runner.os == 'macOS' && inputs.arch != 'x64'
-      run: |
-        brew update
-        brew install mono
-      shell: sh
+    - name: Cache on Windows
+      if: runner.os == 'Windows'
+      uses: actions/cache@v5
+      with:
+        path: ${{ env.TEMP }}\chocolatey
+        key: mono-${{ runner.os }}-${{ inputs.arch }}
+
+    # - name: Cache on macOS (x86_64)
+    #   if: runner.os == 'Linux'
+    #   uses: actions/cache@v5
+    #   with:
+    #     path: .apt
+    #     key: mono-${{ runner.os }}-${{ inputs.arch }}
+    #
+    # - name: Cache on macOS (arm64)
+    #   if: runner.os == 'Linux'
+    #   uses: actions/cache@v5
+    #   with:
+    #     path: .apt
+    #     key: mono-${{ runner.os }}-${{ inputs.arch }}
+
+    # ===================================
 
     - name: Install on Linux
       if: runner.os == 'Linux'
       run: |
-        sudo apt update
-        sudo apt install -y mono-runtime-sgen
+        sudo apt-get -o Dir::Cache=".apt" update
+        sudo apt-get -o Dir::Cache=".apt" install -y mono-runtime-sgen
       shell: sh
 
     - name: Install on Windows (x86)
@@ -39,5 +55,19 @@ runs:
     - name: Install on Windows
       if: runner.os == 'Windows' && inputs.arch != 'x86'
       run: choco install -y mono
+      shell: sh
+
+    - name: Install on macOS (x86_64)
+      if: runner.os == 'macOS' && inputs.arch == 'x64'
+      run: |
+        arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        arch -x86_64 /usr/local/bin/brew install mono
+      shell: sh
+
+    - name: Install on macOS (arm64)
+      if: runner.os == 'macOS' && inputs.arch != 'x64'
+      run: |
+        brew update
+        brew install mono
       shell: sh
 
