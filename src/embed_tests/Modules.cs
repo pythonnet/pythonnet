@@ -28,18 +28,6 @@ namespace Python.EmbeddingTest
             }
         }
 
-        [OneTimeSetUp]
-        public void OneTimeSetUp()
-        {
-            PythonEngine.Initialize();
-        }
-
-        [OneTimeTearDown]
-        public void OneTimeTearDown()
-        {
-            PythonEngine.Shutdown();
-        }
-
         /// <summary>
         /// Eval a Python expression and obtain its return value.
         /// </summary>
@@ -50,7 +38,7 @@ namespace Python.EmbeddingTest
             {
                 ps.Set("a", 1);
                 var result = ps.Eval<int>("a + 2");
-                Assert.AreEqual(3, result);
+                Assert.That(result, Is.EqualTo(3));
             }
         }
 
@@ -66,7 +54,7 @@ namespace Python.EmbeddingTest
                 ps.Set("cc", 10); //declare a local variable
                 ps.Exec("aa = bb + cc + 3");
                 var result = ps.Get<int>("aa");
-                Assert.AreEqual(113, result);
+                Assert.That(result, Is.EqualTo(113));
             }
         }
 
@@ -83,7 +71,7 @@ namespace Python.EmbeddingTest
                 ps.Set("cc", 10); //declare a local variable
                 PyObject script = PythonEngine.Compile("bb + cc + 3", "", RunFlagType.Eval);
                 var result = ps.Execute<int>(script);
-                Assert.AreEqual(113, result);
+                Assert.That(result, Is.EqualTo(113));
             }
         }
 
@@ -102,7 +90,7 @@ namespace Python.EmbeddingTest
                 PyObject script = PythonEngine.Compile("aa = bb + cc + 3", "", RunFlagType.File);
                 ps.Execute(script);
                 var result = ps.Get<int>("aa");
-                Assert.AreEqual(113, result);
+                Assert.That(result, Is.EqualTo(113));
             }
         }
 
@@ -123,7 +111,7 @@ namespace Python.EmbeddingTest
                 dynamic func1 = ps.Get("func1");
                 func1(); //call the function, it can be called any times
                 var result = ps.Get<int>("bb");
-                Assert.AreEqual(100, result);
+                Assert.That(result, Is.EqualTo(100));
 
                 ps.Set("bb", 100);
                 ps.Set("cc", 10);
@@ -134,7 +122,7 @@ namespace Python.EmbeddingTest
                 dynamic func2 = ps.Get("func2");
                 func2();
                 result = ps.Get<int>("bb");
-                Assert.AreEqual(20, result);
+                Assert.That(result, Is.EqualTo(20));
             }
         }
 
@@ -219,10 +207,10 @@ namespace Python.EmbeddingTest
 
             using var modWithName = PyModule.FromString("mod_with_name", "", "some_filename");
 
-            Assert.AreEqual("none", mod.Get<string>("__file__"));
-            Assert.AreEqual("none", modWithoutName.Get<string>("__file__"));
-            Assert.AreEqual("none", modNullName.Get<string>("__file__"));
-            Assert.AreEqual("some_filename", modWithName.Get<string>("__file__"));
+            Assert.That(mod.Get<string>("__file__"), Is.EqualTo("none"));
+            Assert.That(modWithoutName.Get<string>("__file__"), Is.EqualTo("none"));
+            Assert.That(modNullName.Get<string>("__file__"), Is.EqualTo("none"));
+            Assert.That(modWithName.Get<string>("__file__"), Is.EqualTo("some_filename"));
         }
 
         /// <summary>
@@ -235,17 +223,17 @@ namespace Python.EmbeddingTest
             using (Py.GIL())
             {
                 dynamic sys = ps.Import("sys");
-                Assert.IsTrue(ps.Contains("sys"));
+                Assert.That(ps.Contains("sys"), Is.True);
 
                 ps.Exec("sys.attr1 = 2");
                 var value1 = ps.Eval<int>("sys.attr1");
                 var value2 = sys.attr1.As<int>();
-                Assert.AreEqual(2, value1);
+                Assert.That(value1, Is.EqualTo(2));
                 Assert.AreEqual(2, value2);
 
                 //import as
                 ps.Import("sys", "sys1");
-                Assert.IsTrue(ps.Contains("sys1"));
+                Assert.That(ps.Contains("sys1"), Is.True);
             }
         }
 
@@ -266,10 +254,10 @@ namespace Python.EmbeddingTest
                     scope.Import(ps, "ps");
                     scope.Exec("aa = ps.bb + ps.cc + 3");
                     var result = scope.Get<int>("aa");
-                    Assert.AreEqual(113, result);
+                    Assert.That(result, Is.EqualTo(113));
                 }
 
-                Assert.IsFalse(ps.Contains("aa"));
+                Assert.That(ps.Contains("aa"), Is.False);
             }
         }
 
@@ -289,10 +277,10 @@ namespace Python.EmbeddingTest
                 {
                     scope.Exec("aa = bb + cc + 3");
                     var result = scope.Get<int>("aa");
-                    Assert.AreEqual(113, result);
+                    Assert.That(result, Is.EqualTo(113));
                 }
 
-                Assert.IsFalse(ps.Contains("aa"));
+                Assert.That(ps.Contains("aa"), Is.False);
             }
         }
 
@@ -345,22 +333,22 @@ namespace Python.EmbeddingTest
             {
                 (ps.Variables() as dynamic)["ee"] = new PyInt(200);
                 var a0 = ps.Get<int>("ee");
-                Assert.AreEqual(200, a0);
+                Assert.That(a0, Is.EqualTo(200));
 
                 ps.Exec("locals()['ee'] = 210");
                 var a1 = ps.Get<int>("ee");
-                Assert.AreEqual(210, a1);
+                Assert.That(a1, Is.EqualTo(210));
 
                 ps.Exec("globals()['ee'] = 220");
                 var a2 = ps.Get<int>("ee");
-                Assert.AreEqual(220, a2);
+                Assert.That(a2, Is.EqualTo(220));
 
                 using (var item = ps.Variables())
                 {
                     item["ee"] = new PyInt(230);
                 }
                 var a3 = ps.Get<int>("ee");
-                Assert.AreEqual(230, a3);
+                Assert.That(a3, Is.EqualTo(230));
             }
         }
 
@@ -420,7 +408,7 @@ namespace Python.EmbeddingTest
                 using (Py.GIL())
                 {
                     var result = ps.Get<int>("res");
-                    Assert.AreEqual(101 * th_cnt, result);
+                    Assert.That(result, Is.EqualTo(101 * th_cnt));
                 }
             }
             finally
@@ -434,7 +422,7 @@ namespace Python.EmbeddingTest
         {
             using var scope = Py.CreateScope();
 
-            Assert.IsFalse(PyModule.SysModules.HasKey("testmod"));
+            Assert.That(PyModule.SysModules.HasKey("testmod"), Is.False);
 
             PyModule testmod = new PyModule("testmod");
 
@@ -448,7 +436,7 @@ namespace Python.EmbeddingTest
                 );
             scope.Execute(code);
 
-            Assert.IsTrue(scope.TryGet("x", out dynamic x));
+            Assert.That(scope.TryGet("x", out dynamic x), Is.True);
             Assert.AreEqual("True", x.ToString());
         }
 

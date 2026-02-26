@@ -15,10 +15,13 @@ using PyRuntime = Python.Runtime.Runtime;
 // Unfortunately this means no continuous integration testing for this case.
 //
 #if NETFRAMEWORK
-namespace Python.EmbeddingTest
+namespace Python.EmbeddingTest.NeedsReinit
 {
-    class TestDomainReload
+    [Category("NeedsReinit")]
+    class TestDomainReload : StopAndRestartEngine
     {
+
+
         abstract class CrossCaller : MarshalByRefObject
         {
             public abstract ValueType Execute(ValueType arg);

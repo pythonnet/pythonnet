@@ -25,6 +25,7 @@ namespace Python.Runtime
         [NonSerialized]
         internal List<string> dotNetMembers = new();
         internal Indexer? indexer;
+        internal MethodBinder? del;
         internal readonly Dictionary<int, MethodObject> richcompare = new();
         internal MaybeType type;
 
@@ -373,6 +374,8 @@ namespace Python.Runtime
             return 0;
         }
 
+        static readonly HashSet<IntPtr> ClearVisited = new();
+
         internal static unsafe int BaseUnmanagedClear(BorrowedReference ob)
         {
             var type = Runtime.PyObject_TYPE(ob);
@@ -384,21 +387,20 @@ namespace Python.Runtime
             }
             var clear = (delegate* unmanaged[Cdecl]<BorrowedReference, int>)clearPtr;
 
-            bool usesSubtypeClear = clearPtr == TypeManager.subtype_clear;
-            if (usesSubtypeClear)
+            if (clearPtr == TypeManager.subtype_clear)
             {
-                // workaround for https://bugs.python.org/issue45266 (subtype_clear)
-                using var dict = Runtime.PyObject_GenericGetDict(ob);
-                if (Runtime.PyMapping_HasKey(dict.Borrow(), PyIdentifier.__clear_reentry_guard__) != 0)
+                var addr = ob.DangerousGetAddress();
+                if (!ClearVisited.Add(addr))
                     return 0;
-                int res = Runtime.PyDict_SetItem(dict.Borrow(), PyIdentifier.__clear_reentry_guard__, Runtime.None);
-                if (res != 0) return res;
 
-                res = clear(ob);
-                Runtime.PyDict_DelItem(dict.Borrow(), PyIdentifier.__clear_reentry_guard__);
+                int res = clear(ob);
+                ClearVisited.Remove(addr);
                 return res;
             }
-            return clear(ob);
+            else
+            {
+                return clear(ob);
+            }
         }
 
         protected override Dictionary<string, object?> OnSave(BorrowedReference ob)
@@ -465,6 +467,11 @@ namespace Python.Runtime
             // with the index arg (method binders expect arg tuples).
             NewReference argsTuple = default;
 
+            if (v.IsNull)
+            {
+                return DelImpl(ob, idx, cls);
+            }
+
             if (!Runtime.PyTuple_Check(idx))
             {
                 argsTuple = Runtime.PyTuple_New(1);
@@ -497,11 +504,43 @@ namespace Python.Runtime
             // Add value to argument list
             Runtime.PyTuple_SetItem(real.Borrow(), i, v);
 
-            cls.indexer.SetItem(ob, real.Borrow());
+            using var result = cls.indexer.SetItem(ob, real.Borrow());
+            return result.IsNull() ? -1 : 0;
+        }
 
-            if (Exceptions.ErrorOccurred())
+        /// Implements __delitem__ (del x[...]) for IList&lt;T&gt; and IDictionary&lt;TKey, TValue&gt;.
+        private static int DelImpl(BorrowedReference ob, BorrowedReference idx, ClassBase cls)
+        {
+            if (cls.del is null)
             {
+                Exceptions.SetError(Exceptions.TypeError, "object does not support item deletion");
                 return -1;
+            }
+
+            if (Runtime.PyTuple_Check(idx))
+            {
+                Exceptions.SetError(Exceptions.TypeError, "multi-index deletion not supported");
+                return -1;
+            }
+
+            using var argsTuple = Runtime.PyTuple_New(1);
+            Runtime.PyTuple_SetItem(argsTuple.Borrow(), 0, idx);
+            using var result = cls.del.Invoke(ob, argsTuple.Borrow(), kw: null);
+            if (result.IsNull())
+                return -1;
+
+            if (Runtime.PyBool_CheckExact(result.Borrow()))
+            {
+                if (Runtime.PyObject_IsTrue(result.Borrow()) != 0)
+                    return 0;
+
+                Exceptions.SetError(Exceptions.KeyError, "key not found");
+                return -1;
+            }
+
+            if (!result.IsNone())
+            {
+                Exceptions.warn("unsupported return type for __delitem__", Exceptions.TypeError);
             }
 
             return 0;

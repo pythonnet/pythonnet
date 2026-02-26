@@ -10,18 +10,6 @@ namespace Python.EmbeddingTest;
 
 public class Events
 {
-    [OneTimeSetUp]
-    public void SetUp()
-    {
-        PythonEngine.Initialize();
-    }
-
-    [OneTimeTearDown]
-    public void Dispose()
-    {
-        PythonEngine.Shutdown();
-    }
-
     [Test]
     public void UsingDoesNotLeak()
     {

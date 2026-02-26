@@ -15,7 +15,6 @@ namespace Python.EmbeddingTest
         [OneTimeSetUp]
         public void SetUp()
         {
-            PythonEngine.Initialize();
             // workaround for assert tlock.locked() warning
             threading = Py.Import("threading");
         }
@@ -24,7 +23,6 @@ namespace Python.EmbeddingTest
         public void Dispose()
         {
             threading.Dispose();
-            PythonEngine.Shutdown();
         }
 
         [Test]
@@ -50,9 +48,9 @@ namespace Python.EmbeddingTest
             }
             PythonEngine.EndAllowThreads(threadState);
 
-            Assert.IsTrue(asyncCall.Wait(TimeSpan.FromSeconds(5)), "Async thread has not finished in time");
+            Assert.That(asyncCall.Wait(TimeSpan.FromSeconds(5)), Is.True, "Async thread has not finished in time");
 
-            Assert.AreEqual(pythonThreadID, pythonThreadID2);
+            Assert.That(pythonThreadID2, Is.EqualTo(pythonThreadID));
             Assert.NotZero(pythonThreadID);
         }
 
@@ -86,13 +84,13 @@ except KeyboardInterrupt:
             PythonEngine.EndAllowThreads(threadState);
 
             int interruptReturnValue = PythonEngine.Interrupt((ulong)Interlocked.Read(ref pythonThreadID));
-            Assert.AreEqual(1, interruptReturnValue);
+            Assert.That(interruptReturnValue, Is.EqualTo(1));
 
             threadState = PythonEngine.BeginAllowThreads();
-            Assert.IsTrue(asyncCall.Wait(TimeSpan.FromSeconds(5)), "Async thread was not interrupted in time");
+            Assert.That(asyncCall.Wait(TimeSpan.FromSeconds(5)), Is.True, "Async thread was not interrupted in time");
             PythonEngine.EndAllowThreads(threadState);
 
-            Assert.AreEqual(0, asyncCall.Result);
+            Assert.That(asyncCall.Result, Is.EqualTo(0));
         }
     }
 }

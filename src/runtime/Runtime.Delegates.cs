@@ -308,7 +308,8 @@ public unsafe partial class Runtime
             {
                 throw new BadPythonDllException(
                     "Runtime.PythonDLL was not set or does not point to a supported Python runtime DLL." +
-                    " See https://github.com/pythonnet/pythonnet#embedding-python-in-net",
+                    " See https://github.com/pythonnet/pythonnet#embedding-python-in-net." +
+                    $" Value of PythonDLL: {PythonDLL ?? "null"}",
                     e);
             }
         }

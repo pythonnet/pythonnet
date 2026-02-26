@@ -13,14 +13,13 @@ namespace Python.EmbeddingTest
         [OneTimeSetUp]
         public void SetUp()
         {
-            PythonEngine.Initialize();
             TupleCodec<ValueTuple>.Register();
         }
 
         [OneTimeTearDown]
         public void Dispose()
         {
-            PythonEngine.Shutdown();
+            PyObjectConversions.Reset();
         }
 
         [Test]
@@ -32,7 +31,7 @@ namespace Python.EmbeddingTest
             StringAssert.StartsWith("-0.95892", sin(5).ToString());
 
             double c = (double)(np.cos(5) + sin(5));
-            Assert.AreEqual(-0.675262, c, 0.01);
+            Assert.That(c, Is.EqualTo(-0.675262).Within(0.01));
 
             dynamic a = np.array(new List<float> { 1, 2, 3 });
             Assert.AreEqual("float64", a.dtype.ToString());
