@@ -47,6 +47,14 @@ jobs:
             suffix:   -macos-aarch64-none
 
         python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+
+        exclude:
+          # Fails with initfs_encoding error
+          - os:
+              category: windows
+              platform: x86
+            python: "3.10"
+
     env:
       NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
     steps:
@@ -79,17 +87,21 @@ jobs:
         run: uv sync --managed-python
 
       - name: Embedding tests (Mono/.NET Framework)
+        if: always()
         run: dotnet test --runtime any-${{ matrix.os.platform }} --framework net472 --logger "console;verbosity=detailed" src/embed_tests/
         env:
           MONO_THREADS_SUSPEND: preemptive # https://github.com/mono/mono/issues/21466
 
       - name: Embedding tests (.NET Core)
+        if: always()
         run: dotnet test --runtime any-${{ matrix.os.platform }} --framework net10.0 --logger "console;verbosity=detailed" src/embed_tests/
 
       - name: Python Tests (Mono)
+        if: always()
         run: pytest --runtime mono
 
       - name: Python Tests (.NET Core)
+        if: always()
         run: pytest --runtime coreclr
 
       - name: Python Tests (.NET Framework)
