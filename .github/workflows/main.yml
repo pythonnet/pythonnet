@@ -55,6 +55,26 @@ jobs:
               platform: x86
             python: "3.10"
 
+          # broken ctypes find_library
+          - os:
+              category: macos
+              platform: arm64
+            python: '3.10'
+          - os:
+              category: macos
+              platform: arm64
+            python: '3.11'
+          - os:
+              category: macos
+              platform: arm64
+            python: '3.12'
+
+          # fails to call mono methods
+          - os:
+              category: windows
+              platform: x86
+            python: '3.13'
+
     env:
       NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
     steps:
@@ -67,6 +87,8 @@ jobs:
         with:
           dotnet-version: '10.0'
           architecture: ${{ matrix.os.platform }}
+
+      - run: dotnet restore
 
       - name: Install Mono
         uses: ./.github/actions/install-mono
@@ -81,8 +103,6 @@ jobs:
           activate-environment: true
           enable-cache: true
 
-      - run: dotnet restore
-
       - name: Synchronize the virtual environment
         run: uv sync --managed-python
 
@@ -96,21 +116,17 @@ jobs:
         if: always()
         run: dotnet test --runtime any-${{ matrix.os.platform }} --framework net10.0 --logger "console;verbosity=detailed" src/embed_tests/
 
-      - name: Python Tests (Mono)
-        if: always()
-        run: pytest --runtime mono
-
       - name: Python Tests (.NET Core)
         if: always()
         run: pytest --runtime coreclr
+
+      - name: Python Tests (Mono)
+        if: always()
+        run: pytest --runtime mono
 
       - name: Python Tests (.NET Framework)
         if: ${{ matrix.os.category == 'windows' }}
         run: pytest --runtime netfx
 
       - name: Python tests run from .NET
-        # For some reason, it won't find pytest on the Windows + 3.10
-        # combination, which hints that it does not handle the venv properly in
-        # this combination.
-        if: ${{ matrix.os.category != 'windows' || matrix.python != '3.10' }}
         run: dotnet test --runtime any-${{ matrix.os.platform }} src/python_tests_runner/
