@@ -55,7 +55,7 @@ jobs:
               platform: x86
             python: "3.10"
 
-          # broken ctypes find_library
+          # Broken ctypes find_library
           - os:
               category: macos
               platform: arm64
@@ -68,6 +68,12 @@ jobs:
               category: macos
               platform: arm64
             python: '3.12'
+
+          # Fails to find pytest
+          - os:
+              category: windows
+              platform: x64
+            python: '3.10'
 
           # fails to call mono methods
           - os:
