@@ -11,7 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="NUnit" Version="4.*" />
-    <PackageReference Include="NUnit3TestAdapter" Version="5.*">
+    <PackageReference Include="NUnit3TestAdapter" Version="6.*">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
