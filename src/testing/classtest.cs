@@ -70,5 +70,15 @@ namespace Python.Test
                 throw new Exception("Expected ISayHello and SimpleClass instance");
             }
         }
+
+        public virtual string SayGoodbye()
+        {
+            return "!";
+        }
+    }
+
+    public class SimpleClass2 : SimpleClass
+    {
+        // this class does not override SayGoodbye.
     }
 }
