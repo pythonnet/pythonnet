@@ -45,7 +45,7 @@ Mono (``mono``)
 
 .NET Framework (``netfx``)
     Default on Windows and also only supported there. Must be at least version
-    4.7.2.
+    4.6.1, with 4.7.2 or later recommended.
 
 .NET Core (``coreclr``)
     Self-contained is not supported, must be at least version 3.1.
