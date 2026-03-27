@@ -89,3 +89,4 @@
 -   Ehsan Iran-Nejad ([@eirannejad](https://github.com/eirannejad))
 -   ([@legomanww](https://github.com/legomanww))
 -   ([@gertdreyer](https://github.com/gertdreyer))
+-   Kerbiter ([@Metadorius](https://github.com/Metadorius))
