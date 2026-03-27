@@ -55,6 +55,9 @@ email = "pythonnet@python.org"
 Homepage = "https://pythonnet.github.io/"
 Sources = "https://github.com/pythonnet/pythonnet"
 
+[project.entry-points.pyinstaller40]
+hook-dirs = "pythonnet._pyinstaller:get_hook_dirs"
+
 [tool.setuptools]
 zip-safe = false
 py-modules = ["clr"]
