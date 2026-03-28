@@ -228,7 +228,8 @@ namespace Python.Runtime
         public string ToString(string format, IFormatProvider formatProvider)
         {
             using var _ = Py.GIL();
-            return ToBigInteger().ToString(format, formatProvider);
+            object val = Runtime.PyLong_AsLongLong(obj);
+            return val?.ToString() ?? ToBigInteger().ToString(format, formatProvider);
         }
 
         public override TypeCode GetTypeCode() => TypeCode.Int64;
