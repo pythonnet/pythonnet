@@ -18,16 +18,22 @@ namespace Python.Runtime
                 // Version=0.0.0.0 vs the 4.0.2.0 shim on disk). Binding redirects
                 // via config files can't be injected after AppDomain creation, so
                 // resolve assemblies from our runtime directory directly.
-                AppDomain.CurrentDomain.AssemblyResolve += (_, args) =>
+                // Only needed on .NET Framework; on .NET (Core) this causes
+                // duplicate assembly loads, as .deps.json is respected and
+                // the correct assembly is already found.
+                if (typeof(object).Assembly.GetName().Name == "mscorlib")
                 {
-                    var name = new System.Reflection.AssemblyName(args.Name);
-                    var dir = Path.GetDirectoryName(typeof(Loader).Assembly.Location);
-                    var path = Path.Combine(dir, name.Name + ".dll");
+                    AppDomain.CurrentDomain.AssemblyResolve += (_, args) =>
+                    {
+                        var name = new System.Reflection.AssemblyName(args.Name);
+                        var dir = Path.GetDirectoryName(typeof(Loader).Assembly.Location);
+                        var path = Path.Combine(dir, name.Name + ".dll");
 
-                    return File.Exists(path)
-                        ? System.Reflection.Assembly.LoadFrom(path)
-                        : null;
-                };
+                        return File.Exists(path)
+                            ? System.Reflection.Assembly.LoadFrom(path)
+                            : null;
+                    };
+                }
 
                 var dllPath = Encodings.UTF8.GetString((byte*)data.ToPointer(), size);
 
