@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Dynamic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -232,6 +233,13 @@ namespace Python.Runtime
                     continue;
                 }
 
+                // Avoid re-entrant DLR binder recursion when Python derives from
+                // DynamicObject-based types (including overrides in intermediate bases).
+                if (IsDynamicObjectHookMethod(method))
+                {
+                    continue;
+                }
+
                 // skip if this property has already been overridden
                 if ((method.Name.StartsWith("get_") || method.Name.StartsWith("set_"))
                     && pyProperties.Contains(method.Name.Substring(4)))
@@ -298,6 +306,35 @@ namespace Python.Runtime
             AssemblyBuilder assemblyBuilder = assemblyBuilders[assemblyName];
 
             return type;
+        }
+
+        static bool IsDynamicObjectHookMethod(MethodInfo method)
+        {
+            MethodInfo origin = method.GetBaseDefinition();
+            Type? originType = origin.DeclaringType;
+            if (originType == typeof(DynamicObject))
+            {
+                return origin.Name switch
+                {
+                    nameof(DynamicObject.TryGetMember)
+                    or nameof(DynamicObject.TrySetMember)
+                    or nameof(DynamicObject.TryDeleteMember)
+                    or nameof(DynamicObject.TryInvokeMember)
+                    or nameof(DynamicObject.TryConvert)
+                    or nameof(DynamicObject.TryGetIndex)
+                    or nameof(DynamicObject.TrySetIndex)
+                    or nameof(DynamicObject.GetDynamicMemberNames)
+                    or nameof(IDynamicMetaObjectProvider.GetMetaObject) => true,
+                    _ => false,
+                };
+            }
+
+            if (originType == typeof(IDynamicMetaObjectProvider))
+            {
+                return origin.Name == nameof(IDynamicMetaObjectProvider.GetMetaObject);
+            }
+
+            return false;
         }
 
         /// <summary>
