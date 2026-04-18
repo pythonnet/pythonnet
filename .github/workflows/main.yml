@@ -55,20 +55,6 @@ jobs:
               platform: x86
             python: "3.10"
 
-          # Broken ctypes find_library
-          - os:
-              category: macos
-              platform: arm64
-            python: '3.10'
-          - os:
-              category: macos
-              platform: arm64
-            python: '3.11'
-          - os:
-              category: macos
-              platform: arm64
-            python: '3.12'
-
           # Fails to find pytest
           - os:
               category: windows
@@ -97,7 +83,7 @@ jobs:
       - run: dotnet restore
 
       - name: Install Mono
-        uses: ./.github/actions/install-mono
+        uses: pythonnet/clr-loader/.github/actions/install-mono@main
         with:
           arch: ${{ matrix.os.platform }}
 

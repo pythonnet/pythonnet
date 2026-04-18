@@ -90,14 +90,14 @@ wheels = [
 
 [[package]]
 name = "clr-loader"
-version = "0.3.0"
+version = "0.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cffi" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/fe/56/0fb4f734a5b2574b9b75157eabef64e5e2ceaf44b759306034e8b1452e62/clr_loader-0.3.0.tar.gz", hash = "sha256:b880e0821cdc18f9bf9f05e5130e966cc78fa75edc7432baf4fa4711e8412b05", size = 84710, upload-time = "2026-03-03T00:41:51.314Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e4/46/7eea92b6aa2d68af78e049cbecec5f757f1aad44ecdecdc16bbad7eead51/clr_loader-0.3.1.tar.gz", hash = "sha256:2e073e9aaf49d1ae2f56ecba27987ad5fb68be4bcd9dd34a5bed8f0e4e128366", size = 86805, upload-time = "2026-04-18T17:49:44.287Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a2/07/6c965da95ef2b7410f1314cdfe462efdf9722bfd7fbfe6945564b8b0467a/clr_loader-0.3.0-py3-none-any.whl", hash = "sha256:d918467eb1077d23b48b0b7e9b6379e8fbf20b573832839a41cec1e06dad2beb", size = 57431, upload-time = "2026-03-03T00:41:06.554Z" },
+    { url = "https://files.pythonhosted.org/packages/5e/da/ec1a6e36624000b6df0dd61183c42342ee5814c073315e802cadaad04d2f/clr_loader-0.3.1-py3-none-any.whl", hash = "sha256:cbad189de20d202a7d621956b0fc38049e13c9bf7ca2923441eff725cd121aa1", size = 55730, upload-time = "2026-04-18T17:49:42.99Z" },
 ]
 
 [[package]]
@@ -385,7 +385,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "clr-loader", specifier = ">=0.3.0,<0.4.0" }]
+requires-dist = [{ name = "clr-loader", specifier = ">=0.3.1,<0.4.0" }]
 
 [package.metadata.requires-dev]
 dev = [
