@@ -4,20 +4,27 @@
 
 import System
 import pytest
-import psutil
 import sys
 import gc
+import tracemalloc
 from Python.Test import MethodTest
 
+@pytest.fixture(scope="function")
+def memory_usage_tracking():
+    was_tracing = tracemalloc.is_tracing()
+    if not was_tracing:
+        tracemalloc.start()
+    yield
+    if not was_tracing:
+        tracemalloc.stop()
 
-@pytest.fixture
-def process() -> psutil.Process:
-    """Fixture for getting the current process."""
-    return psutil.Process()
-
-
-def _get_precise_process_memory_bytes(process: psutil.Process) -> int:
-    return process.memory_full_info().uss
+def _get_total_memory_bytes() -> int:
+    """Get total memory consumption combining .NET GC memory and Python tracemalloc."""
+    dotnet_memory = System.GC.GetTotalMemory(forceFullCollection=False)
+    # Get Python-side memory
+    current, _peak = tracemalloc.get_traced_memory()
+    # Return combined measurement
+    return dotnet_memory + current
 
 
 def test_instance_method_overwritable():
@@ -949,12 +956,13 @@ def test_getting_generic_method_binding_does_not_leak_ref_count():
     assert refCount == 1
 
 
-def test_getting_generic_method_binding_does_not_leak_memory(process: psutil.Process):
+def test_getting_generic_method_binding_does_not_leak_memory(memory_usage_tracking):
     """Test that managed object is freed after calling generic method. Issue #691"""
 
     from PlainOldNamespace import PlainOldClass
 
-    processBytesBeforeCall = _get_precise_process_memory_bytes(process)
+    tracemalloc.start()
+    processBytesBeforeCall = _get_total_memory_bytes()
     print(
         "\n\nMemory consumption (bytes) at start of test: "
         + str(processBytesBeforeCall)
@@ -967,7 +975,7 @@ def test_getting_generic_method_binding_does_not_leak_memory(process: psutil.Pro
     gc.collect()
     System.GC.Collect()
 
-    processBytesAfterCall = _get_precise_process_memory_bytes(process)
+    processBytesAfterCall = _get_total_memory_bytes()
     print("Memory consumption (bytes) at end of test: " + str(processBytesAfterCall))
     processBytesDelta = processBytesAfterCall - processBytesBeforeCall
     print("Memory delta: " + str(processBytesDelta))
@@ -991,14 +999,12 @@ def test_getting_overloaded_method_binding_does_not_leak_ref_count():
     assert refCount == 1
 
 
-def test_getting_overloaded_method_binding_does_not_leak_memory(
-    process: psutil.Process,
-):
+def test_getting_overloaded_method_binding_does_not_leak_memory(memory_usage_tracking):
     """Test that managed object is freed after calling overloaded method. Issue #691"""
 
     from PlainOldNamespace import PlainOldClass
 
-    processBytesBeforeCall = _get_precise_process_memory_bytes(process)
+    processBytesBeforeCall = _get_total_memory_bytes()
     print(
         "\n\nMemory consumption (bytes) at start of test: "
         + str(processBytesBeforeCall)
@@ -1011,7 +1017,7 @@ def test_getting_overloaded_method_binding_does_not_leak_memory(
     gc.collect()
     System.GC.Collect()
 
-    processBytesAfterCall = _get_precise_process_memory_bytes(process)
+    processBytesAfterCall = _get_total_memory_bytes()
     print("Memory consumption (bytes) at end of test: " + str(processBytesAfterCall))
     processBytesDelta = processBytesAfterCall - processBytesBeforeCall
     print("Memory delta: " + str(processBytesDelta))
@@ -1036,13 +1042,12 @@ def test_getting_method_overloads_binding_does_not_leak_ref_count():
     assert refCount == 1
 
 
-@pytest.mark.xfail(reason="Fails locally, need to investigate later", strict=False)
-def test_getting_method_overloads_binding_does_not_leak_memory(process: psutil.Process):
+def test_getting_method_overloads_binding_does_not_leak_memory(memory_usage_tracking):
     """Test that managed object is freed after calling overloaded method. Issue #691"""
 
     from PlainOldNamespace import PlainOldClass
 
-    processBytesBeforeCall = _get_precise_process_memory_bytes(process)
+    processBytesBeforeCall = _get_total_memory_bytes()
     print(
         "\n\nMemory consumption (bytes) at start of test: "
         + str(processBytesBeforeCall)
@@ -1055,7 +1060,7 @@ def test_getting_method_overloads_binding_does_not_leak_memory(process: psutil.P
     gc.collect()
     System.GC.Collect()
 
-    processBytesAfterCall = _get_precise_process_memory_bytes(process)
+    processBytesAfterCall = _get_total_memory_bytes()
     print("Memory consumption (bytes) at end of test: " + str(processBytesAfterCall))
     processBytesDelta = processBytesAfterCall - processBytesBeforeCall
     print("Memory delta: " + str(processBytesDelta))
