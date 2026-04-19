@@ -127,7 +127,7 @@ cmdclass = {
 dotnet_libs = [
     DotnetLib(
         "python-runtime",
-        "src/runtime/Python.Runtime.csproj",
+        "src/compat/Python.Runtime.Compat.csproj",
         output="pythonnet/runtime",
     )
 ]
