@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Dynamic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -22,6 +23,10 @@ namespace Python.Runtime
     [Serializable]
     internal class ClassBase : ManagedType, IDeserializationCallback
     {
+        static readonly DynamicObjectMemberAccessor dynamicMemberAccessor = new();
+
+        internal static void Reset() => dynamicMemberAccessor.Clear();
+
         [NonSerialized]
         internal List<string> dotNetMembers = new();
         internal Indexer? indexer;
@@ -603,6 +608,105 @@ namespace Python.Runtime
             => type.GetMethods(BindingFlags.Public | BindingFlags.Instance)
                 .Where(m => m.Name == "__call__");
 
+        static NewReference tp_getattro_dlr(BorrowedReference ob, BorrowedReference key)
+        {
+            var attr = Runtime.PyObject_GenericGetAttr(ob, key);
+            if (!attr.IsNull())
+            {
+                return attr;
+            }
+
+            // Only run the DLR binder if the error was AttributeError, otherwise preserve the original error
+            if (Runtime.PyErr_ExceptionMatches(Exceptions.AttributeError) == 0)
+            {
+                return default;
+            }
+
+            if (!Runtime.PyString_Check(key))
+            {
+                return default;
+            }
+
+            if (GetManagedObject(ob) is not CLRObject co)
+            {
+                return default;
+            }
+
+            // Slot registration already guarantees this type supports DLR
+            var dynamicObject = (IDynamicMetaObjectProvider)co.inst;
+
+            string? memberName = Runtime.GetManagedString(key);
+            if (memberName is null)
+            {
+                return default;
+            }
+
+            if (!dynamicMemberAccessor.TryGetMember(dynamicObject, memberName, out object? value))
+            {
+                return default;
+            }
+
+            // Clear the lingering AttributeError
+            Runtime.PyErr_Clear();
+
+            using var pyValue = value.ToPython();
+            return pyValue.NewReferenceOrNull();
+        }
+
+        static int tp_setattro_dlr(BorrowedReference ob, BorrowedReference key, BorrowedReference val)
+        {
+            int result = Runtime.PyObject_GenericSetAttr(ob, key, val);
+            if (result == 0)
+            {
+                return 0;
+            }
+
+            // Preserve non-attribute errors exactly as they are.
+            if (Runtime.PyErr_ExceptionMatches(Exceptions.AttributeError) == 0)
+            {
+                return -1;
+            }
+
+            // Deletion fallback is intentionally not handled by DLR binder yet.
+            if (val == null)
+            {
+                return -1;
+            }
+
+            if (!Runtime.PyString_Check(key))
+            {
+                return -1;
+            }
+
+            if (GetManagedObject(ob) is not CLRObject co)
+            {
+                return -1;
+            }
+
+            // Slot registration already guarantees this type supports DLR.
+            var dynamicObject = (IDynamicMetaObjectProvider)co.inst;
+
+            string? memberName = Runtime.GetManagedString(key);
+            if (memberName is null)
+            {
+                return -1;
+            }
+
+            if (!Converter.ToManaged(val, typeof(object), out object? managedValue, true))
+            {
+                return -1;
+            }
+
+            if (!dynamicMemberAccessor.TrySetMember(dynamicObject, memberName, managedValue))
+            {
+                return -1;
+            }
+
+            // Clear the lingering AttributeError
+            Runtime.PyErr_Clear();
+            return 0;
+        }
+
         public virtual void InitializeSlots(BorrowedReference pyType, SlotsHolder slotsHolder)
         {
             if (!this.type.Valid) return;
@@ -610,6 +714,12 @@ namespace Python.Runtime
             if (GetCallImplementations(this.type.Value).Any())
             {
                 TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.tp_call, new Interop.BBB_N(tp_call_impl), slotsHolder);
+            }
+
+            if (typeof(IDynamicMetaObjectProvider).IsAssignableFrom(this.type.Value))
+            {
+                TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.tp_getattro, new Interop.BB_N(tp_getattro_dlr), slotsHolder);
+                TypeManager.InitializeSlotIfEmpty(pyType, TypeOffset.tp_setattro, new Interop.BBB_I32(tp_setattro_dlr), slotsHolder);
             }
 
             if (indexer is not null)

@@ -40,7 +40,7 @@ namespace Python.Runtime
             moduleBuilders = new Dictionary<Tuple<string, string>, ModuleBuilder>();
         }
 
-        public static void Reset()
+        public static new void Reset()
         {
             assemblyBuilders = new Dictionary<string, AssemblyBuilder>();
             moduleBuilders = new Dictionary<Tuple<string, string>, ModuleBuilder>();

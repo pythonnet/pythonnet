@@ -151,6 +151,7 @@ namespace Python.Runtime
 
             GenericUtil.Reset();
             ClassManager.Reset();
+            ClassBase.Reset();
             ClassDerivedObject.Reset();
             TypeManager.Initialize();
             CLRObject.creationBlocked = false;
@@ -280,6 +281,7 @@ namespace Python.Runtime
 
             NullGCHandles(ExtensionType.loadedExtensions);
             ClassManager.RemoveClasses();
+            ClassBase.Reset();
             TypeManager.RemoveTypes();
             _typesInitialized = false;
 
