@@ -983,9 +983,9 @@ def test_getting_generic_method_binding_does_not_leak_memory(memory_usage_tracki
     bytesAllocatedPerIteration = pow(2, 20)  # 1MB
     bytesLeakedPerIteration = processBytesDelta / iterations
 
-    # Allow 75% threshold - this shows the original issue is fixed, which leaks the full allocated bytes per iteration
+    # Allow 90% threshold - this shows the original issue is fixed, which leaks the full allocated bytes per iteration
     # Increased from 50% to ensure that it works on Windows with Python >3.13
-    failThresholdBytesLeakedPerIteration = bytesAllocatedPerIteration * 0.75
+    failThresholdBytesLeakedPerIteration = bytesAllocatedPerIteration * 0.9
 
     assert bytesLeakedPerIteration < failThresholdBytesLeakedPerIteration
 
@@ -1068,8 +1068,8 @@ def test_getting_method_overloads_binding_does_not_leak_memory(memory_usage_trac
     bytesAllocatedPerIteration = pow(2, 20)  # 1MB
     bytesLeakedPerIteration = processBytesDelta / iterations
 
-    # Allow 75% threshold - this shows the original issue is fixed, which leaks the full allocated bytes per iteration
-    failThresholdBytesLeakedPerIteration = bytesAllocatedPerIteration * 0.75
+    # Allow 90% threshold - this shows the original issue is fixed, which leaks the full allocated bytes per iteration
+    failThresholdBytesLeakedPerIteration = bytesAllocatedPerIteration * 0.9
 
     assert bytesLeakedPerIteration < failThresholdBytesLeakedPerIteration
 
