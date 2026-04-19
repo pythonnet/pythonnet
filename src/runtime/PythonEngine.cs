@@ -135,7 +135,7 @@ namespace Python.Runtime
         }
 
         public static Version MinSupportedVersion => new(3, 7);
-        public static Version MaxSupportedVersion => new(3, 13, int.MaxValue, int.MaxValue);
+        public static Version MaxSupportedVersion => new(3, 14, int.MaxValue, int.MaxValue);
         public static bool IsSupportedVersion(Version version) => version >= MinSupportedVersion && version <= MaxSupportedVersion;
 
         public static string Version
