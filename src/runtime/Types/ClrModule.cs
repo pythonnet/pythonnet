@@ -16,7 +16,6 @@ namespace Python.Runtime
         protected static bool interactive_preload = true;
         internal static bool preload;
         // XXX Test performance of new features //
-        internal static bool _SuppressDocs = false;
         internal static bool _SuppressOverloads = false;
 
         static CLRModule()
@@ -39,10 +38,6 @@ namespace Python.Runtime
         {
             interactive_preload = true;
             preload = false;
-
-            // XXX Test performance of new features //
-            _SuppressDocs = false;
-            _SuppressOverloads = false;
         }
 
         /// <summary>
@@ -82,15 +77,15 @@ namespace Python.Runtime
         //[ModuleProperty]
         public static bool SuppressDocs
         {
-            get { return _SuppressDocs; }
-            set { _SuppressDocs = value; }
+            get { return BindingManager.DefaultBindingOptions.SuppressDocs; }
+            set { BindingManager.DefaultBindingOptions.SuppressDocs = value; }
         }
 
         //[ModuleProperty]
         public static bool SuppressOverloads
         {
-            get { return _SuppressOverloads; }
-            set { _SuppressOverloads = value; }
+            get { return BindingManager.DefaultBindingOptions.SuppressOverloads; }
+            set { BindingManager.DefaultBindingOptions.SuppressOverloads = value; }
         }
 
         [ModuleFunction]
