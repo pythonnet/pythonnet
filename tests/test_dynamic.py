@@ -65,3 +65,66 @@ def test_dynamic_and_native_members_coexist():
     assert obj.answer == 42
     assert obj.Multiplier == 2
     assert obj.Multiply(10) == 20
+
+
+@pytest.mark.parametrize("obj", [DynamicMappingObject(), ExpandoObject()])
+def test_set_and_get_dynamic_property(obj):
+    """Test that setting and getting dynamic properties goes through DLR binder."""
+    # Get initial value (should be None for non-existent property)
+    assert not hasattr(obj, "MyProp")
+    
+    # Set a dynamic property to a value
+    obj.MyProp = 42
+    assert obj.MyProp == 42
+    
+    # Set to None and verify it stays None through DLR
+    obj.MyProp = None
+    assert obj.MyProp is None
+    
+    # Set to another value and verify
+    obj.MyProp = "hello"
+    assert obj.MyProp == "hello"
+
+
+def test_update_dynamic_value():
+    """Setting from Python must update the backing dynamic store in C#."""
+    obj = DynamicMappingObject()
+    obj.SetDynamicValue("TestProp", "initial")
+    assert obj.TestProp == "initial"
+
+    obj.TestProp = None
+
+    assert obj.TestProp is None
+    assert obj.GetDynamicValue("TestProp") is None
+
+
+def test_derive_from_dynamic_class():
+    class MyMappingObject(DynamicMappingObject):
+        __namespace__ = "PythonNetTest"
+
+        def __init__(self):
+            self._custom = 0
+
+        @property
+        def custom_property(self):
+            return self._custom
+        
+        @custom_property.setter
+        def custom_property(self, i):
+            self._custom += i
+
+
+    obj = MyMappingObject()
+    with pytest.raises(AttributeError):
+        x = obj.unknown_property
+
+    assert obj.custom_property == 0
+
+    obj.custom_property = 5
+    assert obj.custom_property == 5
+
+    obj.custom_property = 5
+    assert obj.custom_property == 10
+
+    obj.other_property = None
+    assert obj.other_property is None

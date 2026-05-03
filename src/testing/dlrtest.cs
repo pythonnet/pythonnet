@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Dynamic;
 
@@ -5,7 +6,9 @@ namespace Python.Test;
 
 public class DynamicMappingObject : DynamicObject
 {
-    readonly Dictionary<string, object> storage = [];
+    Dictionary<string, object> storage;
+
+    Dictionary<string, object> Storage => storage ??= [];
 
     // Native members for testing that regular CLR access is unaffected.
     public string Label = "default";
@@ -13,19 +16,30 @@ public class DynamicMappingObject : DynamicObject
     public int Multiply(int value) => value * Multiplier;
 
     // Test helper: bypass normal member binding and write directly to dynamic storage.
-    public void SetDynamicValue(string name, object value) => storage[name] = value;
+    public void SetDynamicValue(string name, object value) => Storage[name] = value;
+
+    // Test helper: retrieve the actual value stored in C# (for verification that None was stored as null)
+    public object GetDynamicValue(string name) => Storage.TryGetValue(name, out var value) ? value : null;
+
+
 
     public override bool TryGetMember(GetMemberBinder binder, out object result)
-        => storage.TryGetValue(binder.Name, out result);
+        => Storage.TryGetValue(binder.Name, out result);
+
+    public object TestProp 
+    { 
+        get => "TEST_PROP"; 
+        set => throw new InvalidOperationException("Can't write to TestProp"); 
+    }
 
     public override bool TrySetMember(SetMemberBinder binder, object value)
     {
-        storage[binder.Name] = value;
+        Storage[binder.Name] = value;
         return true;
     }
 
     public override bool TryDeleteMember(DeleteMemberBinder binder)
-        => storage.Remove(binder.Name);
+        => binder is not null && Storage.Remove(binder.Name);
 
-    public override IEnumerable<string> GetDynamicMemberNames() => storage.Keys;
+    public override IEnumerable<string> GetDynamicMemberNames() => Storage.Keys;
 }
