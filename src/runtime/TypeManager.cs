@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -36,6 +37,182 @@ namespace Python.Runtime
             "tp_traverse",
             "tp_clear",
         };
+
+        static readonly DynamicObjectMemberAccessor dynamicMemberAccessor = new();
+
+        static bool HasClrMember(object instance, string memberName) =>
+            instance.GetType().GetMember(memberName, BindingFlags.Public | BindingFlags.Instance).Length > 0;
+
+        static bool IsPythonSpecialAttributeName(string memberName) =>
+            memberName.Length > 4 && memberName.StartsWith("__") && memberName.EndsWith("__");
+
+        static bool TryGetDynamicInstance(BorrowedReference ob, out object instance, out IDynamicMetaObjectProvider dynamicObject)
+        {
+            if (ManagedType.GetManagedObject(ob) is CLRObject co && co.inst is IDynamicMetaObjectProvider coDynamic)
+            {
+                instance = co.inst;
+                dynamicObject = coDynamic;
+                return true;
+            }
+
+            if (Converter.ToManaged(ob, typeof(IDynamicMetaObjectProvider), out object? managedDynamic, false)
+                && managedDynamic is IDynamicMetaObjectProvider convertedDynamic)
+            {
+                instance = managedDynamic;
+                dynamicObject = convertedDynamic;
+                return true;
+            }
+
+            if (Converter.ToManaged(ob, typeof(object), out object? managedInstance, false)
+                && managedInstance is IDynamicMetaObjectProvider boxedDynamic)
+            {
+                instance = managedInstance;
+                dynamicObject = boxedDynamic;
+                return true;
+            }
+
+            instance = null!;
+            dynamicObject = null!;
+            return false;
+        }
+
+        static bool TryGetManagedDynamicInstance(BorrowedReference ob, out object instance, out IDynamicMetaObjectProvider dynamicObject)
+        {
+            if (ManagedType.GetManagedObject(ob) is CLRObject co && co.inst is IDynamicMetaObjectProvider coDynamic)
+            {
+                instance = co.inst;
+                dynamicObject = coDynamic;
+                return true;
+            }
+
+            instance = null!;
+            dynamicObject = null!;
+            return false;
+        }
+
+        public static NewReference tp_getattro_dlr_proxy(BorrowedReference ob, BorrowedReference key)
+        {
+            bool hasStringKey = Runtime.PyString_Check(key);
+            string? memberName = hasStringKey ? Runtime.GetManagedString(key) : null;
+
+            if (memberName is not null && TryGetManagedDynamicInstance(ob, out object preInstance, out var preDynamicObject))
+            {
+                if (memberName == nameof(DynamicObjectMemberAccessor.GetDynamicMemberNames)
+                    && !HasClrMember(preInstance, memberName))
+                {
+                    using var pyMemberNames = new Func<IReadOnlyCollection<string>>(
+                        () => dynamicMemberAccessor.GetDynamicMemberNames(preDynamicObject)).ToPython();
+                    return pyMemberNames.NewReferenceOrNull();
+                }
+            }
+
+            var attr = Runtime.PyObject_GenericGetAttr(ob, key);
+            if (!attr.IsNull())
+            {
+                return attr;
+            }
+
+            if (memberName == null)
+            {
+                return default;
+            }
+
+            if (Runtime.PyErr_ExceptionMatches(Exceptions.AttributeError) == 0)
+            {
+                return default;
+            }
+
+            if (!TryGetManagedDynamicInstance(ob, out object instance, out var dynamicObject))
+            {
+                return default;
+            }
+
+            if (memberName is null)
+            {
+                return default;
+            }
+
+            if (HasClrMember(instance, memberName))
+            {
+                return default;
+            }
+
+            if (IsPythonSpecialAttributeName(memberName))
+            {
+                return default;
+            }
+
+            bool resolved;
+            object? value;
+            try
+            {
+                resolved = dynamicMemberAccessor.TryGetMember(dynamicObject, memberName, out value);
+            }
+            catch
+            {
+                return default;
+            }
+
+            if (!resolved)
+            {
+                return default;
+            }
+
+            Runtime.PyErr_Clear();
+
+            using var pyValue = value.ToPython();
+            return pyValue.NewReferenceOrNull();
+        }
+
+        public static int tp_setattro_dlr_proxy(BorrowedReference ob, BorrowedReference key, BorrowedReference val)
+        {
+            string? memberName = Runtime.PyString_Check(key) ? Runtime.GetManagedString(key) : null;
+            bool hasDynamicInstance = TryGetDynamicInstance(ob, out object instance, out var dynamicObject);
+            bool canUseDynamic = hasDynamicInstance
+                && memberName is not null
+                && !HasClrMember(instance, memberName);
+
+            if (canUseDynamic)
+            {
+                if (val == null)
+                {
+                    if (dynamicMemberAccessor.TryDeleteMember(dynamicObject, memberName!))
+                    {
+                        Runtime.PyErr_Clear();
+                        return 0;
+                    }
+                }
+                else
+                {
+                    object? managedValue = null;
+                    if (val != Runtime.PyNone && !Converter.ToManaged(val, typeof(object), out managedValue, true))
+                    {
+                        return -1;
+                    }
+
+                    if (dynamicMemberAccessor.TrySetMember(dynamicObject, memberName!, managedValue))
+                    {
+                        Runtime.PyErr_Clear();
+                        return 0;
+                    }
+                }
+            }
+
+            int result = Runtime.PyObject_GenericSetAttr(ob, key, val);
+            if (result == 0 && canUseDynamic)
+            {
+                object? managedValue = null;
+                if (val != null && val != Runtime.PyNone && !Converter.ToManaged(val, typeof(object), out managedValue, true))
+                {
+                    return 0;
+                }
+
+                dynamicMemberAccessor.TrySetMember(dynamicObject, memberName!, managedValue);
+                Runtime.PyErr_Clear();
+            }
+
+            return result;
+        }
 
         internal static void Initialize()
         {
@@ -303,6 +480,12 @@ namespace Python.Runtime
 
             impl.InitializeSlots(type, slotsHolder);
 
+            if (typeof(IDynamicMetaObjectProvider).IsAssignableFrom(clrType)
+                && !typeof(IPythonDerivedType).IsAssignableFrom(clrType))
+            {
+                InitializeSlot(type, TypeOffset.tp_getattro, new Interop.BB_N(tp_getattro_dlr_proxy), slotsHolder);
+            }
+
             OperatorMethod.FixupSlots(type, clrType);
             // Leverage followup initialization from the Python runtime. Note
             // that the type of the new type must PyType_Type at the time we
@@ -311,6 +494,22 @@ namespace Python.Runtime
             if (!type.IsReady && Runtime.PyType_Ready(type) != 0)
             {
                 throw PythonException.ThrowLastAsClrException();
+            }
+
+            if (typeof(IDynamicMetaObjectProvider).IsAssignableFrom(clrType)
+                && !typeof(IPythonDerivedType).IsAssignableFrom(clrType))
+            {
+                MethodInfo? setMethod = typeof(TypeManager).GetMethod(
+                    nameof(tp_setattro_dlr_proxy),
+                    BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+
+                if (setMethod is null)
+                {
+                    throw new MissingMethodException("DLR attribute slot handlers were not found");
+                }
+
+                InitializeSlot(type, TypeOffset.tp_setattro, setMethod, slotsHolder);
+                Runtime.PyType_Modified(type.Reference);
             }
 
             var dict = Util.ReadRef(type, TypeOffset.tp_dict);

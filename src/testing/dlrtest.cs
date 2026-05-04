@@ -26,12 +26,6 @@ public class DynamicMappingObject : DynamicObject
     public override bool TryGetMember(GetMemberBinder binder, out object result)
         => Storage.TryGetValue(binder.Name, out result);
 
-    public object TestProp 
-    { 
-        get => "TEST_PROP"; 
-        set => throw new InvalidOperationException("Can't write to TestProp"); 
-    }
-
     public override bool TrySetMember(SetMemberBinder binder, object value)
     {
         Storage[binder.Name] = value;

@@ -87,15 +87,58 @@ def test_set_and_get_dynamic_property(obj):
 
 
 def test_update_dynamic_value():
-    """Setting from Python must update the backing dynamic store in C#."""
+    """Dynamic-only members should use DLR get/set/modify/delete end-to-end."""
     obj = DynamicMappingObject()
-    obj.SetDynamicValue("TestProp", "initial")
-    assert obj.TestProp == "initial"
+    assert not hasattr(obj, "DynamicOnly")
 
-    obj.TestProp = None
+    # Initial set should create a dynamic member
+    obj.DynamicOnly = "initial"
+    assert obj.DynamicOnly == "initial"
 
-    assert obj.TestProp is None
-    assert obj.GetDynamicValue("TestProp") is None
+    # Modify flows through TrySetMember
+    obj.DynamicOnly = "updated"
+    assert obj.DynamicOnly == "updated"
+
+    # Setting None keeps a present member with None value
+    obj.DynamicOnly = None
+    assert obj.DynamicOnly is None
+
+    # Delete flows through TryDeleteMember
+    del obj.DynamicOnly
+    assert "DynamicOnly" not in dir(obj)
+    assert not hasattr(obj, "DynamicOnly")
+
+
+def test_dynamic_set_none_updates_managed_store_after_get():
+    """Regression: get->set(None)->get must route through DLR and update managed storage."""
+    obj = DynamicMappingObject()
+    obj.SetDynamicValue("MyProp", "initial")
+
+    x = obj.MyProp
+    assert x == "initial"
+
+    obj.MyProp = None
+
+    y = obj.MyProp
+    assert y is None
+    assert obj.GetDynamicValue("MyProp") is None
+
+
+@pytest.mark.parametrize("obj", [DynamicMappingObject(), ExpandoObject()])
+def test_dynamic_member_lifecycle(obj):
+    """Dynamic members should support set/modify/get/delete via the DLR binder."""
+    name = "LifecycleMember"
+
+    assert not hasattr(obj, name)
+
+    setattr(obj, name, 1)
+    assert getattr(obj, name) == 1
+
+    setattr(obj, name, 2)
+    assert getattr(obj, name) == 2
+
+    delattr(obj, name)
+    assert not hasattr(obj, name)
 
 
 def test_derive_from_dynamic_class():
