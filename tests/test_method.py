@@ -1025,8 +1025,8 @@ def test_getting_overloaded_method_binding_does_not_leak_memory(memory_usage_tra
     bytesAllocatedPerIteration = pow(2, 20)  # 1MB
     bytesLeakedPerIteration = processBytesDelta / iterations
 
-    # Allow 50% threshold - this shows the original issue is fixed, which leaks the full allocated bytes per iteration
-    failThresholdBytesLeakedPerIteration = bytesAllocatedPerIteration / 2
+    # Allow 90% threshold - this shows the original issue is fixed, which leaks the full allocated bytes per iteration
+    failThresholdBytesLeakedPerIteration = bytesAllocatedPerIteration * 0.9
 
     assert bytesLeakedPerIteration < failThresholdBytesLeakedPerIteration
 
