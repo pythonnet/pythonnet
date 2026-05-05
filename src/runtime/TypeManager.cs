@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+
 using Python.Runtime.Native;
 using Python.Runtime.StateSerialization;
 
@@ -76,74 +77,48 @@ namespace Python.Runtime
             return false;
         }
 
-        static bool TryGetManagedDynamicInstance(BorrowedReference ob, out object instance, out IDynamicMetaObjectProvider dynamicObject)
-        {
-            if (ManagedType.GetManagedObject(ob) is CLRObject co && co.inst is IDynamicMetaObjectProvider coDynamic)
-            {
-                instance = co.inst;
-                dynamicObject = coDynamic;
-                return true;
-            }
-
-            instance = null!;
-            dynamicObject = null!;
-            return false;
-        }
-
         public static NewReference tp_getattro_dlr_proxy(BorrowedReference ob, BorrowedReference key)
         {
-            bool hasStringKey = Runtime.PyString_Check(key);
-            string? memberName = hasStringKey ? Runtime.GetManagedString(key) : null;
+            var isDynamic = TryGetDynamicInstance(ob, out object instance, out IDynamicMetaObjectProvider dynamicObject);
 
-            if (memberName is not null && TryGetManagedDynamicInstance(ob, out object preInstance, out var preDynamicObject))
+            // The whole DLR machinery only makes sense with string keys and dynamic objects
+            if (!isDynamic || !Runtime.PyString_Check(key))
             {
-                if (memberName == nameof(DynamicObjectMemberAccessor.GetDynamicMemberNames)
-                    && !HasClrMember(preInstance, memberName))
-                {
-                    using var pyMemberNames = new Func<IReadOnlyCollection<string>>(
-                        () => dynamicMemberAccessor.GetDynamicMemberNames(preDynamicObject)).ToPython();
-                    return pyMemberNames.NewReferenceOrNull();
-                }
+                return Runtime.PyObject_GenericGetAttr(ob, key);
             }
 
+            string memberName = Runtime.GetManagedString(key)!;
+
+            // Forward requests to GetDynamicMemberNames to the mixin implementation
+            if (memberName == nameof(DynamicObjectMemberAccessor.GetDynamicMemberNames)
+                && !HasClrMember(instance, memberName))
+            {
+                using var pyMemberNames = new Func<IReadOnlyCollection<string>>(
+                    () => dynamicMemberAccessor.GetDynamicMemberNames(dynamicObject)
+                ).ToPython();
+                return pyMemberNames.NewReferenceOrNull();
+            }
+
+            // Now, first try to access the Python attribute
             var attr = Runtime.PyObject_GenericGetAttr(ob, key);
             if (!attr.IsNull())
-            {
                 return attr;
-            }
 
-            if (memberName == null)
-            {
-                return default;
-            }
-
+            // attr is null, so an exception must be set. If that exception is not an AttributeError,
+            // we return from this function immediately without clearing. All later returns until the
+            // very end will lead to the AttributeError getting raised.
             if (Runtime.PyErr_ExceptionMatches(Exceptions.AttributeError) == 0)
             {
                 return default;
             }
 
-            if (!TryGetManagedDynamicInstance(ob, out object instance, out var dynamicObject))
+            if (HasClrMember(instance, memberName) || IsPythonSpecialAttributeName(memberName))
             {
                 return default;
             }
 
-            if (memberName is null)
-            {
-                return default;
-            }
-
-            if (HasClrMember(instance, memberName))
-            {
-                return default;
-            }
-
-            if (IsPythonSpecialAttributeName(memberName))
-            {
-                return default;
-            }
-
-            bool resolved;
-            object? value;
+            bool resolved = false;
+            object? value = null;
             try
             {
                 resolved = dynamicMemberAccessor.TryGetMember(dynamicObject, memberName, out value);
@@ -166,64 +141,55 @@ namespace Python.Runtime
 
         public static int tp_setattro_dlr_proxy(BorrowedReference ob, BorrowedReference key, BorrowedReference val)
         {
-            string? memberName = Runtime.PyString_Check(key) ? Runtime.GetManagedString(key) : null;
-            bool hasDynamicInstance = TryGetDynamicInstance(ob, out object instance, out var dynamicObject);
-            bool canUseDynamic = hasDynamicInstance
-                && memberName is not null
-                && !HasClrMember(instance, memberName);
+            var isDynamic = TryGetDynamicInstance(ob, out object instance, out IDynamicMetaObjectProvider dynamicObject);
 
-            // For Python-derived types (IPythonDerivedType), the Python descriptor protocol
-            // (e.g. @property setters) takes priority over DLR member storage. Try
-            // PyObject_GenericSetAttr first; only fall back to DLR on AttributeError.
-            if (canUseDynamic && instance is IPythonDerivedType)
+            // The whole DLR machinery only makes sense with string keys and dynamic objects
+            if (!isDynamic || !Runtime.PyString_Check(key))
             {
-                int pyResult = Runtime.PyObject_GenericSetAttr(ob, key, val);
-                if (pyResult == 0) return 0;
-                if (Runtime.PyErr_ExceptionMatches(Exceptions.AttributeError) == 0) return pyResult;
-                Runtime.PyErr_Clear();
-                // fall through to DLR path below
+                return Runtime.PyObject_GenericSetAttr(ob, key, val);
             }
 
-            if (canUseDynamic)
+            string memberName = Runtime.GetManagedString(key)!;
+
+            // For Python-derived types (IPythonDerivedType), the Python descriptor protocol
+            // (e.g. @property setters) takes priority over DLR member storage.
+            if (instance is IPythonDerivedType)
             {
+                int pyResult = Runtime.PyObject_GenericSetAttr(ob, key, val);
+                if (pyResult == 0)
+                    return 0;
+
+                if (Runtime.PyErr_ExceptionMatches(Exceptions.AttributeError) == 0)
+                    return pyResult;
+
+                Runtime.PyErr_Clear();
+                // Fall through to DLR fallback below
+            }
+
+            if (!HasClrMember(instance, memberName) && !IsPythonSpecialAttributeName(memberName))
+            {
+                // Try DLR member storage first
+                bool handled = false;
+
                 if (val == null)
                 {
-                    if (dynamicMemberAccessor.TryDeleteMember(dynamicObject, memberName!))
-                    {
-                        Runtime.PyErr_Clear();
-                        return 0;
-                    }
+                    handled = dynamicMemberAccessor.TryDeleteMember(dynamicObject, memberName);
                 }
                 else
                 {
                     object? managedValue = null;
                     if (val != Runtime.PyNone && !Converter.ToManaged(val, typeof(object), out managedValue, true))
-                    {
                         return -1;
-                    }
 
-                    if (dynamicMemberAccessor.TrySetMember(dynamicObject, memberName!, managedValue))
-                    {
-                        Runtime.PyErr_Clear();
-                        return 0;
-                    }
+                    handled = dynamicMemberAccessor.TrySetMember(dynamicObject, memberName, managedValue);
                 }
-            }
 
-            int result = Runtime.PyObject_GenericSetAttr(ob, key, val);
-            if (result == 0 && canUseDynamic)
-            {
-                object? managedValue = null;
-                if (val != null && val != Runtime.PyNone && !Converter.ToManaged(val, typeof(object), out managedValue, true))
-                {
+                if (handled)
                     return 0;
-                }
-
-                dynamicMemberAccessor.TrySetMember(dynamicObject, memberName!, managedValue);
-                Runtime.PyErr_Clear();
             }
 
-            return result;
+            // Fall back to Python attribute setting
+            return Runtime.PyObject_GenericSetAttr(ob, key, val);
         }
 
         internal static void Initialize()
