@@ -3,14 +3,19 @@
 import distutils
 from distutils.command.build import build as _build
 from setuptools.command.develop import develop as _develop
-from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
 from setuptools import Distribution
 from setuptools import setup, Command
 
 import os
+import sys
 
 # Disable SourceLink during the build until it can read repo-format v1, #1613
 os.environ["EnableSourceControlManagerQueries"] = "false"
+
+NET46_SUPPORT_OPTION = "--net46-support"
+NET46_SUPPORT = NET46_SUPPORT_OPTION in sys.argv
+if NET46_SUPPORT:
+    sys.argv.remove(NET46_SUPPORT_OPTION)
 
 
 class DotnetLib:
@@ -106,14 +111,6 @@ class develop(_develop):
         return super().install_for_development()
 
 
-class bdist_wheel(_bdist_wheel):
-    def finalize_options(self):
-        # Monkey patch bdist_wheel to think the package is pure even though we
-        # include DLLs
-        super().finalize_options()
-        self.root_is_pure = True
-
-
 # Monkey-patch Distribution s.t. it supports the dotnet_libs attribute
 Distribution.dotnet_libs = None
 
@@ -121,18 +118,20 @@ cmdclass = {
     "build": build,
     "build_dotnet": build_dotnet,
     "develop": develop,
-    "bdist_wheel": bdist_wheel,
 }
 
-dotnet_libs = [
-    DotnetLib(
-        "python-runtime",
-        "src/compat/Python.Runtime.Compat.csproj",
-        output="pythonnet/runtime",
-    )
-]
+
+if NET46_SUPPORT:
+    csproj = "src/compat/Python.Runtime.Compat.csproj"
+    plat_name = "win32"
+else:
+    csproj = "src/runtime/Python.Runtime.csproj"
+    plat_name = "any"
+
+dotnet_libs = [DotnetLib("python-runtime", csproj, output="pythonnet/runtime")]
 
 setup(
     cmdclass=cmdclass,
     dotnet_libs=dotnet_libs,
+    options={"bdist_wheel": {"plat_name": plat_name}},
 )
