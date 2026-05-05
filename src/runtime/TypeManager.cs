@@ -172,6 +172,18 @@ namespace Python.Runtime
                 && memberName is not null
                 && !HasClrMember(instance, memberName);
 
+            // For Python-derived types (IPythonDerivedType), the Python descriptor protocol
+            // (e.g. @property setters) takes priority over DLR member storage. Try
+            // PyObject_GenericSetAttr first; only fall back to DLR on AttributeError.
+            if (canUseDynamic && instance is IPythonDerivedType)
+            {
+                int pyResult = Runtime.PyObject_GenericSetAttr(ob, key, val);
+                if (pyResult == 0) return 0;
+                if (Runtime.PyErr_ExceptionMatches(Exceptions.AttributeError) == 0) return pyResult;
+                Runtime.PyErr_Clear();
+                // fall through to DLR path below
+            }
+
             if (canUseDynamic)
             {
                 if (val == null)
