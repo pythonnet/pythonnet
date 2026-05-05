@@ -218,6 +218,7 @@ namespace Python.Runtime
         {
             Debug.Assert(cache.Count == 0, "Cache should be empty",
                 "Some errors may occurred on last shutdown");
+            dynamicMemberAccessor.Clear();
             using (var plainType = SlotHelper.CreateObjectType())
             {
                 subtype_traverse = Util.ReadIntPtr(plainType.Borrow(), TypeOffset.tp_traverse);
@@ -240,6 +241,8 @@ namespace Python.Runtime
                     }
                 }
             }
+
+            dynamicMemberAccessor.Clear();
 
             foreach (var type in cache.Values)
             {
@@ -480,12 +483,6 @@ namespace Python.Runtime
 
             impl.InitializeSlots(type, slotsHolder);
 
-            if (typeof(IDynamicMetaObjectProvider).IsAssignableFrom(clrType)
-                && !typeof(IPythonDerivedType).IsAssignableFrom(clrType))
-            {
-                InitializeSlot(type, TypeOffset.tp_getattro, new Interop.BB_N(tp_getattro_dlr_proxy), slotsHolder);
-            }
-
             OperatorMethod.FixupSlots(type, clrType);
             // Leverage followup initialization from the Python runtime. Note
             // that the type of the new type must PyType_Type at the time we
@@ -496,19 +493,10 @@ namespace Python.Runtime
                 throw PythonException.ThrowLastAsClrException();
             }
 
-            if (typeof(IDynamicMetaObjectProvider).IsAssignableFrom(clrType)
-                && !typeof(IPythonDerivedType).IsAssignableFrom(clrType))
+            if (typeof(IDynamicMetaObjectProvider).IsAssignableFrom(clrType))
             {
-                MethodInfo? setMethod = typeof(TypeManager).GetMethod(
-                    nameof(tp_setattro_dlr_proxy),
-                    BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
-
-                if (setMethod is null)
-                {
-                    throw new MissingMethodException("DLR attribute slot handlers were not found");
-                }
-
-                InitializeSlot(type, TypeOffset.tp_setattro, setMethod, slotsHolder);
+                InitializeSlot(type, TypeOffset.tp_getattro, new Interop.BB_N(tp_getattro_dlr_proxy), slotsHolder);
+                InitializeSlot(type, TypeOffset.tp_setattro, new Interop.BBB_I32(tp_setattro_dlr_proxy), slotsHolder);
                 Runtime.PyType_Modified(type.Reference);
             }
 
