@@ -39,6 +39,13 @@ dev = [
     "numpy >=2 ; python_version >= '3.10'",
     "numpy <2 ; python_version < '3.10'",
 ]
+doc = [
+    "sphinx",
+    "furo>=2025.12.19",
+    "pygments>=2.20",
+    "breathe",
+    "sphinx-csharp @ git+https://github.com/rogerbarton/sphinx-csharp.git",
+]
 
 [[project.authors]]
 name = "The Contributors of the Python.NET Project"

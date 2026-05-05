@@ -7,15 +7,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
+    - name: Set up Python
+      uses: astral-sh/setup-uv@v7
+      with:
+        python-version: "3.12"
+        cache-python: true
+        activate-environment: true
+        enable-cache: true
+
     - name: Doxygen Action
       uses: mattnotmitt/doxygen-action@1.12.0
       with:
         working-directory: "doc/"
 
+    - name: Synchronize the virtual environment
+      run: uv sync --managed-python --no-dev --group doc
+
     - name: Build Sphinx documentation
       run: |
-        pip install -r doc/requirements.txt
-        sphinx-build doc/source/ ./doc/build/html/
+        uv run sphinx-build doc/source/ ./doc/build/html/
 
     - name: Upload artifact
       # Automatically uploads an artifact from the './_site' directory by default
