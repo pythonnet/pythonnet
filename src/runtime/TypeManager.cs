@@ -171,7 +171,7 @@ namespace Python.Runtime
                 // Try DLR member storage first
                 bool handled = false;
 
-                if (val == null)
+                if (val.IsNull)
                 {
                     handled = dynamicMemberAccessor.TryDeleteMember(dynamicObject, memberName);
                 }
