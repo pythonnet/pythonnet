@@ -169,19 +169,32 @@ namespace Python.Runtime
             if (!HasClrMember(instance, memberName) && !IsPythonSpecialAttributeName(memberName))
             {
                 // Try DLR member storage first
-                bool handled = false;
+                bool handled;
 
-                if (val.IsNull)
+                try
                 {
-                    handled = dynamicMemberAccessor.TryDeleteMember(dynamicObject, memberName);
+                    if (val.IsNull)
+                    {
+                        handled = dynamicMemberAccessor.TryDeleteMember(dynamicObject, memberName);
+                    }
+                    else
+                    {
+                        object? managedValue = null;
+                        if (val != Runtime.PyNone && !Converter.ToManaged(val, typeof(object), out managedValue, true))
+                            return -1;
+
+                        handled = dynamicMemberAccessor.TrySetMember(dynamicObject, memberName, managedValue);
+                        if (!handled)
+                        {
+                            Exceptions.SetError(Exceptions.AttributeError, $"'{instance.GetType().Name}' object has no attribute '{memberName}'");
+                            return -1;
+                        }
+                    }
                 }
-                else
+                catch (Exception e)
                 {
-                    object? managedValue = null;
-                    if (val != Runtime.PyNone && !Converter.ToManaged(val, typeof(object), out managedValue, true))
-                        return -1;
-
-                    handled = dynamicMemberAccessor.TrySetMember(dynamicObject, memberName, managedValue);
+                    Exceptions.SetError(e);
+                    return -1;
                 }
 
                 if (handled)
