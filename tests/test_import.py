@@ -5,6 +5,11 @@
 import pytest
 import sys
 
+# Unused import to preload the class
+#
+# This resulted in the FileStream name missing from the wildcard import later
+from System.IO import FileStream  # noqa: F401
+
 def test_relative_missing_import():
     """Test that a relative missing import doesn't crash.
     Some modules use this to check if a package is installed.
