@@ -5,6 +5,10 @@ from System.Collections.Generic import Dictionary
 from System.Dynamic import ExpandoObject
 
 from Python.Test import DynamicMappingObject
+from Python.Test import RejectingDeleteDynamicObject
+from Python.Test import RejectingSetDynamicObject
+from Python.Test import ThrowingDeleteDynamicObject
+from Python.Test import ThrowingSetDynamicObject
 
 
 def _mro_names(obj):
@@ -171,3 +175,35 @@ def test_derive_from_dynamic_class():
 
     obj.other_property = None
     assert obj.other_property is None
+
+
+def test_trysetmember_false_raises_attributeerror_instead_of_silent_python_setattr():
+    obj = RejectingSetDynamicObject()
+
+    with pytest.raises(AttributeError):
+        obj.typoed_name = 42
+
+    assert not hasattr(obj, "typoed_name")
+
+
+def test_trysetmember_exception_is_raised_in_python():
+    obj = ThrowingSetDynamicObject()
+
+    with pytest.raises(Exception, match="TrySetMember failed for 'bad_name'"):
+        obj.bad_name = 42
+
+
+def test_trydeletemember_false_raises_attributeerror():
+    obj = RejectingDeleteDynamicObject()
+    obj.AddDynamicMember("existing_name", 42)
+
+    with pytest.raises(AttributeError):
+        del obj.missing_name
+
+
+def test_trydeletemember_exception_is_raised_in_python():
+    obj = ThrowingDeleteDynamicObject()
+    obj.bad_name = 42
+
+    with pytest.raises(Exception, match="TryDeleteMember failed for 'bad_name'"):
+        del obj.bad_name
