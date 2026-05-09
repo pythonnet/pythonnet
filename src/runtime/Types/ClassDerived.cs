@@ -34,6 +34,7 @@ namespace Python.Runtime
     {
         private static Dictionary<string, AssemblyBuilder> assemblyBuilders;
         private static Dictionary<Tuple<string, string>, ModuleBuilder> moduleBuilders;
+        private static readonly object _buildersLock = new();
 
         static ClassDerivedObject()
         {
@@ -43,8 +44,11 @@ namespace Python.Runtime
 
         public static void Reset()
         {
-            assemblyBuilders = new Dictionary<string, AssemblyBuilder>();
-            moduleBuilders = new Dictionary<Tuple<string, string>, ModuleBuilder>();
+            lock (_buildersLock)
+            {
+                assemblyBuilders = new Dictionary<string, AssemblyBuilder>();
+                moduleBuilders = new Dictionary<Tuple<string, string>, ModuleBuilder>();
+            }
         }
 
         internal ClassDerivedObject(Type tp) : base(tp)
@@ -694,33 +698,23 @@ namespace Python.Runtime
 
         private static ModuleBuilder GetModuleBuilder(string assemblyName, string moduleName)
         {
-            // find or create a dynamic assembly and module
-            AppDomain domain = AppDomain.CurrentDomain;
-            ModuleBuilder moduleBuilder;
+            var key = Tuple.Create(assemblyName, moduleName);
+            lock (_buildersLock)
+            {
+                if (moduleBuilders.TryGetValue(key, out ModuleBuilder? existing))
+                    return existing;
 
-            if (moduleBuilders.ContainsKey(Tuple.Create(assemblyName, moduleName)))
-            {
-                moduleBuilder = moduleBuilders[Tuple.Create(assemblyName, moduleName)];
-            }
-            else
-            {
-                AssemblyBuilder assemblyBuilder;
-                if (assemblyBuilders.ContainsKey(assemblyName))
+                if (!assemblyBuilders.TryGetValue(assemblyName, out AssemblyBuilder? assemblyBuilder))
                 {
-                    assemblyBuilder = assemblyBuilders[assemblyName];
-                }
-                else
-                {
-                    assemblyBuilder = domain.DefineDynamicAssembly(new AssemblyName(assemblyName),
-                        AssemblyBuilderAccess.Run);
+                    assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(
+                        new AssemblyName(assemblyName), AssemblyBuilderAccess.Run);
                     assemblyBuilders[assemblyName] = assemblyBuilder;
                 }
 
-                moduleBuilder = assemblyBuilder.DefineDynamicModule(moduleName);
-                moduleBuilders[Tuple.Create(assemblyName, moduleName)] = moduleBuilder;
+                var moduleBuilder = assemblyBuilder.DefineDynamicModule(moduleName);
+                moduleBuilders[key] = moduleBuilder;
+                return moduleBuilder;
             }
-
-            return moduleBuilder;
         }
     }
 
