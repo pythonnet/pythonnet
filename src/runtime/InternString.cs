@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -8,8 +9,8 @@ namespace Python.Runtime
 {
     static partial class InternString
     {
-        private static readonly Dictionary<string, PyString> _string2interns = new();
-        private static readonly Dictionary<IntPtr, string> _intern2strings = new();
+        private static readonly ConcurrentDictionary<string, PyString> _string2interns = new();
+        private static readonly ConcurrentDictionary<IntPtr, string> _intern2strings = new();
         const BindingFlags PyIdentifierFieldFlags = BindingFlags.Static | BindingFlags.NonPublic;
 
         static InternString()
@@ -75,8 +76,8 @@ namespace Python.Runtime
 
         private static void SetIntern(string s, PyString op)
         {
-            _string2interns.Add(s, op);
-            _intern2strings.Add(op.Reference.DangerousGetAddress(), s);
+            _string2interns.TryAdd(s, op);
+            _intern2strings.TryAdd(op.Reference.DangerousGetAddress(), s);
         }
     }
 }
