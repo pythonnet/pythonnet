@@ -62,6 +62,12 @@ public class RejectingSetDynamicObject : DynamicStorageObject
     }
 }
 
+public class ThrowingGetDynamicObject : DynamicStorageObject
+{
+    public override bool TryGetMember(GetMemberBinder binder, out object result)
+        => throw new InvalidOperationException($"TryGetMember failed for '{binder.Name}'");
+}
+
 public class ThrowingSetDynamicObject : DynamicStorageObject
 {
     public override bool TrySetMember(SetMemberBinder binder, object value)
