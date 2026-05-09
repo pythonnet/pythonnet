@@ -46,7 +46,7 @@ jobs:
             instance: macos-15
             suffix:   -macos-aarch64-none
 
-        python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        python: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.14t"]
 
         exclude:
           # Fails with initfs_encoding error
@@ -66,6 +66,17 @@ jobs:
               category: windows
               platform: x86
             python: '3.13'
+
+          # Free-threaded Python on Windows is not yet supported by pythonnet's
+          # native build chain; restrict 3.14t to Linux and macOS for now.
+          - os:
+              category: windows
+              platform: x86
+            python: '3.14t'
+          - os:
+              category: windows
+              platform: x64
+            python: '3.14t'
 
     env:
       NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
@@ -99,7 +110,8 @@ jobs:
         run: uv sync --managed-python
 
       - name: Embedding tests (Mono/.NET Framework)
-        if: always()
+        # Mono does not yet support free-threaded Python.
+        if: ${{ always() && matrix.python != '3.14t' }}
         run: dotnet test --runtime any-${{ matrix.os.platform }} --framework net472 --logger "console;verbosity=detailed" src/embed_tests/
         env:
           MONO_THREADS_SUSPEND: preemptive # https://github.com/mono/mono/issues/21466
@@ -113,7 +125,8 @@ jobs:
         run: pytest --runtime coreclr
 
       - name: Python Tests (Mono)
-        if: always()
+        # Mono does not yet support free-threaded Python.
+        if: ${{ always() && matrix.python != '3.14t' }}
         run: pytest --runtime mono
 
       - name: Python Tests (.NET Framework)
