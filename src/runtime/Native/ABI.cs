@@ -7,11 +7,23 @@ namespace Python.Runtime.Native
 
     static class ABI
     {
-        public static int RefCountOffset { get; } = GetRefCountOffset();
-        public static int ObjectHeadOffset => RefCountOffset;
+        // Offset of ob_refcnt within PyObject.  GIL builds only; on free-threaded
+        // Python the refcount is split (ob_ref_local + ob_ref_shared) and Refcount
+        // uses Py_REFCNT instead.
+        public static int RefCountOffset { get; private set; }
+
+        // Bytes to add to generated TypeOffset values for absolute PyHeapTypeObject
+        // offsets.  Free-threaded PyObject_HEAD is 16 bytes larger than the GIL one.
+        public static int ObjectHeadOffset { get; private set; }
+
+        public static bool IsFreeThreaded { get; private set; }
 
         internal static void Initialize(Version version)
         {
+            IsFreeThreaded = DetectFreeThreaded();
+            RefCountOffset = IsFreeThreaded ? -1 : ProbeRefCountOffset();
+            ObjectHeadOffset = IsFreeThreaded ? 16 : RefCountOffset;
+
             string offsetsClassSuffix = string.Format(CultureInfo.InvariantCulture,
                                                       "{0}{1}", version.Major, version.Minor);
 
@@ -34,7 +46,20 @@ namespace Python.Runtime.Native
             TypeOffset.Use(typeOffsets, nativeOffsetsClass == null ? ObjectHeadOffset : 0);
         }
 
-        static unsafe int GetRefCountOffset()
+        static bool DetectFreeThreaded()
+        {
+            // sys._is_gil_enabled() was added in Python 3.13; absent means GIL build.
+            using var sys = Runtime.PyImport_ImportModule("sys");
+            if (sys.IsNull()) { Runtime.PyErr_Clear(); return false; }
+            using var func = Runtime.PyObject_GetAttrString(sys.Borrow(), "_is_gil_enabled");
+            if (func.IsNull()) { Runtime.PyErr_Clear(); return false; }
+            using var args = Runtime.PyTuple_New(0);
+            using var result = Runtime.PyObject_Call(func.Borrow(), args.Borrow(), default);
+            if (result.IsNull()) { Runtime.PyErr_Clear(); return false; }
+            return Runtime.PyObject_IsTrue(result.Borrow()) == 0;
+        }
+
+        static unsafe int ProbeRefCountOffset()
         {
             using var tempObject = Runtime.PyList_New(0);
             IntPtr* tempPtr = (IntPtr*)tempObject.DangerousGetAddress();

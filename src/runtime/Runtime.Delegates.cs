@@ -15,6 +15,15 @@ public unsafe partial class Runtime
         {
             Py_IncRef = (delegate* unmanaged[Cdecl]<BorrowedReference, void>)GetFunctionByName(nameof(Py_IncRef), GetUnmanagedDll(_PythonDll));
             Py_DecRef = (delegate* unmanaged[Cdecl]<StolenReference, void>)GetFunctionByName(nameof(Py_DecRef), GetUnmanagedDll(_PythonDll));
+            try
+            {
+                // Exported as a function only on CPython 3.14+; required for free-threaded.
+                Py_REFCNT = (delegate* unmanaged[Cdecl]<BorrowedReference, nint>)GetFunctionByName(nameof(Py_REFCNT), GetUnmanagedDll(_PythonDll));
+            }
+            catch (MissingMethodException)
+            {
+                Py_REFCNT = null;
+            }
             Py_Initialize = (delegate* unmanaged[Cdecl]<void>)GetFunctionByName(nameof(Py_Initialize), GetUnmanagedDll(_PythonDll));
             Py_InitializeEx = (delegate* unmanaged[Cdecl]<int, void>)GetFunctionByName(nameof(Py_InitializeEx), GetUnmanagedDll(_PythonDll));
             Py_IsInitialized = (delegate* unmanaged[Cdecl]<int>)GetFunctionByName(nameof(Py_IsInitialized), GetUnmanagedDll(_PythonDll));
@@ -316,6 +325,7 @@ public unsafe partial class Runtime
 
         internal static delegate* unmanaged[Cdecl]<BorrowedReference, void> Py_IncRef { get; }
         internal static delegate* unmanaged[Cdecl]<StolenReference, void> Py_DecRef { get; }
+        internal static delegate* unmanaged[Cdecl]<BorrowedReference, nint> Py_REFCNT { get; }
         internal static delegate* unmanaged[Cdecl]<void> Py_Initialize { get; }
         internal static delegate* unmanaged[Cdecl]<int, void> Py_InitializeEx { get; }
         internal static delegate* unmanaged[Cdecl]<int> Py_IsInitialized { get; }
