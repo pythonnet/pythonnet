@@ -278,7 +278,7 @@ namespace Python.Runtime
                                  obj: true, derived: false, buffer: false);
             CLRObject.creationBlocked = true;
 
-            NullGCHandles(ExtensionType.loadedExtensions);
+            NullGCHandles(ExtensionType.loadedExtensions.Keys);
             ClassManager.RemoveClasses();
             TypeManager.RemoveTypes();
             _typesInitialized = false;
@@ -351,7 +351,7 @@ namespace Python.Runtime
                 }
                 else if (forceBreakLoops)
                 {
-                    NullGCHandles(CLRObject.reflectedObjects);
+                    NullGCHandles(CLRObject.reflectedObjects.Keys);
                     CLRObject.reflectedObjects.Clear();
                 }
             }
@@ -618,12 +618,12 @@ namespace Python.Runtime
         [Pure]
         internal static unsafe nint Refcount(BorrowedReference op)
         {
-            if (op == null)
-            {
-                return 0;
-            }
-            var p = (nint*)(op.DangerousGetAddress() + ABI.RefCountOffset);
-            return *p;
+            if (op == null) return 0;
+            // Py_REFCNT is exported as a function on CPython 3.14+ and required on
+            // free-threaded builds; older Pythons only expose it as a macro, so we
+            // fall back to reading ob_refcnt directly.
+            if (Delegates.Py_REFCNT != null) return Delegates.Py_REFCNT(op);
+            return *(nint*)(op.DangerousGetAddress() + ABI.RefCountOffset);
         }
         [Pure]
         internal static int Refcount32(BorrowedReference op) => checked((int)Refcount(op));
