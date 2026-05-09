@@ -33,7 +33,13 @@ namespace Python.Runtime
                                                              BindingFlags.Public |
                                                              BindingFlags.NonPublic;
 
-        internal static Dictionary<MaybeType, ReflectedClrType> cache = new(capacity: 128);
+        // Two-cache design for thread-safe type creation:
+        //   `cache`            — only fully-initialised types; safe to read without the lock.
+        //   `_inProgressCache` — partial types being built inside the lock; visible only
+        //                        to the building thread (for self-referential definitions).
+        internal static System.Collections.Concurrent.ConcurrentDictionary<MaybeType, ReflectedClrType> cache = new();
+        internal static readonly System.Collections.Concurrent.ConcurrentDictionary<MaybeType, ReflectedClrType> _inProgressCache = new();
+        internal static readonly object _cacheCreateLock = new();
         private static readonly Type dtype;
 
         private ClassManager()
@@ -103,13 +109,13 @@ namespace Python.Runtime
             return new()
             {
                 Contexts = contexts,
-                Cache = cache,
+                Cache = new Dictionary<MaybeType, ReflectedClrType>(cache),
             };
         }
 
         internal static void RestoreRuntimeData(ClassManagerState storage)
         {
-            cache = storage.Cache;
+            cache = new System.Collections.Concurrent.ConcurrentDictionary<MaybeType, ReflectedClrType>(storage.Cache);
             var invalidClasses = new List<KeyValuePair<MaybeType, ReflectedClrType>>();
             var contexts = storage.Contexts;
             foreach (var pair in cache)

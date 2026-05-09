@@ -29,7 +29,9 @@ namespace Python.Runtime
 
 
         private const BindingFlags tbFlags = BindingFlags.Public | BindingFlags.Static;
-        private static readonly Dictionary<MaybeType, PyType> cache = new();
+        // Thread-safe cache; multi-step creation in GetType is serialised via _cacheCreateLock.
+        internal static readonly System.Collections.Concurrent.ConcurrentDictionary<MaybeType, PyType> cache = new();
+        internal static readonly object _cacheCreateLock = new();
 
         static readonly Dictionary<PyType, SlotsHolder> _slotsHolders = new(PythonReferenceComparer.Instance);
 
@@ -260,7 +262,7 @@ namespace Python.Runtime
         internal static TypeManagerState SaveRuntimeData()
             => new()
             {
-                Cache = cache,
+                Cache = new Dictionary<MaybeType, PyType>(cache),
             };
 
         internal static void RestoreRuntimeData(TypeManagerState storage)
@@ -279,14 +281,15 @@ namespace Python.Runtime
 
         internal static PyType GetType(Type type)
         {
-            // Note that these types are cached with a refcount of 1, so they
-            // effectively exist until the CPython runtime is finalized.
-            if (!cache.TryGetValue(type, out var pyType))
+            // Cached with refcount 1; effectively lives until the CPython runtime is finalised.
+            if (cache.TryGetValue(type, out var pyType)) return pyType;
+            lock (_cacheCreateLock)
             {
+                if (cache.TryGetValue(type, out pyType)) return pyType;
                 pyType = CreateType(type);
                 cache[type] = pyType;
+                return pyType;
             }
-            return pyType;
         }
         /// <summary>
         /// Given a managed Type derived from ExtensionType, get the handle to
