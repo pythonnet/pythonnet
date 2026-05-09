@@ -10,7 +10,7 @@ namespace Python.Runtime
     internal class OverloadMapper : ExtensionType
     {
         private readonly MethodObject m;
-        private readonly PyObject? target;
+        private PyObject? target;
 
         public OverloadMapper(MethodObject m, PyObject? target)
         {
@@ -42,7 +42,10 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError(e);
             }
 
-            var mb = new MethodBinding(self.m, self.target) { info = mi };
+            var mb = new MethodBinding(
+                self.m,
+                self.target is null ? null : new PyObject(self.target.Reference))
+                { info = mi };
             return mb.Alloc();
         }
 
@@ -53,6 +56,12 @@ namespace Python.Runtime
         {
             var self = (OverloadMapper)GetManagedObject(op)!;
             return self.m.GetDocString();
+        }
+
+        protected override void OnClear()
+        {
+            target?.Dispose();
+            target = null;
         }
     }
 }
