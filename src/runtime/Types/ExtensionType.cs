@@ -42,14 +42,15 @@ namespace Python.Runtime
 
         public PyObject AllocObject() => new(Alloc().Steal());
 
-        // "borrowed" references
-        internal static readonly HashSet<IntPtr> loadedExtensions = new();
+        // "borrowed" references; thread-safe to survive free-threaded Python and
+        // .NET finalizer-thread races.
+        internal static readonly System.Collections.Concurrent.ConcurrentDictionary<IntPtr, byte> loadedExtensions = new();
         void SetupGc (BorrowedReference ob, BorrowedReference tp)
         {
             GCHandle gc = GCHandle.Alloc(this);
             InitGCHandle(ob, tp, gc);
 
-            bool isNew = loadedExtensions.Add(ob.DangerousGetAddress());
+            bool isNew = loadedExtensions.TryAdd(ob.DangerousGetAddress(), 0);
             Debug.Assert(isNew);
 
             // We have to support gc because the type machinery makes it very
@@ -104,7 +105,7 @@ namespace Python.Runtime
 
             if (TryFreeGCHandle(ob))
             {
-                bool deleted = loadedExtensions.Remove(ob.DangerousGetAddress());
+                bool deleted = loadedExtensions.TryRemove(ob.DangerousGetAddress(), out _);
                 Debug.Assert(deleted);
             }
 

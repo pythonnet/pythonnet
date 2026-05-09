@@ -360,7 +360,7 @@ namespace Python.Runtime
             if (TryFreeGCHandle(ob))
             {
                 IntPtr addr = ob.DangerousGetAddress();
-                bool deleted = CLRObject.reflectedObjects.Remove(addr);
+                bool deleted = CLRObject.reflectedObjects.TryRemove(addr, out _);
                 Debug.Assert(deleted);
             }
 

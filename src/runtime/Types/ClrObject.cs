@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -13,8 +14,8 @@ namespace Python.Runtime
 
         internal static bool creationBlocked = false;
 
-        // "borrowed" references
-        internal static readonly HashSet<IntPtr> reflectedObjects = new();
+        // "borrowed" references; thread-safe (see ExtensionType.loadedExtensions).
+        internal static readonly ConcurrentDictionary<IntPtr, byte> reflectedObjects = new();
         static NewReference Create(object ob, BorrowedReference tp)
         {
             if (creationBlocked)
@@ -28,7 +29,7 @@ namespace Python.Runtime
             GCHandle gc = GCHandle.Alloc(self);
             InitGCHandle(py.Borrow(), type: tp, gc);
 
-            bool isNew = reflectedObjects.Add(py.DangerousGetAddress());
+            bool isNew = reflectedObjects.TryAdd(py.DangerousGetAddress(), 0);
             Debug.Assert(isNew);
 
             // Fix the BaseException args (and __cause__ in case of Python 3)
@@ -73,7 +74,7 @@ namespace Python.Runtime
             GCHandle gc = GCHandle.Alloc(this);
             SetGCHandle(ob, gc);
 
-            bool isNew = reflectedObjects.Add(ob.DangerousGetAddress());
+            bool isNew = reflectedObjects.TryAdd(ob.DangerousGetAddress(), 0);
             Debug.Assert(isNew);
         }
     }
