@@ -248,6 +248,63 @@ def test_concurrent_delegate_creation():
 
 
 @freethreaded_only
+def test_concurrent_clr_delegate_invocation_from_python():
+    """Python callables wrapped as distinct CLR delegate types, invoked concurrently.
+
+    Real-world: QuantConnect/Lean and similar embedders pass Python callables
+    where C# expects a delegate; under FT the dispatcher emit + Invoke run from
+    multiple threads.  Hits DelegateManager.GetDispatcher (Reflection.Emit lock)
+    and Dispatcher.Dispatch (Py.GIL reacquisition).
+    """
+    from Python.Test import (
+        PublicDelegate, StringDelegate, BoolDelegate,
+    )
+
+    delegates = (
+        PublicDelegate(lambda: None),
+        StringDelegate(lambda: "ok"),
+        BoolDelegate(lambda: True),
+    )
+
+    def fire(i):
+        d = delegates[i % len(delegates)]
+        for _ in range(200):
+            d()
+        return True
+
+    assert all(_run_in_threads(fire, n_threads=8))
+
+
+@freethreaded_only
+def test_concurrent_generic_type_binding():
+    """Concurrent `Dictionary[K, V]` with many distinct type-arg pairs.
+
+    Real-world: pythonnet/pythonnet#2269, #1407, #821 — concurrent ToPython /
+    GenericByName from N threads.  Exercises ClassManager.cache,
+    TypeManager.cache, GenericUtil.mapping, and the generic-type binding
+    fast path together.
+
+    FT-only: the cumulative state under the full pytest suite trips the same
+    pre-existing CPython 3.11/3.12/3.13 GIL-build crash that gates the other
+    high-contention tests in this file.
+    """
+    from System import Int32, Int64, String, Double, Single, Byte
+    from System.Collections.Generic import Dictionary, List
+
+    arg_types = (Int32, Int64, String, Double, Single, Byte)
+    pairs = [(k, v) for k in arg_types for v in arg_types]
+
+    def bind(_):
+        for _ in range(50):
+            for k, v in pairs:
+                _ = Dictionary[k, v]
+                _ = List[k]
+        return True
+
+    assert all(_run_in_threads(bind, n_threads=8))
+
+
+@freethreaded_only
 def test_concurrent_shutdown_handler_register():
     """Concurrent AddShutdownHandler/RemoveShutdownHandler — exercises ShutdownHandlers list.
 
