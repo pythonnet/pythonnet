@@ -110,13 +110,24 @@ namespace Python.Runtime
                 CheckRun();
 #endif
 
-                Interlocked.Increment(ref Runtime._collected);
+                // If Python is finalizing we cannot safely enqueue a decref:
+                // the .NET finalizer thread runs concurrently with Py_Finalize
+                // and any later Py_DecRef would touch torn-down state.  Drop
+                // the reference and let process exit reclaim the memory.
+                if (Runtime._Py_IsFinalizing() == true)
+                {
+                    rawPtr = IntPtr.Zero;
+                }
+                else
+                {
+                    Interlocked.Increment(ref Runtime._collected);
 
-                Finalizer.Instance.AddFinalizedObject(ref rawPtr, run
+                    Finalizer.Instance.AddFinalizedObject(ref rawPtr, run
 #if TRACE_ALLOC
-                    , Traceback
+                        , Traceback
 #endif
-                );
+                    );
+                }
             }
 
             Dispose(false);
