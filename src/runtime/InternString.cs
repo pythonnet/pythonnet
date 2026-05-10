@@ -76,8 +76,11 @@ namespace Python.Runtime
 
         private static void SetIntern(string s, PyString op)
         {
-            _string2interns.TryAdd(s, op);
-            _intern2strings.TryAdd(op.Reference.DangerousGetAddress(), s);
+            // Initialize is single-threaded; TryAdd preserves the original
+            // single-write invariant via Debug.Assert without crashing release.
+            bool a = _string2interns.TryAdd(s, op);
+            bool b = _intern2strings.TryAdd(op.Reference.DangerousGetAddress(), s);
+            Debug.Assert(a && b);
         }
     }
 }
