@@ -99,6 +99,19 @@ def test_is_gil_enabled_attribute_present_on_3_13_plus():
         assert isinstance(sys._is_gil_enabled(), bool)
 
 
+def test_module_dunder_all_added_once():
+    """Module.__all__ adds each name exactly once.
+
+    Exercises ModuleObject.allNames (ConcurrentDictionary) — the per-name
+    "have we surfaced this in __all__ yet" guard.  A torn HashSet would let
+    duplicates slip through here on free-threaded builds.
+    """
+    import System
+
+    names = list(System.__all__)
+    assert len(names) == len(set(names))
+
+
 def _run_in_threads(target, n_threads, *args, **kwargs):
     """Run target() in n_threads threads, return results in start order, raise on first error."""
     results = [None] * n_threads
@@ -146,6 +159,29 @@ def test_concurrent_attribute_access():
         return True
 
     assert all(_run_in_threads(access, n_threads=8))
+
+
+def test_concurrent_module_attribute_access():
+    """Concurrent CLR-namespace attribute access — exercises ModuleObject.cache.
+
+    Each lookup of `System.X` either hits ModuleObject.cache or populates it
+    on first miss.  A plain Dictionary tore on simultaneous TryGetValue/Add
+    from multiple threads; the test reads many distinct names per worker.
+    """
+    import System
+
+    names = (
+        "String", "Int32", "Int64", "Double", "Boolean", "Object",
+        "DateTime", "TimeSpan", "Type", "Array", "Console", "Math",
+    )
+
+    def lookup(_):
+        for _ in range(200):
+            for n in names:
+                getattr(System, n)
+        return True
+
+    assert all(_run_in_threads(lookup, n_threads=8))
 
 
 @freethreaded_only
