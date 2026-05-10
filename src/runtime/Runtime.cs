@@ -34,9 +34,10 @@ namespace Python.Runtime
 
         static string? _PythonDll => PythonEnvironment.LibPython;
 
-        private static bool _isInitialized = false;
+        // volatile: read from worker threads, written from Initialize/Shutdown.
+        private static volatile bool _isInitialized = false;
         internal static bool IsInitialized => _isInitialized;
-        private static bool _typesInitialized = false;
+        private static volatile bool _typesInitialized = false;
         internal static bool TypeManagerInitialized => _typesInitialized;
         internal static readonly bool Is32Bit = IntPtr.Size == 4;
 
@@ -53,7 +54,9 @@ namespace Python.Runtime
 
         public static int MainManagedThreadId { get; private set; }
 
-        private static readonly List<PyObject> _pyRefs = new ();
+        // Lock guards re-init from embedders racing on SetPyMember/ResetPyMembers.
+        private static readonly List<PyObject> _pyRefs = new();
+        private static readonly object _pyRefsLock = new();
 
         internal static Version PyVersion
         {
@@ -72,7 +75,7 @@ namespace Python.Runtime
 
         internal static int GetRun()
         {
-            int runNumber = run;
+            int runNumber = Volatile.Read(ref run);
             Debug.Assert(runNumber > 0, "This must only be called after Runtime is initialized at least once");
             return runNumber;
         }
@@ -188,8 +191,8 @@ namespace Python.Runtime
 
         static void NewRun()
         {
-            run++;
-            using var pyRun = PyLong_FromLongLong(run);
+            int newRun = Interlocked.Increment(ref run);
+            using var pyRun = PyLong_FromLongLong(newRun);
             PySys_SetObject(RunSysPropName, pyRun.BorrowOrThrow());
         }
 
@@ -387,14 +390,14 @@ namespace Python.Runtime
                 throw PythonException.ThrowLastAsClrException();
             }
             obj = new PyObject(value);
-            _pyRefs.Add(obj);
+            lock (_pyRefsLock) _pyRefs.Add(obj);
         }
 
         private static void SetPyMemberTypeOf(out PyType obj, PyObject value)
         {
             var type = PyObject_Type(value);
             obj = new PyType(type.StealOrThrow(), prevalidated: true);
-            _pyRefs.Add(obj);
+            lock (_pyRefsLock) _pyRefs.Add(obj);
         }
 
         private static void SetPyMemberTypeOf(out PyObject obj, StolenReference value)
@@ -411,9 +414,14 @@ namespace Python.Runtime
 
         private static void ResetPyMembers()
         {
-            foreach (var pyObj in _pyRefs)
+            PyObject[] snapshot;
+            lock (_pyRefsLock)
+            {
+                snapshot = _pyRefs.ToArray();
+                _pyRefs.Clear();
+            }
+            foreach (var pyObj in snapshot)
                 pyObj.Dispose();
-            _pyRefs.Clear();
         }
 
         private static void ClearClrModules()
@@ -607,9 +615,7 @@ namespace Python.Runtime
         internal static unsafe void XDecref(StolenReference op)
         {
 #if DEBUG
-            // The Refcount > 0 check is racy under free-threaded Python: the .NET
-            // finalizer thread can dispatch decrefs concurrently with Py_Finalize,
-            // and a stale read of ob_ref_local can crash the process.  Skip on FT.
+            // Racy on FT: stale ob_ref_local read may crash.
             Debug.Assert(op == null || Native.ABI.IsFreeThreaded || Refcount(new BorrowedReference(op.Pointer)) > 0);
             Debug.Assert(_isInitialized || Py_IsInitialized() != 0 || _Py_IsFinalizing() != false);
 #endif
@@ -622,9 +628,7 @@ namespace Python.Runtime
         internal static unsafe nint Refcount(BorrowedReference op)
         {
             if (op == null) return 0;
-            // Py_REFCNT is exported as a function on CPython 3.14+ and required on
-            // free-threaded builds; older Pythons only expose it as a macro, so we
-            // fall back to reading ob_refcnt directly.
+            // Py_REFCNT is a real symbol on 3.14+; older Pythons expose it as a macro.
             if (Delegates.Py_REFCNT != null) return Delegates.Py_REFCNT(op);
             return *(nint*)(op.DangerousGetAddress() + ABI.RefCountOffset);
         }

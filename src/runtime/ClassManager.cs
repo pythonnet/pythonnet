@@ -34,10 +34,9 @@ namespace Python.Runtime
                                                              BindingFlags.Public |
                                                              BindingFlags.NonPublic;
 
-        // Two-cache design for thread-safe type creation:
-        //   `cache`            — only fully-initialised types; safe to read without the lock.
-        //   `_inProgressCache` — partial types being built inside the lock; visible only
-        //                        to the building thread (for self-referential definitions).
+        // cache: fully-initialised types (lock-free reads).
+        // _inProgressCache: partial types visible only to the lock-holding builder
+        // for self-referential definitions.
         internal static ConcurrentDictionary<MaybeType, ReflectedClrType> cache = new();
         internal static readonly ConcurrentDictionary<MaybeType, ReflectedClrType> _inProgressCache = new();
         internal static readonly object _cacheCreateLock = new();

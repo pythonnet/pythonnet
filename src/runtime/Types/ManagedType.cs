@@ -240,10 +240,7 @@ namespace Python.Runtime
             int offset = Util.ReadInt32(type, Offsets.tp_clr_inst_offset);
             Debug.Assert(offset > 0);
 
-            // Atomic claim of the GCHandle: under free-threaded Python tp_clear
-            // and tp_dealloc can race against each other (e.g. main thread vs
-            // .NET finalizer thread).  A non-atomic read-then-zero would let
-            // both threads see the same handle and double-free it.
+            // Atomic claim: tp_clear and tp_dealloc may race on the same slot.
             IntPtr* slot = (IntPtr*)(reflectedClrObject.DangerousGetAddress() + offset);
             IntPtr raw = System.Threading.Interlocked.Exchange(ref *slot, IntPtr.Zero);
             if (raw == IntPtr.Zero) return false;

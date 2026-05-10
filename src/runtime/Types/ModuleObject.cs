@@ -14,7 +14,6 @@ namespace Python.Runtime
     [Serializable]
     internal class ModuleObject : ExtensionType
     {
-        // Hot path on every `Module.Attr` access; thread-safe for free-threaded Python.
         private readonly ConcurrentDictionary<string, PyObject> cache = new();
 
         internal string moduleName;

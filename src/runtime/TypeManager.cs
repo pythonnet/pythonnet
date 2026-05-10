@@ -29,7 +29,7 @@ namespace Python.Runtime
 
 
         private const BindingFlags tbFlags = BindingFlags.Public | BindingFlags.Static;
-        // Thread-safe cache; multi-step creation in GetType is serialised via _cacheCreateLock.
+        // Multi-step creation in GetType is serialised via _cacheCreateLock.
         internal static readonly ConcurrentDictionary<MaybeType, PyType> cache = new();
         internal static readonly object _cacheCreateLock = new();
 

@@ -7,13 +7,10 @@ namespace Python.Runtime.Native
 
     static class ABI
     {
-        // Offset of ob_refcnt within PyObject.  GIL builds only; on free-threaded
-        // Python the refcount is split (ob_ref_local + ob_ref_shared) and Refcount
-        // uses Py_REFCNT instead.
+        // GIL builds only. FT splits the refcount; Refcount uses Py_REFCNT.
         public static int RefCountOffset { get; private set; }
 
-        // Bytes to add to generated TypeOffset values for absolute PyHeapTypeObject
-        // offsets.  Free-threaded PyObject_HEAD is 16 bytes larger than the GIL one.
+        // Added to generated TypeOffsets. FT PyObject_HEAD is 16 bytes larger.
         public static int ObjectHeadOffset { get; private set; }
 
         public static bool IsFreeThreaded { get; private set; }

@@ -84,26 +84,16 @@ namespace Python.Runtime
             // self may be null after Shutdown begun
             if (self is not null)
             {
-                // Replace the strong handle with a weak one so the C# wrapper can be
-                // collected, but the Python object survives until it does.
-                //
-                // Under free-threaded Python a concurrent tp_dealloc/tp_clear path
-                // could race with us; do the swap atomically and only free the old
-                // handle if we were the thread that observed it.
+                // Atomically swap strong->weak; concurrent tp_clear may also clear the slot.
                 GCHandle weak = GCHandle.Alloc(self, GCHandleType.Weak);
                 BorrowedReference borrow = ob.Borrow();
                 int offset = Util.ReadInt32(Runtime.PyObject_TYPE(borrow), Offsets.tp_clr_inst_offset);
                 IntPtr* slot = (IntPtr*)(borrow.DangerousGetAddress() + offset);
                 IntPtr oldRaw = System.Threading.Interlocked.Exchange(ref *slot, (IntPtr)weak);
                 if (oldRaw != IntPtr.Zero)
-                {
                     ((GCHandle)oldRaw).Free();
-                }
                 else
-                {
-                    // Lost the race; another thread already cleared the slot.
                     weak.Free();
-                }
             }
         }
 
@@ -178,10 +168,7 @@ namespace Python.Runtime
                 assemblyName = "Python.Runtime.Dynamic";
             }
 
-            // Reflection.Emit's ModuleBuilder/TypeBuilder operations are not
-            // thread-safe; concurrent DefineType calls on the same module
-            // corrupt the IL stream and segfault under free-threaded Python.
-            // Serialise the entire emit-and-bake sequence on _buildersLock.
+            // Reflection.Emit is not thread-safe.
             lock (_buildersLock)
             {
                 return CreateDerivedTypeImpl(name, baseType, typeInterfaces, py_dict, assemblyName, moduleName);

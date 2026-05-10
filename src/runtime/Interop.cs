@@ -105,9 +105,7 @@ namespace Python.Runtime
 
     internal class Interop
     {
-        // Hit on every type-slot installation; thread-safe for free-threaded Python.
-        // Two threads racing past TryGetValue with the old plain Dictionary would
-        // throw on Add ("duplicate key") instead of silently picking one winner.
+        // Concurrent: type-slot installation can race past TryGetValue.
         static readonly ConcurrentDictionary<MethodInfo, Type> delegateTypes = new();
 
         internal static Type GetPrototype(MethodInfo method)

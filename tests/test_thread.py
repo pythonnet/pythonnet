@@ -225,14 +225,45 @@ def test_concurrent_python_subclass_of_clr_type():
 
 
 @freethreaded_only
-def test_freethreaded_concurrent_attribute_access_no_tear():
-    """Heavier attribute-access stress to bias scheduling toward racy reads."""
-    import System
+def test_concurrent_delegate_creation():
+    """Concurrent CLR delegate dispatcher creation — exercises DelegateManager.
 
-    def stress(_):
-        for _ in range(2000):
-            _ = System.String.Empty
-            _ = System.Int32.MaxValue
+    Each new (delegate-type, callable) pair runs Reflection.Emit to build a
+    dispatcher subclass.  Without a lock, concurrent DefineType raises
+    "Duplicate type name within an assembly" or corrupts the IL stream.
+
+    FT-only because high-rate Reflection.Emit interacts badly with the
+    CPython 3.11/3.12/3.13 GIL-build GC under cumulative test state
+    (same pre-existing crash as test_concurrent_clr_object_creation).
+    """
+    from Python.Runtime import PythonEngine
+    handler = PythonEngine.ShutdownHandler
+
+    def build(_):
+        for _ in range(50):
+            handler(lambda: None)
         return True
 
-    assert all(_run_in_threads(stress, n_threads=16))
+    assert all(_run_in_threads(build, n_threads=8))
+
+
+@freethreaded_only
+def test_concurrent_shutdown_handler_register():
+    """Concurrent AddShutdownHandler/RemoveShutdownHandler — exercises ShutdownHandlers list.
+
+    FT-only because Python<->CLR delegate marshalling at this rate trips
+    the same pre-existing CPython 3.11/3.12/3.13 GIL-build crash as the
+    other high-contention tests in this file.
+    """
+    from Python.Runtime import PythonEngine
+
+    handlers = [PythonEngine.ShutdownHandler(lambda: None) for _ in range(32)]
+
+    def churn(i):
+        h = handlers[i % len(handlers)]
+        for _ in range(500):
+            PythonEngine.AddShutdownHandler(h)
+            PythonEngine.RemoveShutdownHandler(h)
+        return True
+
+    assert all(_run_in_threads(churn, n_threads=8))
