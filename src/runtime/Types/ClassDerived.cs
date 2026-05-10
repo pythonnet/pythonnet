@@ -44,6 +44,8 @@ namespace Python.Runtime
 
         public static void Reset()
         {
+            // Atomic replacement of both builder caches so a concurrent
+            // GetModuleBuilder cannot observe one new + one old.
             lock (_buildersLock)
             {
                 assemblyBuilders = new Dictionary<string, AssemblyBuilder>();
@@ -84,7 +86,21 @@ namespace Python.Runtime
             // self may be null after Shutdown begun
             if (self is not null)
             {
-                // Atomically swap strong->weak; concurrent tp_clear may also clear the slot.
+                // Python refcount has reached 0 but we do NOT free the PyObject:
+                // the C# wrapper (via IPythonDerivedType.__pyobj__) may still
+                // reference it, and a later ToPython() on that wrapper will
+                // resurrect a strong handle and call _Py_NewReference.
+                //
+                // Demote the GCHandle from strong -> weak so the C# wrapper can
+                // be collected; when it is, PyFinalize enqueues the actual
+                // PyObject_GC_Del.  Until then the slot keeps the wrapper
+                // reachable from Python -> C# but not the other way.
+                //
+                // Interlocked.Exchange: under FT (or .NET-finalizer-thread
+                // races) tp_clear can hit the same slot.  Whichever thread
+                // observes the original handle frees it; the loser frees the
+                // weak handle it just allocated.  Without the atomic swap both
+                // threads could see and free the same handle (double-free).
                 GCHandle weak = GCHandle.Alloc(self, GCHandleType.Weak);
                 BorrowedReference borrow = ob.Borrow();
                 int offset = Util.ReadInt32(Runtime.PyObject_TYPE(borrow), Offsets.tp_clr_inst_offset);
@@ -715,6 +731,8 @@ namespace Python.Runtime
         private static ModuleBuilder GetModuleBuilder(string assemblyName, string moduleName)
         {
             var key = Tuple.Create(assemblyName, moduleName);
+            // Cache check-and-create must be atomic; DefineDynamicAssembly /
+            // DefineDynamicModule produce duplicate builders under contention.
             lock (_buildersLock)
             {
                 if (moduleBuilders.TryGetValue(key, out ModuleBuilder? existing))

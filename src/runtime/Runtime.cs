@@ -414,6 +414,8 @@ namespace Python.Runtime
 
         private static void ResetPyMembers()
         {
+            // Snapshot under lock; Dispose() runs outside it so a callback that
+            // re-enters SetPyMember does not deadlock.
             PyObject[] snapshot;
             lock (_pyRefsLock)
             {

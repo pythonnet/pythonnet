@@ -283,6 +283,7 @@ namespace Python.Runtime
         {
             // Cached with refcount 1; effectively lives until the CPython runtime is finalised.
             if (cache.TryGetValue(type, out var pyType)) return pyType;
+            // CreateType + cache write must be atomic so two threads do not both allocate.
             lock (_cacheCreateLock)
             {
                 if (cache.TryGetValue(type, out pyType)) return pyType;
