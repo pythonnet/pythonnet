@@ -63,16 +63,18 @@ def test_python_thread_calls_to_clr():
             done.append(None)
             dprint("thread %s %d done" % (thread.get_ident(), i))
 
-    def start_threads(count):
-        for _ in range(count):
-            thread_ = threading.Thread(target=run_thread)
-            thread_.start()
-
-    start_threads(5)
+    threads = [threading.Thread(target=run_thread) for _ in range(5)]
+    for t in threads:
+        t.start()
 
     while len(done) < 50:
         dprint(len(done))
         time.sleep(0.1)
+
+    # Join the workers so they cannot outlive this test and fire
+    # threading.excepthook from background activity (visible under FT).
+    for t in threads:
+        t.join()
 
 
 # Free-threaded / refcount tests below.  Run on every interpreter; the GIL
@@ -172,7 +174,8 @@ def test_concurrent_clr_object_creation():
 def test_concurrent_python_subclass_of_clr_type():
     """Concurrent dynamic-subclass creation — exercises ClassDerived's builder lock.
 
-    FT-only for the same reason as test_concurrent_clr_object_creation.
+    FT-only because the GIL-build code path triggers a pre-existing CLR
+    object lifecycle crash under high contention.
     """
     import System
 
