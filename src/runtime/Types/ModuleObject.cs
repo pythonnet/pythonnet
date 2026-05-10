@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -13,13 +14,14 @@ namespace Python.Runtime
     [Serializable]
     internal class ModuleObject : ExtensionType
     {
-        private readonly Dictionary<string, PyObject> cache = new();
+        // Hot path on every `Module.Attr` access; thread-safe for free-threaded Python.
+        private readonly ConcurrentDictionary<string, PyObject> cache = new();
 
         internal string moduleName;
         internal PyDict dict;
         protected string _namespace;
         private readonly PyList __all__ = new ();
-        private readonly HashSet<string> allNames = new();
+        private readonly ConcurrentDictionary<string, byte> allNames = new();
 
         // Attributes to be set on the module according to PEP302 and 451
         // by the import machinery.
@@ -193,7 +195,7 @@ namespace Python.Runtime
                     hasValidAttribute = !attrVal.IsNull();
                 }
 
-                if (hasValidAttribute && allNames.Add(name))
+                if (hasValidAttribute && allNames.TryAdd(name, 0))
                 {
                     // if it's a valid attribute, add it to __all__ once.
                     using var pyname = Runtime.PyString_FromString(name);
@@ -267,7 +269,7 @@ namespace Python.Runtime
                     }
                     Runtime.PyErr_Clear();
                 }
-                cache.Remove(memberName);
+                cache.TryRemove(memberName, out _);
             }
         }
 

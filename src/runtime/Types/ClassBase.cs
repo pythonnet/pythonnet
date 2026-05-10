@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -374,7 +375,9 @@ namespace Python.Runtime
             return 0;
         }
 
-        static readonly HashSet<IntPtr> ClearVisited = new();
+        // Re-entrancy guard for tp_clear. Thread-safe so concurrent tp_clear from
+        // different threads (free-threaded or finalizer-thread) cannot tear the set.
+        static readonly ConcurrentDictionary<IntPtr, byte> ClearVisited = new();
 
         internal static unsafe int BaseUnmanagedClear(BorrowedReference ob)
         {
@@ -390,11 +393,11 @@ namespace Python.Runtime
             if (clearPtr == TypeManager.subtype_clear)
             {
                 var addr = ob.DangerousGetAddress();
-                if (!ClearVisited.Add(addr))
+                if (!ClearVisited.TryAdd(addr, 0))
                     return 0;
 
                 int res = clear(ob);
-                ClearVisited.Remove(addr);
+                ClearVisited.TryRemove(addr, out _);
                 return res;
             }
             else

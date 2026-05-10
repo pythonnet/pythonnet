@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -104,7 +105,10 @@ namespace Python.Runtime
 
     internal class Interop
     {
-        static readonly Dictionary<MethodInfo, Type> delegateTypes = new();
+        // Hit on every type-slot installation; thread-safe for free-threaded Python.
+        // Two threads racing past TryGetValue with the old plain Dictionary would
+        // throw on Add ("duplicate key") instead of silently picking one winner.
+        static readonly ConcurrentDictionary<MethodInfo, Type> delegateTypes = new();
 
         internal static Type GetPrototype(MethodInfo method)
         {
@@ -131,7 +135,7 @@ namespace Python.Runtime
 
                 if (invoke.ReturnType != method.ReturnType) continue;
 
-                delegateTypes.Add(method, candidate);
+                delegateTypes.TryAdd(method, candidate);
                 return candidate;
             }
 
