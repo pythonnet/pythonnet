@@ -29,6 +29,8 @@ internal sealed class ReflectedClrType : PyType
         if (ClassManager.cache.TryGetValue(type, out var pyType))
             return pyType;
 
+        // Shared with ClassManager.cache + TypeManager._slotsHolders writes
+        // so the multi-step type build below is atomic.
         lock (ClassManager._cacheCreateLock)
         {
             // Re-check now that we hold the lock; another thread may have finished.
