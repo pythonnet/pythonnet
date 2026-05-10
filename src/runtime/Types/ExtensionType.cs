@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -44,7 +45,7 @@ namespace Python.Runtime
 
         // "borrowed" references; thread-safe to survive free-threaded Python and
         // .NET finalizer-thread races.
-        internal static readonly System.Collections.Concurrent.ConcurrentDictionary<IntPtr, byte> loadedExtensions = new();
+        internal static readonly ConcurrentDictionary<IntPtr, byte> loadedExtensions = new();
         void SetupGc (BorrowedReference ob, BorrowedReference tp)
         {
             GCHandle gc = GCHandle.Alloc(this);

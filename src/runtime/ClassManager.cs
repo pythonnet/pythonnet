@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -37,8 +38,8 @@ namespace Python.Runtime
         //   `cache`            — only fully-initialised types; safe to read without the lock.
         //   `_inProgressCache` — partial types being built inside the lock; visible only
         //                        to the building thread (for self-referential definitions).
-        internal static System.Collections.Concurrent.ConcurrentDictionary<MaybeType, ReflectedClrType> cache = new();
-        internal static readonly System.Collections.Concurrent.ConcurrentDictionary<MaybeType, ReflectedClrType> _inProgressCache = new();
+        internal static ConcurrentDictionary<MaybeType, ReflectedClrType> cache = new();
+        internal static readonly ConcurrentDictionary<MaybeType, ReflectedClrType> _inProgressCache = new();
         internal static readonly object _cacheCreateLock = new();
         private static readonly Type dtype;
 
@@ -115,7 +116,7 @@ namespace Python.Runtime
 
         internal static void RestoreRuntimeData(ClassManagerState storage)
         {
-            cache = new System.Collections.Concurrent.ConcurrentDictionary<MaybeType, ReflectedClrType>(storage.Cache);
+            cache = new ConcurrentDictionary<MaybeType, ReflectedClrType>(storage.Cache);
             var invalidClasses = new List<KeyValuePair<MaybeType, ReflectedClrType>>();
             var contexts = storage.Contexts;
             foreach (var pair in cache)
