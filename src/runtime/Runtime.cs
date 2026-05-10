@@ -607,7 +607,10 @@ namespace Python.Runtime
         internal static unsafe void XDecref(StolenReference op)
         {
 #if DEBUG
-            Debug.Assert(op == null || Refcount(new BorrowedReference(op.Pointer)) > 0);
+            // The Refcount > 0 check is racy under free-threaded Python: the .NET
+            // finalizer thread can dispatch decrefs concurrently with Py_Finalize,
+            // and a stale read of ob_ref_local can crash the process.  Skip on FT.
+            Debug.Assert(op == null || Native.ABI.IsFreeThreaded || Refcount(new BorrowedReference(op.Pointer)) > 0);
             Debug.Assert(_isInitialized || Py_IsInitialized() != 0 || _Py_IsFinalizing() != false);
 #endif
             if (op == null) return;

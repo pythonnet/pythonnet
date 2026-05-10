@@ -115,6 +115,10 @@ namespace Python.Runtime
 
             _throttled = unchecked(this._throttled + 1);
             if (!started || !Enable || _throttled < Threshold) return;
+            // Skip the drain while Python is finalizing: the .NET-side queue may
+            // contain references that became stale during teardown, and calling
+            // Py_DecRef on torn-down state segfaults under free-threaded Python.
+            if (Runtime._Py_IsFinalizing() == true) return;
             _throttled = 0;
             this.Collect();
         }
@@ -136,7 +140,13 @@ namespace Python.Runtime
                 return;
             }
 
-            Debug.Assert(Runtime.Refcount(new BorrowedReference(obj)) > 0);
+            // Skip the Refcount sanity check under free-threaded Python: the .NET
+            // finalizer thread can race with Py_Finalize and a stale read of
+            // ob_ref_local will crash the process.  Keep the check on GIL builds.
+            if (!Native.ABI.IsFreeThreaded)
+            {
+                Debug.Assert(Runtime.Refcount(new BorrowedReference(obj)) > 0);
+            }
 
 #if FINALIZER_CHECK
             lock (_queueLock)
