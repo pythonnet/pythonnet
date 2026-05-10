@@ -110,10 +110,7 @@ namespace Python.Runtime
                 CheckRun();
 #endif
 
-                // If Python is finalizing we cannot safely enqueue a decref:
-                // the .NET finalizer thread runs concurrently with Py_Finalize
-                // and any later Py_DecRef would touch torn-down state.  Drop
-                // the reference and let process exit reclaim the memory.
+                // Drop the reference if Python is tearing down; queued Py_DecRef would crash.
                 if (Runtime._Py_IsFinalizing() == true)
                 {
                     rawPtr = IntPtr.Zero;

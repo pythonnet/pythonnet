@@ -43,8 +43,6 @@ namespace Python.Runtime
 
         public PyObject AllocObject() => new(Alloc().Steal());
 
-        // "borrowed" references; thread-safe to survive free-threaded Python and
-        // .NET finalizer-thread races.
         internal static readonly ConcurrentDictionary<IntPtr, byte> loadedExtensions = new();
         void SetupGc (BorrowedReference ob, BorrowedReference tp)
         {

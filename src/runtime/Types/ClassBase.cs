@@ -375,8 +375,7 @@ namespace Python.Runtime
             return 0;
         }
 
-        // Re-entrancy guard for tp_clear. Thread-safe so concurrent tp_clear from
-        // different threads (free-threaded or finalizer-thread) cannot tear the set.
+        // tp_clear re-entrancy guard.
         static readonly ConcurrentDictionary<IntPtr, byte> ClearVisited = new();
 
         internal static unsafe int BaseUnmanagedClear(BorrowedReference ob)

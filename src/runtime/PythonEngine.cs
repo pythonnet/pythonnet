@@ -16,7 +16,8 @@ namespace Python.Runtime
     public class PythonEngine : IDisposable
     {
         private static DelegateManager? delegateManager;
-        private static bool initialized;
+        // volatile: read from worker threads, written from Initialize/Shutdown.
+        private static volatile bool initialized;
         private static IntPtr _pythonHome = IntPtr.Zero;
         private static IntPtr _programName = IntPtr.Zero;
         private static IntPtr _pythonPath = IntPtr.Zero;
@@ -405,7 +406,9 @@ namespace Python.Runtime
         /// </summary>
         public delegate void ShutdownHandler();
 
+        // Lock: ConcurrentStack lacks remove-by-equality; List<> needs serialised mutation.
         static readonly List<ShutdownHandler> ShutdownHandlers = new();
+        static readonly object _shutdownHandlersLock = new();
 
         /// <summary>
         /// Add a function to be called when the engine is shut down.
@@ -422,7 +425,7 @@ namespace Python.Runtime
         /// </summary>
         public static void AddShutdownHandler(ShutdownHandler handler)
         {
-            ShutdownHandlers.Add(handler);
+            lock (_shutdownHandlersLock) ShutdownHandlers.Add(handler);
         }
 
         /// <summary>
@@ -435,12 +438,15 @@ namespace Python.Runtime
         /// </summary>
         public static void RemoveShutdownHandler(ShutdownHandler handler)
         {
-            for (int index = ShutdownHandlers.Count - 1; index >= 0; --index)
+            lock (_shutdownHandlersLock)
             {
-                if (ShutdownHandlers[index] == handler)
+                for (int index = ShutdownHandlers.Count - 1; index >= 0; --index)
                 {
-                    ShutdownHandlers.RemoveAt(index);
-                    break;
+                    if (ShutdownHandlers[index] == handler)
+                    {
+                        ShutdownHandlers.RemoveAt(index);
+                        break;
+                    }
                 }
             }
         }
@@ -452,10 +458,17 @@ namespace Python.Runtime
         /// </summary>
         static void ExecuteShutdownHandlers()
         {
-            while(ShutdownHandlers.Count > 0)
+            // Invoke unlocked so handlers can re-enter Add/Remove.
+            while (true)
             {
-                var handler = ShutdownHandlers[ShutdownHandlers.Count - 1];
-                ShutdownHandlers.RemoveAt(ShutdownHandlers.Count - 1);
+                ShutdownHandler handler;
+                lock (_shutdownHandlersLock)
+                {
+                    if (ShutdownHandlers.Count == 0) return;
+                    int last = ShutdownHandlers.Count - 1;
+                    handler = ShutdownHandlers[last];
+                    ShutdownHandlers.RemoveAt(last);
+                }
                 handler();
             }
         }

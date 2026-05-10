@@ -36,7 +36,8 @@ namespace Python.Runtime
         [DefaultValue(DefaultThreshold)]
         public int Threshold { get; set; } = DefaultThreshold;
 
-        bool started;
+        // volatile: ThrottledCollect on PyObject ctor races with Initialize.
+        volatile bool started;
 
         [DefaultValue(true)]
         public bool Enable { get; set; } = true;
@@ -113,13 +114,10 @@ namespace Python.Runtime
         {
             if (!started) throw new InvalidOperationException($"{nameof(PythonEngine)} is not initialized");
 
-            _throttled = unchecked(this._throttled + 1);
-            if (!started || !Enable || _throttled < Threshold) return;
-            // Skip the drain while Python is finalizing: the .NET-side queue may
-            // contain references that became stale during teardown, and calling
-            // Py_DecRef on torn-down state segfaults under free-threaded Python.
+            if (!Enable || Interlocked.Increment(ref _throttled) < Threshold) return;
+            // Stale pointers on the queue would crash Py_DecRef during teardown.
             if (Runtime._Py_IsFinalizing() == true) return;
-            _throttled = 0;
+            Interlocked.Exchange(ref _throttled, 0);
             this.Collect();
         }
 
@@ -140,9 +138,7 @@ namespace Python.Runtime
                 return;
             }
 
-            // Skip the Refcount sanity check under free-threaded Python: the .NET
-            // finalizer thread can race with Py_Finalize and a stale read of
-            // ob_ref_local will crash the process.  Keep the check on GIL builds.
+            // Skip on FT: stale ob_ref_local read from the finalizer thread can crash.
             if (!Native.ABI.IsFreeThreaded)
             {
                 Debug.Assert(Runtime.Refcount(new BorrowedReference(obj)) > 0);
