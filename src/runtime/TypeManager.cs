@@ -123,8 +123,13 @@ namespace Python.Runtime
             {
                 resolved = dynamicMemberAccessor.TryGetMember(dynamicObject, memberName, out value);
             }
-            catch
+            catch (Exception e)
             {
+                // Avoid wrapping the CLR exception via Converter.ToPython here: that would trigger
+                // CLR type initialisation which can re-enter this slot on the same live object,
+                // causing infinite recursion. A plain RuntimeError with the message is safe.
+                Runtime.PyErr_Clear();
+                Exceptions.SetError(Exceptions.RuntimeError, e.Message);
                 return default;
             }
 

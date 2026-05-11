@@ -8,6 +8,7 @@ from Python.Test import DynamicMappingObject
 from Python.Test import RejectingDeleteDynamicObject
 from Python.Test import RejectingSetDynamicObject
 from Python.Test import ThrowingDeleteDynamicObject
+from Python.Test import ThrowingGetDynamicObject
 from Python.Test import ThrowingSetDynamicObject
 
 
@@ -184,6 +185,14 @@ def test_trysetmember_false_raises_attributeerror_instead_of_silent_python_setat
         obj.typoed_name = 42
 
     assert not hasattr(obj, "typoed_name")
+
+
+def test_trygetmember_exception_is_raised_in_python():
+    obj = ThrowingGetDynamicObject()
+    obj.AddDynamicMember("any_key", 1)
+
+    with pytest.raises(Exception, match="TryGetMember failed for 'any_key'"):
+        _ = obj.any_key
 
 
 def test_trysetmember_exception_is_raised_in_python():
