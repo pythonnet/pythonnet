@@ -11,10 +11,12 @@ namespace Python.Runtime
     {
         private readonly MethodObject m;
         private PyObject? target;
+        readonly PyType targetType;
 
-        public OverloadMapper(MethodObject m, PyObject? target)
+        public OverloadMapper(MethodObject m, PyObject? target, PyType targetType)
         {
             this.target = target;
+            this.targetType = targetType;
             this.m = m;
         }
 
@@ -42,10 +44,7 @@ namespace Python.Runtime
                 return Exceptions.RaiseTypeError(e);
             }
 
-            var mb = new MethodBinding(
-                self.m,
-                self.target is null ? null : new PyObject(self.target.Reference))
-                { info = mi };
+            var mb = new MethodBinding(self.m, self.target?.NewReference(), self.targetType.NewReference()) { info = mi };
             return mb.Alloc();
         }
 
@@ -61,6 +60,7 @@ namespace Python.Runtime
         protected override void OnClear()
         {
             target?.Dispose();
+            targetType.Dispose();
             target = null;
         }
     }
