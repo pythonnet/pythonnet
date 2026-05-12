@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
@@ -41,8 +42,14 @@ namespace Python.Runtime
 
         static readonly DynamicObjectMemberAccessor dynamicMemberAccessor = new();
 
+        // tp_getattro_dlr_proxy / tp_setattro_dlr_proxy hit HasClrMember on every
+        // attribute access; cache the reflection result per (Type, name).
+        static readonly ConcurrentDictionary<(Type, string), bool> _hasClrMemberCache = new();
+
         static bool HasClrMember(object instance, string memberName) =>
-            instance.GetType().GetMember(memberName, BindingFlags.Public | BindingFlags.Instance).Length > 0;
+            _hasClrMemberCache.GetOrAdd(
+                (instance.GetType(), memberName),
+                k => k.Item1.GetMember(k.Item2, BindingFlags.Public | BindingFlags.Instance).Length > 0);
 
         static bool IsPythonSpecialAttributeName(string memberName) =>
             memberName.Length > 4 && memberName.StartsWith("__") && memberName.EndsWith("__");
@@ -198,7 +205,9 @@ namespace Python.Runtime
                 }
                 catch (Exception e)
                 {
-                    Exceptions.SetError(e);
+                    // Same reasoning as the getter: avoid Converter.ToPython(e) to keep this
+                    // slot re-entry-safe on live dynamic objects.
+                    Exceptions.SetError(Exceptions.RuntimeError, e.Message);
                     return -1;
                 }
 
