@@ -29,7 +29,7 @@ namespace Python.EmbeddingTest
 
             var ex = Assert.Throws<PythonException>(() => t = PyList.AsList(i));
 
-            Assert.AreEqual("'int' object is not iterable", ex.Message);
+            Assert.That(ex.Message, Is.EqualTo("'int' object is not iterable"));
             Assert.IsNull(t);
         }
 
@@ -49,7 +49,7 @@ namespace Python.EmbeddingTest
             var s = new PyList();
 
             Assert.IsInstanceOf(typeof(PyList), s);
-            Assert.AreEqual(0, s.Length());
+            Assert.That(s.Length(), Is.EqualTo(0));
         }
 
         [Test]
@@ -59,10 +59,10 @@ namespace Python.EmbeddingTest
             var s = new PyList(ai);
 
             Assert.IsInstanceOf(typeof(PyList), s);
-            Assert.AreEqual(3, s.Length());
-            Assert.AreEqual("3", s[0].ToString());
-            Assert.AreEqual("2", s[1].ToString());
-            Assert.AreEqual("1", s[2].ToString());
+            Assert.That(s.Length(), Is.EqualTo(3));
+            Assert.That(s[0].ToString(), Is.EqualTo("3"));
+            Assert.That(s[1].ToString(), Is.EqualTo("2"));
+            Assert.That(s[2].ToString(), Is.EqualTo("1"));
         }
 
         [Test]
@@ -72,7 +72,7 @@ namespace Python.EmbeddingTest
             var s = new PyList(a);
 
             Assert.IsInstanceOf(typeof(PyList), s);
-            Assert.AreEqual(0, s.Length());
+            Assert.That(s.Length(), Is.EqualTo(0));
         }
 
         [Test]
@@ -83,7 +83,7 @@ namespace Python.EmbeddingTest
 
             var ex = Assert.Throws<ArgumentException>(() => t = new PyList(i));
 
-            Assert.AreEqual("object is not a list", ex.Message);
+            Assert.That(ex.Message, Is.EqualTo("object is not a list"));
             Assert.IsNull(t);
         }
 
@@ -94,8 +94,8 @@ namespace Python.EmbeddingTest
             var s = new PyList(ai);
             s.Append(new PyInt(4));
 
-            Assert.AreEqual(4, s.Length());
-            Assert.AreEqual("4", s[3].ToString());
+            Assert.That(s.Length(), Is.EqualTo(4));
+            Assert.That(s[3].ToString(), Is.EqualTo("4"));
         }
 
         [Test]
@@ -105,8 +105,8 @@ namespace Python.EmbeddingTest
             var s = new PyList(ai);
             s.Insert(0, new PyInt(4));
 
-            Assert.AreEqual(4, s.Length());
-            Assert.AreEqual("4", s[0].ToString());
+            Assert.That(s.Length(), Is.EqualTo(4));
+            Assert.That(s[0].ToString(), Is.EqualTo("4"));
         }
 
         [Test]
@@ -117,10 +117,10 @@ namespace Python.EmbeddingTest
 
             s.Reverse();
 
-            Assert.AreEqual(3, s.Length());
-            Assert.AreEqual("2", s[0].ToString());
-            Assert.AreEqual("1", s[1].ToString());
-            Assert.AreEqual("3", s[2].ToString());
+            Assert.That(s.Length(), Is.EqualTo(3));
+            Assert.That(s[0].ToString(), Is.EqualTo("2"));
+            Assert.That(s[1].ToString(), Is.EqualTo("1"));
+            Assert.That(s[2].ToString(), Is.EqualTo("3"));
         }
 
         [Test]
@@ -131,10 +131,10 @@ namespace Python.EmbeddingTest
 
             s.Sort();
 
-            Assert.AreEqual(3, s.Length());
-            Assert.AreEqual("1", s[0].ToString());
-            Assert.AreEqual("2", s[1].ToString());
-            Assert.AreEqual("3", s[2].ToString());
+            Assert.That(s.Length(), Is.EqualTo(3));
+            Assert.That(s[0].ToString(), Is.EqualTo("1"));
+            Assert.That(s[1].ToString(), Is.EqualTo("2"));
+            Assert.That(s[2].ToString(), Is.EqualTo("3"));
         }
 
         [Test]
@@ -151,10 +151,10 @@ namespace Python.EmbeddingTest
                 result.Add(item.ToString());
             }
 
-            Assert.AreEqual(3, result.Count);
-            Assert.AreEqual("foo", result[0]);
-            Assert.AreEqual("bar", result[1]);
-            Assert.AreEqual("baz", result[2]);
+            Assert.That(result.Count, Is.EqualTo(3));
+            Assert.That(result[0], Is.EqualTo("foo"));
+            Assert.That(result[1], Is.EqualTo("bar"));
+            Assert.That(result[2], Is.EqualTo("baz"));
         }
     }
 }

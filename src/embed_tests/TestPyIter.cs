@@ -18,7 +18,7 @@ namespace Python.EmbeddingTest
                 PyObject[] chars = testString.ToArray();
                 Assert.IsTrue(chars.Length > 1);
                 string reconstructed = string.Concat(chars.Select(c => c.As<string>()));
-                Assert.AreEqual(testString.As<string>(), reconstructed);
+                Assert.That(reconstructed, Is.EqualTo(testString.As<string>()));
             }
         }
     }

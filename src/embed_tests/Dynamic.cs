@@ -19,12 +19,12 @@ namespace Python.EmbeddingTest
             sys.testattr = stream;
             // Check whether there are the same object.
             dynamic _stream = sys.testattr.AsManagedObject(typeof(StringBuilder));
-            Assert.AreEqual(_stream, stream);
+            Assert.That(_stream, Is.EqualTo(stream));
 
             PythonEngine.RunSimpleString(
                 "import sys\n" +
                 "sys.testattr.Append('Hello!')\n");
-            Assert.AreEqual(stream.ToString(), "Hello!");
+            Assert.That(stream.ToString(), Is.EqualTo("Hello!"));
         }
 
         /// <summary>
@@ -63,7 +63,7 @@ namespace Python.EmbeddingTest
             sys.testattr = io.StringIO();
             dynamic bb = sys.testattr; // Get the PyObject
             bb.write("Hello!");
-            Assert.AreEqual(bb.getvalue().ToString(), "Hello!");
+            Assert.That(bb.getvalue().ToString(), Is.EqualTo("Hello!"));
         }
 
         /// <summary>
@@ -87,7 +87,7 @@ namespace Python.EmbeddingTest
                 "import sys\n" +
                 "sys.testattr3 = sys.testattr1 is sys.testattr2\n"
             );
-            Assert.AreEqual(sys.testattr3.ToString(), "True");
+            Assert.That(sys.testattr3.ToString(), Is.EqualTo("True"));
 
             // Compare in .NET
             Assert.IsTrue(sys.testattr1.Equals(sys.testattr2));
@@ -110,7 +110,7 @@ namespace Python.EmbeddingTest
                 "sys.testattr3 = sys.testattr1 is sys.testattr2\n"
             );
 
-            Assert.AreEqual(sys.testattr3.ToString(), "True");
+            Assert.That(sys.testattr3.ToString(), Is.EqualTo("True"));
 
             // Compare in .NET
             Assert.IsTrue(sys.testattr1.Equals(sys.testattr2));

@@ -146,8 +146,8 @@ obj.Field += 10
 ");
                             }
                             var clrObj = obj.As<Domain.MyClass>();
-                            Assert.AreEqual(clrObj.Property, 2);
-                            Assert.AreEqual(clrObj.Field, 20);
+                            Assert.That(2, Is.EqualTo(clrObj.Property));
+                            Assert.That(20, Is.EqualTo(clrObj.Field));
                         }
                     }
                 }

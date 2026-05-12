@@ -4,7 +4,7 @@
     <AssemblyCopyright>Copyright (c) 2006-2025 The Contributors of the Python.NET Project</AssemblyCopyright>
     <AssemblyCompany>pythonnet</AssemblyCompany>
     <AssemblyProduct>Python.NET</AssemblyProduct>
-    <LangVersion>12.0</LangVersion>
+    <LangVersion>14</LangVersion>
     <IsPackable>false</IsPackable>
     <DeterministicSourcePaths>true</DeterministicSourcePaths>
     <FullVersion>$([System.IO.File]::ReadAllText("$(MSBuildThisFileDirectory)version.txt").Trim())</FullVersion>

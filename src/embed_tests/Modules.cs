@@ -149,11 +149,11 @@ namespace Python.EmbeddingTest
                 );
                 dynamic obj1 = _ps.Class1(20);
                 var result = obj1.call(10).As<int>();
-                Assert.AreEqual(130, result);
+                Assert.That(result, Is.EqualTo(130));
 
                 obj1.update(10);
                 result = ps.Get<int>("bb");
-                Assert.AreEqual(30, result);
+                Assert.That(result, Is.EqualTo(30));
             }
         }
 
@@ -185,11 +185,11 @@ namespace Python.EmbeddingTest
 
                 dynamic obj1 = ps2.Class1(20);
                 var result = obj1.call(10).As<int>();
-                Assert.AreEqual(130, result);
+                Assert.That(result, Is.EqualTo(130));
 
                 obj1.update(10);
                 result = ps2.Get<int>("bb");
-                Assert.AreEqual(30, result);
+                Assert.That(result, Is.EqualTo(30));
             }
         }
 
@@ -229,7 +229,7 @@ namespace Python.EmbeddingTest
                 var value1 = ps.Eval<int>("sys.attr1");
                 var value2 = sys.attr1.As<int>();
                 Assert.That(value1, Is.EqualTo(2));
-                Assert.AreEqual(2, value2);
+                Assert.That(value2, Is.EqualTo(2));
 
                 //import as
                 ps.Import("sys", "sys1");
@@ -308,16 +308,16 @@ namespace Python.EmbeddingTest
                     dynamic func2 = scope.Get("func2");
 
                     var result1 = func2().As<int>();
-                    Assert.AreEqual(0, result1);
+                    Assert.That(result1, Is.EqualTo(0));
 
                     scope.Set("cc", 20);//it has no effect on the globals of 'func1'
                     var result2 = func2().As<int>();
-                    Assert.AreEqual(-10, result2);
+                    Assert.That(result2, Is.EqualTo(-10));
                     scope.Set("cc", 10); //rollback
 
                     ps.Set("cc", 20);
                     var result3 = func2().As<int>();
-                    Assert.AreEqual(10, result3);
+                    Assert.That(result3, Is.EqualTo(10));
                     ps.Set("cc", 10); //rollback
                 }
             }
@@ -437,7 +437,7 @@ namespace Python.EmbeddingTest
             scope.Execute(code);
 
             Assert.That(scope.TryGet("x", out dynamic x), Is.True);
-            Assert.AreEqual("True", x.ToString());
+            Assert.That(x.ToString(), Is.EqualTo("True"));
         }
 
         [Test]

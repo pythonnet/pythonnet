@@ -31,7 +31,7 @@ for _ in range(2000):
 gc.collect()
 ");
         Runtime.Runtime.TryCollectingGarbage(10);
-        Assert.AreEqual(0, ClassWithEventHandler.alive);
+        Assert.That(ClassWithEventHandler.alive, Is.EqualTo(0));
     }
 }
 

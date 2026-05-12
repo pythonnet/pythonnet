@@ -22,7 +22,7 @@ namespace Python.EmbeddingTest.NeedsReinit
             PythonEngine.PythonHome = pythonHome;
             PythonEngine.Initialize();
 
-            Assert.AreEqual(pythonHome, PythonEngine.PythonHome);
+            Assert.That(PythonEngine.PythonHome, Is.EqualTo(pythonHome));
             PythonEngine.Shutdown();
 
             // Restoring valid pythonhome.
@@ -45,7 +45,7 @@ namespace Python.EmbeddingTest.NeedsReinit
             PythonEngine.PythonHome = pythonHome;
             PythonEngine.Initialize();
 
-            Assert.AreEqual(pythonHome, PythonEngine.PythonHome);
+            Assert.That(PythonEngine.PythonHome, Is.EqualTo(pythonHome));
             PythonEngine.Shutdown();
 
             PythonEngine.PythonHome = pythonHomeBackup;
@@ -65,7 +65,7 @@ namespace Python.EmbeddingTest.NeedsReinit
             }
             PythonEngine.PythonHome = "";
 
-            Assert.AreEqual("", PythonEngine.PythonHome);
+            Assert.That(PythonEngine.PythonHome, Is.EqualTo(""));
 
             PythonEngine.PythonHome = backup;
             PythonEngine.Shutdown();
@@ -86,7 +86,7 @@ namespace Python.EmbeddingTest.NeedsReinit
             PythonEngine.ProgramName = programName;
             PythonEngine.Initialize();
 
-            Assert.AreEqual(programName, PythonEngine.ProgramName);
+            Assert.That(PythonEngine.ProgramName, Is.EqualTo(programName));
             PythonEngine.Shutdown();
 
             PythonEngine.ProgramName = programNameBackup;
@@ -124,7 +124,7 @@ namespace Python.EmbeddingTest.NeedsReinit
             PythonEngine.PythonPath = path;
             PythonEngine.Initialize();
 
-            Assert.AreEqual(path, PythonEngine.PythonPath);
+            Assert.That(PythonEngine.PythonPath, Is.EqualTo(path));
             if (importShouldSucceed) Py.Import(moduleName);
 
             PythonEngine.Shutdown();

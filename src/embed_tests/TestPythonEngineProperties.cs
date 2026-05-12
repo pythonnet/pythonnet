@@ -72,7 +72,7 @@ namespace Python.EmbeddingTest
         {
             string s = PythonEngine.PythonPath;
 
-            StringAssert.Contains("python", s.ToLower());
+            Assert.That(s.ToLower(), Does.Contain("python"));
         }
 
         [Test]
@@ -94,7 +94,7 @@ namespace Python.EmbeddingTest
 
             string enginePythonHome = PythonEngine.PythonHome;
 
-            Assert.AreEqual(envPythonHome, enginePythonHome);
+            Assert.That(enginePythonHome, Is.EqualTo(envPythonHome));
         }
     }
 }

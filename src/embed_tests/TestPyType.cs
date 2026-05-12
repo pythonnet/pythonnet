@@ -28,9 +28,9 @@ namespace Python.EmbeddingTest
             );
 
             using var type = new PyType(spec);
-            Assert.AreEqual(name, type.GetAttr("__name__").As<string>());
-            Assert.AreEqual(name, type.Name);
-            Assert.AreEqual(docStr, type.GetAttr("__doc__").As<string>());
+            Assert.That(type.GetAttr("__name__").As<string>(), Is.EqualTo(name));
+            Assert.That(type.Name, Is.EqualTo(name));
+            Assert.That(type.GetAttr("__doc__").As<string>(), Is.EqualTo(docStr));
         }
     }
 }

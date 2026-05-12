@@ -32,7 +32,7 @@ namespace Python.EmbeddingTest {
                 scope.Set(nameof(tuple), tuple);
                 scope.Set(nameof(accept), accept);
                 scope.Exec($"{nameof(accept)}({nameof(tuple)})");
-                Assert.AreEqual(expected: tuple, actual: restored);
+                Assert.That(actual: restored, Is.EqualTo(expected: tuple));
             }
         }
 
@@ -53,7 +53,7 @@ namespace Python.EmbeddingTest {
                 scope.Set(nameof(tuple), tuple);
                 scope.Set(nameof(accept), accept);
                 scope.Exec($"{nameof(accept)}({nameof(tuple)})");
-                Assert.AreEqual(expected: tuple, actual: restored);
+                Assert.That(actual: restored, Is.EqualTo(expected: tuple));
             }
         }
 
@@ -67,7 +67,7 @@ namespace Python.EmbeddingTest {
             var tuple = Activator.CreateInstance(typeof(T), 42.0, "42", new object());
             using var pyTuple = TupleCodec<TTuple>.Instance.TryEncode(tuple);
             Assert.IsTrue(TupleCodec<TTuple>.Instance.TryDecode(pyTuple, out object restored));
-            Assert.AreEqual(expected: tuple, actual: restored);
+            Assert.That(actual: restored, Is.EqualTo(expected: tuple));
         }
 
         [Test]
@@ -81,7 +81,7 @@ namespace Python.EmbeddingTest {
             var tuple = Activator.CreateInstance(typeof(T), 42, "42", new object());
             using var pyTuple = TupleCodec<TTuple>.Instance.TryEncode(tuple);
             Assert.IsTrue(TupleCodec<TTuple>.Instance.TryDecode(pyTuple, out T restored));
-            Assert.AreEqual(expected: tuple, actual: restored);
+            Assert.That(actual: restored, Is.EqualTo(expected: tuple));
         }
 
         static PyObject GetPythonIterable() => PythonEngine.Eval("map(lambda x: x, [1,2,3])");
@@ -118,7 +118,7 @@ namespace Python.EmbeddingTest {
             //the IList will report a Count of 3.
             IList<string> stringList = null;
             Assert.DoesNotThrow(() => { codec.TryDecode(pyList, out stringList); });
-            Assert.AreEqual(stringList.Count, 3);
+            Assert.That(3, Is.EqualTo(stringList.Count));
             Assert.Throws(typeof(InvalidCastException), () => { var x = stringList[0]; });
 
             //can't convert python iterable to list (this will require a copy which isn't lossless)
@@ -162,8 +162,8 @@ namespace Python.EmbeddingTest {
             //the IList will report a Count of 3.
             ICollection<string> stringCollection = null;
             Assert.DoesNotThrow(() => { codec.TryDecode(pyList, out stringCollection); });
-            Assert.AreEqual(3, stringCollection.Count());
-            Assert.Throws(typeof(InvalidCastException), () => {
+            Assert.That(stringCollection.Count(), Is.EqualTo(3));
+            Assert.Throws<InvalidCastException>(() => {
                 string[] array = new string[3];
                 stringCollection.CopyTo(array, 0);
             });
@@ -199,8 +199,8 @@ namespace Python.EmbeddingTest {
             //the IList will report a Count of 3.
             ICollection<string> stringCollection2 = null;
             Assert.DoesNotThrow(() => { codec.TryDecode(pyTuple, out stringCollection2); });
-            Assert.AreEqual(3, stringCollection2.Count());
-            Assert.Throws(typeof(InvalidCastException), () => {
+            Assert.That(stringCollection2.Count, Is.EqualTo(3));
+            Assert.Throws<InvalidCastException>(() => {
                 string[] array = new string[3];
                 stringCollection2.CopyTo(array, 0);
             });
@@ -321,7 +321,7 @@ def call(func):
 ");
             var callFunc = scope.Get("call");
             string message = callFunc.Invoke(callMeAction.ToPython()).As<string>();
-            Assert.AreEqual(TestExceptionMessage, message);
+            Assert.That(message, Is.EqualTo(TestExceptionMessage));
         }
 
         [Test]
@@ -331,7 +331,7 @@ def call(func):
             using var scope = Py.CreateScope();
             var error = Assert.Throws<ValueErrorWrapper>(()
                 => PythonEngine.Exec($"raise ValueError('{TestExceptionMessage}')"));
-            Assert.AreEqual(TestExceptionMessage, error.Message);
+            Assert.That(error.Message, Is.EqualTo(TestExceptionMessage));
         }
 
         [Test]
@@ -360,7 +360,7 @@ DateTimeDecoder.Setup()
             PyObjectConversions.RegisterDecoder(decoder);
             using var result = scope.Eval("FloatDerived()");
             object decoded = result.As<object>();
-            Assert.AreEqual(42, decoded);
+            Assert.That(decoded, Is.EqualTo(42));
         }
 
         [Test]
@@ -374,7 +374,7 @@ DateTimeDecoder.Setup()
                 var error = Assert.Throws<ValueErrorWrapper>(() =>
                     PythonEngine.Exec($"[].__iter__().__next__()")
                 );
-                Assert.AreEqual(TestExceptionMessage, error.Message);
+                Assert.That(error.Message, Is.EqualTo(TestExceptionMessage));
             }
             else
             {
@@ -395,7 +395,7 @@ DateTimeDecoder.Setup()
 
             var pyObj = PythonEngine.Eval("iter");
             var decoded = pyObj.As<object>();
-            Assert.AreSame(everythingElseToSelf, decoded);
+            Assert.That(decoded, Is.SameAs(everythingElseToSelf));
         }
 
         public class EverythingElseToSelfDecoder : IPyObjectDecoder
