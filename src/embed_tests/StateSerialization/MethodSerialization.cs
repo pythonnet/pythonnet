@@ -16,7 +16,7 @@ public class MethodSerialization
         var maybeMethod = new MaybeMethodBase<MethodBase>(method);
         var restored = SerializationRoundtrip(maybeMethod);
         Assert.IsTrue(restored.Valid);
-        Assert.AreEqual(method, restored.Value);
+        Assert.That(restored.Value, Is.EqualTo(method));
     }
 
     [Test]
@@ -26,7 +26,7 @@ public class MethodSerialization
         var maybeConstructor = new MaybeMethodBase<MethodBase>(ctor);
         var restored = SerializationRoundtrip(maybeConstructor);
         Assert.IsTrue(restored.Valid);
-        Assert.AreEqual(ctor, restored.Value);
+        Assert.That(restored.Value, Is.EqualTo(ctor));
     }
 
     static T SerializationRoundtrip<T>(T item)

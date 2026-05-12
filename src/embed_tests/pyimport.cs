@@ -73,12 +73,12 @@ namespace Python.EmbeddingTest
         public void TestCastGlobalVar()
         {
             dynamic foo = Py.Import("PyImportTest.cast_global_var");
-            Assert.AreEqual("1", foo.FOO.ToString());
-            Assert.AreEqual("1", foo.test_foo().ToString());
+            Assert.That(foo.FOO.ToString(), Is.EqualTo("1"));
+            Assert.That(foo.test_foo().ToString(), Is.EqualTo("1"));
 
             foo.FOO = 2;
-            Assert.AreEqual("2", foo.FOO.ToString());
-            Assert.AreEqual("2", foo.test_foo().ToString());
+            Assert.That(foo.FOO.ToString(), Is.EqualTo("2"));
+            Assert.That(foo.test_foo().ToString(), Is.EqualTo("2"));
         }
 
         [Test]

@@ -15,7 +15,7 @@ namespace Python.EmbeddingTest
             const float a = 4.5F;
             var i = new PyFloat(a);
             Assert.True(PyFloat.IsFloatType(i));
-            // Assert.Assert.AreEqual(i, a.ToInt32());
+            // Assert.Assert.That(a.ToInt32(), Is.EqualTo(i));
         }
 
         [Test]
@@ -24,7 +24,7 @@ namespace Python.EmbeddingTest
             var i = new PyFloat(5);
             var a = new PyFloat(i);
             Assert.True(PyFloat.IsFloatType(a));
-            // Assert.Assert.AreEqual(i, a.ToInt32());
+            // Assert.Assert.That(a.ToInt32(), Is.EqualTo(i));
         }
 
         [Test]
@@ -45,7 +45,7 @@ namespace Python.EmbeddingTest
             const double a = 4.5;
             var i = new PyFloat(a);
             Assert.True(PyFloat.IsFloatType(i));
-            // Assert.Assert.AreEqual(i, a.ToInt32());
+            // Assert.Assert.That(a.ToInt32(), Is.EqualTo(i));
         }
 
         [Test]
@@ -54,7 +54,7 @@ namespace Python.EmbeddingTest
             const string a = "5";
             var i = new PyFloat(a);
             Assert.True(PyFloat.IsFloatType(i));
-            // Assert.Assert.AreEqual(i, a.ToInt32());
+            // Assert.Assert.That(a.ToInt32(), Is.EqualTo(i));
         }
 
         [Test]
@@ -63,7 +63,7 @@ namespace Python.EmbeddingTest
             const string a = "4.5";
             var i = new PyFloat(a);
             Assert.True(PyFloat.IsFloatType(i));
-            // Assert.Assert.AreEqual(i, a.ToInt32());
+            // Assert.Assert.That(a.ToInt32(), Is.EqualTo(i));
         }
 
         [Test]
@@ -101,7 +101,7 @@ namespace Python.EmbeddingTest
             PyFloat s = PyFloat.AsFloat(i);
 
             Assert.True(PyFloat.IsFloatType(s));
-            // Assert.Assert.AreEqual(i, a.ToInt32());
+            // Assert.Assert.That(a.ToInt32(), Is.EqualTo(i));
         }
 
         [Test]

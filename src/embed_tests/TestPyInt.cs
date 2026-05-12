@@ -15,7 +15,7 @@ namespace Python.EmbeddingTest
         {
             const int i = 5;
             var a = new PyInt(i);
-            Assert.AreEqual(i, a.ToInt32());
+            Assert.That(a.ToInt32(), Is.EqualTo(i));
         }
 
         [Test]
@@ -23,7 +23,7 @@ namespace Python.EmbeddingTest
         {
             const uint i = 5;
             var a = new PyInt(i);
-            Assert.AreEqual(i, a.ToInt32());
+            Assert.That(a.ToInt32(), Is.EqualTo(i));
         }
 
         [Test]
@@ -31,7 +31,7 @@ namespace Python.EmbeddingTest
         {
             const long i = 5;
             var a = new PyInt(i);
-            Assert.AreEqual(i, a.ToInt32());
+            Assert.That(a.ToInt32(), Is.EqualTo(i));
         }
 
         [Test]
@@ -39,7 +39,7 @@ namespace Python.EmbeddingTest
         {
             const ulong i = 5;
             var a = new PyInt(i);
-            Assert.AreEqual(i, a.ToInt32());
+            Assert.That(a.ToInt32(), Is.EqualTo(i));
         }
 
         [Test]
@@ -47,7 +47,7 @@ namespace Python.EmbeddingTest
         {
             const short i = 5;
             var a = new PyInt(i);
-            Assert.AreEqual(i, a.ToInt32());
+            Assert.That(a.ToInt32(), Is.EqualTo(i));
         }
 
         [Test]
@@ -55,7 +55,7 @@ namespace Python.EmbeddingTest
         {
             const ushort i = 5;
             var a = new PyInt(i);
-            Assert.AreEqual(i, a.ToInt32());
+            Assert.That(a.ToInt32(), Is.EqualTo(i));
         }
 
         [Test]
@@ -63,7 +63,7 @@ namespace Python.EmbeddingTest
         {
             const byte i = 5;
             var a = new PyInt(i);
-            Assert.AreEqual(i, a.ToInt32());
+            Assert.That(a.ToInt32(), Is.EqualTo(i));
         }
 
         [Test]
@@ -71,7 +71,7 @@ namespace Python.EmbeddingTest
         {
             const sbyte i = 5;
             var a = new PyInt(i);
-            Assert.AreEqual(i, a.ToInt32());
+            Assert.That(a.ToInt32(), Is.EqualTo(i));
         }
 
         [Test]
@@ -79,7 +79,7 @@ namespace Python.EmbeddingTest
         {
             var i = new PyInt(5);
             var a = new PyInt(i);
-            Assert.AreEqual(5, a.ToInt32());
+            Assert.That(a.ToInt32(), Is.EqualTo(5));
         }
 
         [Test]
@@ -99,7 +99,7 @@ namespace Python.EmbeddingTest
         {
             const string i = "5";
             var a = new PyInt(i);
-            Assert.AreEqual(5, a.ToInt32());
+            Assert.That(a.ToInt32(), Is.EqualTo(5));
         }
 
         [Test]
@@ -133,7 +133,7 @@ namespace Python.EmbeddingTest
         {
             var i = new PyInt(5);
             var a = PyInt.AsInt(i);
-            Assert.AreEqual(5, a.ToInt32());
+            Assert.That(a.ToInt32(), Is.EqualTo(5));
         }
 
         [Test]
@@ -152,7 +152,7 @@ namespace Python.EmbeddingTest
         {
             var a = new PyInt(5);
             Assert.IsInstanceOf(typeof(int), a.ToInt32());
-            Assert.AreEqual(5, a.ToInt32());
+            Assert.That(a.ToInt32(), Is.EqualTo(5));
         }
 
         [Test]
@@ -160,7 +160,7 @@ namespace Python.EmbeddingTest
         {
             var a = new PyInt(5);
             Assert.IsInstanceOf(typeof(short), a.ToInt16());
-            Assert.AreEqual(5, a.ToInt16());
+            Assert.That(a.ToInt16(), Is.EqualTo(5));
         }
 
         [Test]
@@ -169,7 +169,7 @@ namespace Python.EmbeddingTest
             long val = 5 + (long)int.MaxValue;
             var a = new PyInt(val);
             Assert.IsInstanceOf(typeof(long), a.ToInt64());
-            Assert.AreEqual(val, a.ToInt64());
+            Assert.That(a.ToInt64(), Is.EqualTo(val));
         }
 
         [Test]
@@ -195,7 +195,7 @@ namespace Python.EmbeddingTest
             var expected = simpleValues.Select(v => new BigInteger(v)).ToArray();
             var actual = simpleValues.Select(v => new PyInt(v).ToBigInteger()).ToArray();
 
-            CollectionAssert.AreEqual(expected, actual);
+            Assert.That(actual, Is.EqualTo(expected));
         }
 
         [Test]
@@ -204,37 +204,37 @@ namespace Python.EmbeddingTest
             var v = new PyInt(42);
 
             #region Signed
-            Assert.AreEqual(0, v.CompareTo(42L));
-            Assert.AreEqual(0, v.CompareTo(42));
-            Assert.AreEqual(0, v.CompareTo((short)42));
-            Assert.AreEqual(0, v.CompareTo((sbyte)42));
+            Assert.That(v.CompareTo(42L), Is.EqualTo(0));
+            Assert.That(v.CompareTo(42), Is.EqualTo(0));
+            Assert.That(v.CompareTo((short)42), Is.EqualTo(0));
+            Assert.That(v.CompareTo((sbyte)42), Is.EqualTo(0));
 
-            Assert.AreEqual(1, v.CompareTo(41L));
-            Assert.AreEqual(1, v.CompareTo(41));
-            Assert.AreEqual(1, v.CompareTo((short)41));
-            Assert.AreEqual(1, v.CompareTo((sbyte)41));
+            Assert.That(v.CompareTo(41L), Is.EqualTo(1));
+            Assert.That(v.CompareTo(41), Is.EqualTo(1));
+            Assert.That(v.CompareTo((short)41), Is.EqualTo(1));
+            Assert.That(v.CompareTo((sbyte)41), Is.EqualTo(1));
 
-            Assert.AreEqual(-1, v.CompareTo(43L));
-            Assert.AreEqual(-1, v.CompareTo(43));
-            Assert.AreEqual(-1, v.CompareTo((short)43));
-            Assert.AreEqual(-1, v.CompareTo((sbyte)43));
+            Assert.That(v.CompareTo(43L), Is.EqualTo(-1));
+            Assert.That(v.CompareTo(43), Is.EqualTo(-1));
+            Assert.That(v.CompareTo((short)43), Is.EqualTo(-1));
+            Assert.That(v.CompareTo((sbyte)43), Is.EqualTo(-1));
             #endregion Signed
 
             #region Unsigned
-            Assert.AreEqual(0, v.CompareTo(42UL));
-            Assert.AreEqual(0, v.CompareTo(42U));
-            Assert.AreEqual(0, v.CompareTo((ushort)42));
-            Assert.AreEqual(0, v.CompareTo((byte)42));
+            Assert.That(v.CompareTo(42UL), Is.EqualTo(0));
+            Assert.That(v.CompareTo(42U), Is.EqualTo(0));
+            Assert.That(v.CompareTo((ushort)42), Is.EqualTo(0));
+            Assert.That(v.CompareTo((byte)42), Is.EqualTo(0));
 
-            Assert.AreEqual(1, v.CompareTo(41UL));
-            Assert.AreEqual(1, v.CompareTo(41U));
-            Assert.AreEqual(1, v.CompareTo((ushort)41));
-            Assert.AreEqual(1, v.CompareTo((byte)41));
+            Assert.That(v.CompareTo(41UL), Is.EqualTo(1));
+            Assert.That(v.CompareTo(41U), Is.EqualTo(1));
+            Assert.That(v.CompareTo((ushort)41), Is.EqualTo(1));
+            Assert.That(v.CompareTo((byte)41), Is.EqualTo(1));
 
-            Assert.AreEqual(-1, v.CompareTo(43UL));
-            Assert.AreEqual(-1, v.CompareTo(43U));
-            Assert.AreEqual(-1, v.CompareTo((ushort)43));
-            Assert.AreEqual(-1, v.CompareTo((byte)43));
+            Assert.That(v.CompareTo(43UL), Is.EqualTo(-1));
+            Assert.That(v.CompareTo(43U), Is.EqualTo(-1));
+            Assert.That(v.CompareTo((ushort)43), Is.EqualTo(-1));
+            Assert.That(v.CompareTo((byte)43), Is.EqualTo(-1));
             #endregion Unsigned
         }
 
@@ -273,10 +273,10 @@ namespace Python.EmbeddingTest
         {
             BigInteger val = BigInteger.Pow(2, 1024) + 3;
             var pyInt = new PyInt(val);
-            Assert.AreEqual(val, pyInt.ToBigInteger());
+            Assert.That(pyInt.ToBigInteger(), Is.EqualTo(val));
             val = -val;
             pyInt = new PyInt(val);
-            Assert.AreEqual(val, pyInt.ToBigInteger());
+            Assert.That(pyInt.ToBigInteger(), Is.EqualTo(val));
         }
     }
 }

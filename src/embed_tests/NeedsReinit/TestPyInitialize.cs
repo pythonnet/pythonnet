@@ -28,7 +28,7 @@ namespace Python.EmbeddingTest.NeedsReinit
             {
                 using(var argv = new PyList(Runtime.Runtime.PySys_GetObject("argv")))
                 {
-                    Assert.AreNotEqual(0, argv.Length());
+                    Assert.That(argv.Length(), Is.Not.EqualTo(0));
                 }
             }
         }

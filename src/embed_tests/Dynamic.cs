@@ -19,12 +19,12 @@ namespace Python.EmbeddingTest
             sys.testattr = stream;
             // Check whether there are the same object.
             dynamic _stream = sys.testattr.AsManagedObject(typeof(StringBuilder));
-            Assert.AreEqual(_stream, stream);
+            Assert.That(_stream, Is.EqualTo(stream));
 
             PythonEngine.RunSimpleString(
                 "import sys\n" +
                 "sys.testattr.Append('Hello!')\n");
-            Assert.AreEqual(stream.ToString(), "Hello!");
+            Assert.That(stream.ToString(), Is.EqualTo("Hello!"));
         }
 
         /// <summary>
@@ -45,25 +45,15 @@ namespace Python.EmbeddingTest
         /// Check whether we can get the attr of a python object when the
         /// value of attr is a PyObject.
         /// </summary>
-        /// <remarks>
-        /// FIXME: Issue on Travis PY27: Error : Python.EmbeddingTest.dynamicTest.AssignPyObject
-        /// Python.Runtime.PythonException : ImportError : /home/travis/virtualenv/python2.7.9/lib/python2.7/lib-dynload/_io.so: undefined symbol: _PyLong_AsInt
-        /// </remarks>
         [Test]
         public void AssignPyObject()
         {
-            if (Environment.GetEnvironmentVariable("TRAVIS") == "true" &&
-                Environment.GetEnvironmentVariable("TRAVIS_PYTHON_VERSION") == "2.7")
-            {
-                Assert.Ignore("Fails on Travis/PY27: ImportError: ... undefined symbol: _PyLong_AsInt");
-            }
-
             dynamic sys = Py.Import("sys");
             dynamic io = Py.Import("io");
             sys.testattr = io.StringIO();
             dynamic bb = sys.testattr; // Get the PyObject
             bb.write("Hello!");
-            Assert.AreEqual(bb.getvalue().ToString(), "Hello!");
+            Assert.That(bb.getvalue().ToString(), Is.EqualTo("Hello!"));
         }
 
         /// <summary>
@@ -87,7 +77,7 @@ namespace Python.EmbeddingTest
                 "import sys\n" +
                 "sys.testattr3 = sys.testattr1 is sys.testattr2\n"
             );
-            Assert.AreEqual(sys.testattr3.ToString(), "True");
+            Assert.That(sys.testattr3.ToString(), Is.EqualTo("True"));
 
             // Compare in .NET
             Assert.IsTrue(sys.testattr1.Equals(sys.testattr2));
@@ -110,7 +100,7 @@ namespace Python.EmbeddingTest
                 "sys.testattr3 = sys.testattr1 is sys.testattr2\n"
             );
 
-            Assert.AreEqual(sys.testattr3.ToString(), "True");
+            Assert.That(sys.testattr3.ToString(), Is.EqualTo("True"));
 
             // Compare in .NET
             Assert.IsTrue(sys.testattr1.Equals(sys.testattr2));

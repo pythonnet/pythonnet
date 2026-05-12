@@ -31,7 +31,7 @@ namespace Python.EmbeddingTest
         public void TestPyTupleEmpty()
         {
             var t = new PyTuple();
-            Assert.AreEqual(0, t.Length());
+            Assert.That(t.Length(), Is.EqualTo(0));
         }
 
         [Test]
@@ -42,7 +42,7 @@ namespace Python.EmbeddingTest
 
             var ex = Assert.Throws<ArgumentException>(() => t = new PyTuple(i));
 
-            Assert.AreEqual("object is not a tuple", ex.Message);
+            Assert.That(ex.Message, Is.EqualTo("object is not a tuple"));
             Assert.IsNull(t);
         }
 
@@ -52,7 +52,7 @@ namespace Python.EmbeddingTest
             var a = new PyObject[] { };
             var t = new PyTuple(a);
 
-            Assert.AreEqual(0, t.Length());
+            Assert.That(t.Length(), Is.EqualTo(0));
         }
 
         [Test]
@@ -61,7 +61,7 @@ namespace Python.EmbeddingTest
             var a = new PyInt[] { };
             var t = new PyTuple(a);
 
-            Assert.AreEqual(0, t.Length());
+            Assert.That(t.Length(), Is.EqualTo(0));
         }
 
         [Test]
@@ -70,7 +70,7 @@ namespace Python.EmbeddingTest
             var a = new PyObject[] { new PyInt(1), new PyString("Foo") };
             var t = new PyTuple(a);
 
-            Assert.AreEqual(2, t.Length());
+            Assert.That(t.Length(), Is.EqualTo(2));
         }
 
         /// <summary>
@@ -81,8 +81,6 @@ namespace Python.EmbeddingTest
         /// Test has second purpose. Currently it generated an Exception
         /// that the GC failed to remove often and caused AppDomain unload
         /// errors at the end of tests. See GH#397 for more info.
-        /// <para />
-        /// Curious, on PY27 it gets a Unicode on the ex.Message. On PY3+ its string.
         /// </remarks>
         [Test]
         public void TestPyTupleInvalidAppend()
@@ -93,7 +91,7 @@ namespace Python.EmbeddingTest
             var ex = Assert.Throws<PythonException>(() => t.Concat(s));
 
             StringAssert.StartsWith("can only concatenate tuple", ex.Message);
-            Assert.AreEqual(0, t.Length());
+            Assert.That(t.Length(), Is.EqualTo(0));
             Assert.IsEmpty(t);
         }
 
@@ -116,9 +114,9 @@ namespace Python.EmbeddingTest
 
             Assert.IsNotNull(t);
             Assert.IsInstanceOf(typeof(PyTuple), t);
-            Assert.AreEqual("f", t[0].ToString());
-            Assert.AreEqual("o", t[1].ToString());
-            Assert.AreEqual("o", t[2].ToString());
+            Assert.That(t[0].ToString(), Is.EqualTo("f"));
+            Assert.That(t[1].ToString(), Is.EqualTo("o"));
+            Assert.That(t[2].ToString(), Is.EqualTo("o"));
         }
 
         [Test]
@@ -152,7 +150,7 @@ namespace Python.EmbeddingTest
 
             var ex = Assert.Throws<PythonException>(() => t = PyTuple.AsTuple(i));
 
-            Assert.AreEqual("'int' object is not iterable", ex.Message);
+            Assert.That(ex.Message, Is.EqualTo("'int' object is not iterable"));
             Assert.IsNull(t);
         }
     }

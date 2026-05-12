@@ -16,11 +16,11 @@ namespace Python.EmbeddingTest.NeedsReinit
                 Runtime.Runtime.PyGILState_Ensure();
             }
             Runtime.Runtime.Py_Finalize();
-            Assert.AreEqual(0, Runtime.Runtime.Py_IsInitialized());
+            Assert.That(Runtime.Runtime.Py_IsInitialized(), Is.EqualTo(0));
             Runtime.Runtime.Py_Initialize();
-            Assert.AreEqual(1, Runtime.Runtime.Py_IsInitialized());
+            Assert.That(Runtime.Runtime.Py_IsInitialized(), Is.EqualTo(1));
             Runtime.Runtime.Py_Finalize();
-            Assert.AreEqual(0, Runtime.Runtime.Py_IsInitialized());
+            Assert.That(Runtime.Runtime.Py_IsInitialized(), Is.EqualTo(0));
         }
 
         [Test]
@@ -30,27 +30,27 @@ namespace Python.EmbeddingTest.NeedsReinit
             using var op = Runtime.Runtime.PyString_FromString("FooBar");
 
             // New object RefCount should be one
-            Assert.AreEqual(1, Runtime.Runtime.Refcount32(op.BorrowOrThrow()));
+            Assert.That(Runtime.Runtime.Refcount32(op.BorrowOrThrow()), Is.EqualTo(1));
 
             // Checking refcount didn't change refcount
-            Assert.AreEqual(1, Runtime.Runtime.Refcount32(op.Borrow()));
+            Assert.That(Runtime.Runtime.Refcount32(op.Borrow()), Is.EqualTo(1));
 
             // Borrowing a reference doesn't increase refcount
             BorrowedReference p = op.Borrow();
-            Assert.AreEqual(1, Runtime.Runtime.Refcount32(p));
+            Assert.That(Runtime.Runtime.Refcount32(p), Is.EqualTo(1));
 
             // Py_IncRef/Py_DecRef increase and decrease RefCount
             Runtime.Runtime.Py_IncRef(op.Borrow());
-            Assert.AreEqual(2, Runtime.Runtime.Refcount32(p));
+            Assert.That(Runtime.Runtime.Refcount32(p), Is.EqualTo(2));
             Runtime.Runtime.Py_DecRef(StolenReference.DangerousFromPointer(op.DangerousGetAddress()));
-            Assert.AreEqual(1, Runtime.Runtime.Refcount32(p));
+            Assert.That(Runtime.Runtime.Refcount32(p), Is.EqualTo(1));
 
             // XIncref/XDecref increase and decrease RefCount
 #pragma warning disable CS0618 // Type or member is obsolete. We are testing corresponding members
             Runtime.Runtime.XIncref(p);
-            Assert.AreEqual(2, Runtime.Runtime.Refcount32(p));
+            Assert.That(Runtime.Runtime.Refcount32(p), Is.EqualTo(2));
             Runtime.Runtime.XDecref(op.Steal());
-            Assert.AreEqual(1, Runtime.Runtime.Refcount32(p));
+            Assert.That(Runtime.Runtime.Refcount32(p), Is.EqualTo(1));
 #pragma warning restore CS0618 // Type or member is obsolete
 
             op.Dispose();

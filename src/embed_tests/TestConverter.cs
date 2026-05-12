@@ -155,7 +155,7 @@ namespace Python.EmbeddingTest
             var list = new List<string> {"hello", "world"};
             var listProxy = PyObject.FromManagedObject(list);
             var clrObject = (CLRObject)ManagedType.GetManagedObject(listProxy);
-            Assert.AreSame(list, clrObject.inst);
+            Assert.That(clrObject.inst, Is.SameAs(list));
         }
 
         [Test]
@@ -164,7 +164,7 @@ namespace Python.EmbeddingTest
             var pyObject = "hello world!".ToPython();
             var pyObjectProxy = PyObject.FromManagedObject(pyObject);
             var clrObject = (CLRObject)ManagedType.GetManagedObject(pyObjectProxy);
-            Assert.AreSame(pyObject, clrObject.inst);
+            Assert.That(clrObject.inst, Is.SameAs(pyObject));
 
 #pragma warning disable CS0612 // Type or member is obsolete
             const string handlePropertyName = nameof(PyObject.Handle);

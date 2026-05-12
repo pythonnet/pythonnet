@@ -26,16 +26,16 @@ namespace Python.EmbeddingTest
             var t = new PyString("FooBar");
 
             PyObject s = t.GetSlice(0, 3);
-            Assert.AreEqual("Foo", s.ToString());
+            Assert.That(s.ToString(), Is.EqualTo("Foo"));
 
             PyObject s2 = t.GetSlice(3, 6);
-            Assert.AreEqual("Bar", s2.ToString());
+            Assert.That(s2.ToString(), Is.EqualTo("Bar"));
 
             PyObject s3 = t.GetSlice(0, 6);
-            Assert.AreEqual("FooBar", s3.ToString());
+            Assert.That(s3.ToString(), Is.EqualTo("FooBar"));
 
             PyObject s4 = t.GetSlice(0, 12);
-            Assert.AreEqual("FooBar", s4.ToString());
+            Assert.That(s4.ToString(), Is.EqualTo("FooBar"));
         }
 
         [Test]
@@ -46,7 +46,7 @@ namespace Python.EmbeddingTest
 
             PyObject actual = t1.Concat(t2);
 
-            Assert.AreEqual("FooBar", actual.ToString());
+            Assert.That(actual.ToString(), Is.EqualTo("FooBar"));
         }
 
         [Test]
@@ -55,10 +55,10 @@ namespace Python.EmbeddingTest
             var t1 = new PyString("Foo");
 
             PyObject actual = t1.Repeat(3);
-            Assert.AreEqual("FooFooFoo", actual.ToString());
+            Assert.That(actual.ToString(), Is.EqualTo("FooFooFoo"));
 
             actual = t1.Repeat(-3);
-            Assert.AreEqual("", actual.ToString());
+            Assert.That(actual.ToString(), Is.EqualTo(""));
         }
 
         [Test]
@@ -75,9 +75,9 @@ namespace Python.EmbeddingTest
         {
             var t1 = new PyString("FooBar");
 
-            Assert.AreEqual(4, t1.Index32(new PyString("a")));
-            Assert.AreEqual(5L, t1.Index64(new PyString("r")));
-            Assert.AreEqual(-(nint)1, t1.Index(new PyString("z")));
+            Assert.That(t1.Index32(new PyString("a")), Is.EqualTo(4));
+            Assert.That(t1.Index64(new PyString("r")), Is.EqualTo(5L));
+            Assert.That(t1.Index(new PyString("z")), Is.EqualTo(-(nint)1));
         }
     }
 }
