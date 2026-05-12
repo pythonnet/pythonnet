@@ -48,6 +48,12 @@ public class ClassWithEventHandler
         this.arr = new int[800];
     }
 
+    // Reference LeakEvent to silence warning
+    protected virtual void OnLeakEvent(EventArgs e)
+    {
+        LeakEvent?.Invoke(this, e);
+    }
+
     ~ClassWithEventHandler()
     {
         Interlocked.Decrement(ref alive);
