@@ -84,8 +84,18 @@ namespace Python.Runtime
             DecrefTypeAndFree(lastRef.Steal());
         }
 
+        /// <summary>
+        /// Called during tp_clear before the GCHandle is released.
+        /// Override to eagerly dispose Python object references (PyObject fields)
+        /// held by the subclass, preventing the multi-hop .NET finalizer chain
+        /// from delaying Python-side refcount decrements.
+        /// </summary>
+        protected virtual void OnClear() { }
+
         public static int tp_clear(BorrowedReference ob)
         {
+            (GetManagedObject(ob) as ExtensionType)?.OnClear();
+
             var weakrefs = Runtime.PyObject_GetWeakRefList(ob);
             if (weakrefs != null)
             {
