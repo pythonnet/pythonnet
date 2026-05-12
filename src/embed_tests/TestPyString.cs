@@ -23,7 +23,6 @@ namespace Python.EmbeddingTest
         }
 
         [Test]
-        [Ignore("Ambiguous behavior between PY2/PY3. Needs remapping")]
         public void TestPyObjectCtor()
         {
             const string expected = "Foo";
@@ -58,7 +57,6 @@ namespace Python.EmbeddingTest
         }
 
         [Test]
-        [Ignore("Ambiguous behavior between PY2/PY3. Needs remapping")]
         public void IsStringTrue()
         {
             var t = new PyString("foo");

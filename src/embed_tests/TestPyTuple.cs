@@ -81,8 +81,6 @@ namespace Python.EmbeddingTest
         /// Test has second purpose. Currently it generated an Exception
         /// that the GC failed to remove often and caused AppDomain unload
         /// errors at the end of tests. See GH#397 for more info.
-        /// <para />
-        /// Curious, on PY27 it gets a Unicode on the ex.Message. On PY3+ its string.
         /// </remarks>
         [Test]
         public void TestPyTupleInvalidAppend()
