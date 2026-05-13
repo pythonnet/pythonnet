@@ -98,8 +98,7 @@ jobs:
         run: uv sync --managed-python
 
       - name: Embedding tests (Mono/.NET Framework)
-        # Mono does not yet support free-threaded Python.
-        if: ${{ always() && endsWith(matrix.python, "t") }}
+        if: always()
         run: dotnet test --runtime any-${{ matrix.os.platform }} --framework net472 --logger "console;verbosity=detailed" src/embed_tests/
         env:
           MONO_THREADS_SUSPEND: preemptive # https://github.com/mono/mono/issues/21466
@@ -113,8 +112,7 @@ jobs:
         run: pytest --runtime coreclr
 
       - name: Python Tests (Mono)
-        # Mono does not yet support free-threaded Python.
-        if: ${{ always() && endsWith(matrix.python, "t") }}
+        if: always()
         run: pytest --runtime mono
 
       - name: Python Tests (.NET Framework)
