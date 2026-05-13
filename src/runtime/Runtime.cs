@@ -617,7 +617,7 @@ namespace Python.Runtime
         internal static unsafe void XDecref(StolenReference op)
         {
 #if DEBUG
-            // Racy on FT: stale ob_ref_local read may crash.
+            // Skip on FT: the split refcount can race here and trip the assert spuriously.
             Debug.Assert(op == null || Native.ABI.IsFreeThreaded || Refcount(new BorrowedReference(op.Pointer)) > 0);
             Debug.Assert(_isInitialized || Py_IsInitialized() != 0 || _Py_IsFinalizing() != false);
 #endif

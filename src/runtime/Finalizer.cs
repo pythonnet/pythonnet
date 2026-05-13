@@ -115,7 +115,8 @@ namespace Python.Runtime
             if (!started) throw new InvalidOperationException($"{nameof(PythonEngine)} is not initialized");
 
             if (!Enable || Interlocked.Increment(ref _throttled) < Threshold) return;
-            // Stale pointers on the queue would crash Py_DecRef during teardown.
+            // Defends against externally-driven Py_Finalize (e.g. host's atexit):
+            // queue pointers may already be freed, so skip the drain.
             if (Runtime._Py_IsFinalizing() == true) return;
             Interlocked.Exchange(ref _throttled, 0);
             this.Collect();
@@ -138,7 +139,7 @@ namespace Python.Runtime
                 return;
             }
 
-            // Skip on FT: stale ob_ref_local read from the finalizer thread can crash.
+            // Skip on FT: the split refcount can race here and trip the assert spuriously.
             if (!Native.ABI.IsFreeThreaded)
             {
                 Debug.Assert(Runtime.Refcount(new BorrowedReference(obj)) > 0);
