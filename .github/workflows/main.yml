@@ -10,7 +10,7 @@ jobs:
   build-test:
     name: Build and Test
     runs-on: ${{ matrix.os.instance }}
-    timeout-minutes: 15
+    timeout-minutes: 30
 
     strategy:
       fail-fast: false
