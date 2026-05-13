@@ -17,15 +17,6 @@ def _gil_enabled():
     return getattr(sys, "_is_gil_enabled", lambda: True)()
 
 
-# Marker: tests that only matter on free-threaded builds.  Skipped on GIL
-# builds because the GIL serialises Python-level operations and most of the
-# concurrency hazards we want to exercise simply cannot fire.
-freethreaded_only = pytest.mark.skipif(
-    _gil_enabled(),
-    reason="Only meaningful on free-threaded Python (Py_GIL_DISABLED).",
-)
-
-
 def test_simple_callback_to_python():
     """Test a call to managed code that then calls back into Python."""
     from Python.Test import ThreadTest
@@ -184,7 +175,7 @@ def test_concurrent_module_attribute_access():
     assert all(_run_in_threads(lookup, n_threads=8))
 
 
-@freethreaded_only
+@pytest.mark.skipif(_gil_enabled(), reason="Only meaningful on free-threaded Python (Py_GIL_DISABLED).")
 def test_concurrent_clr_object_creation():
     """Concurrent CLR object alloc/free — exercises reflectedObjects + loadedExtensions.
 
@@ -206,7 +197,7 @@ def test_concurrent_clr_object_creation():
     assert all(_run_in_threads(make_lists, n_threads=8))
 
 
-@freethreaded_only
+@pytest.mark.skipif(_gil_enabled(), reason="Only meaningful on free-threaded Python (Py_GIL_DISABLED).")
 def test_concurrent_python_subclass_of_clr_type():
     """Concurrent dynamic-subclass creation — exercises ClassDerived's builder lock.
 
@@ -224,7 +215,7 @@ def test_concurrent_python_subclass_of_clr_type():
     assert len(set(names)) == len(names)
 
 
-@freethreaded_only
+@pytest.mark.skipif(_gil_enabled(), reason="Only meaningful on free-threaded Python (Py_GIL_DISABLED).")
 def test_concurrent_delegate_creation():
     """Concurrent CLR delegate dispatcher creation — exercises DelegateManager.
 
@@ -247,7 +238,7 @@ def test_concurrent_delegate_creation():
     assert all(_run_in_threads(build, n_threads=8))
 
 
-@freethreaded_only
+@pytest.mark.skipif(_gil_enabled(), reason="Only meaningful on free-threaded Python (Py_GIL_DISABLED).")
 def test_concurrent_clr_delegate_invocation_from_python():
     """Python callables wrapped as distinct CLR delegate types, invoked concurrently.
 
@@ -275,7 +266,7 @@ def test_concurrent_clr_delegate_invocation_from_python():
     assert all(_run_in_threads(fire, n_threads=8))
 
 
-@freethreaded_only
+@pytest.mark.skipif(_gil_enabled(), reason="Only meaningful on free-threaded Python (Py_GIL_DISABLED).")
 def test_concurrent_generic_type_binding():
     """Concurrent `Dictionary[K, V]` with many distinct type-arg pairs.
 
@@ -304,7 +295,7 @@ def test_concurrent_generic_type_binding():
     assert all(_run_in_threads(bind, n_threads=8))
 
 
-@freethreaded_only
+@pytest.mark.skipif(_gil_enabled(), reason="Only meaningful on free-threaded Python (Py_GIL_DISABLED).")
 def test_concurrent_shutdown_handler_register():
     """Concurrent AddShutdownHandler/RemoveShutdownHandler — exercises ShutdownHandlers list.
 
