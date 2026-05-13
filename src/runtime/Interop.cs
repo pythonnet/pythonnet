@@ -141,7 +141,9 @@ namespace Python.Runtime
         }
 
 
-        internal static Dictionary<IntPtr, Delegate> allocatedThunks = new();
+        // Concurrent: documents the multi-writer contract previously enforced
+        // by callers happening to hold TypeManager._cacheCreateLock.
+        internal static ConcurrentDictionary<IntPtr, Delegate> allocatedThunks = new();
 
         internal static ThunkInfo GetThunk(MethodInfo method)
         {

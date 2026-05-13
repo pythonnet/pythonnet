@@ -33,7 +33,9 @@ namespace Python.Runtime
         internal static readonly ConcurrentDictionary<MaybeType, PyType> cache = new();
         internal static readonly object _cacheCreateLock = new();
 
-        static readonly Dictionary<PyType, SlotsHolder> _slotsHolders = new(PythonReferenceComparer.Instance);
+        // Concurrent: documents the multi-writer contract previously enforced
+        // by callers happening to hold _cacheCreateLock.
+        static readonly ConcurrentDictionary<PyType, SlotsHolder> _slotsHolders = new(PythonReferenceComparer.Instance);
 
         // Slots which must be set
         private static readonly string[] _requiredSlots = new string[]
@@ -949,7 +951,7 @@ namespace Python.Runtime
         {
             type = new PyType(type);
             var holder = new SlotsHolder(type);
-            _slotsHolders.Add(type, holder);
+            _slotsHolders[type] = holder;
             return holder;
         }
     }
