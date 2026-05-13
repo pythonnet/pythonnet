@@ -328,8 +328,14 @@ namespace Python.Runtime
 #pragma warning disable CS0618 // PythonDerivedType is for internal use only
             il.Emit(OpCodes.Call, typeof(PythonDerivedType).GetMethod(nameof(PyFinalize)));
 #pragma warning restore CS0618 // PythonDerivedType is for internal use only
-            il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Call, baseClass.GetMethod("Finalize", BindingFlags.NonPublic | BindingFlags.Instance));
+            // Only chain to the base Finalize if it's not another pythonnet-emitted
+            // type: those already call PyFinalize themselves, which would double-queue
+            // the same __pyobj__ and trigger PyObject_GC_Del on freed memory.
+            if (!typeof(IPythonDerivedType).IsAssignableFrom(baseClass))
+            {
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Call, baseClass.GetMethod("Finalize", BindingFlags.NonPublic | BindingFlags.Instance));
+            }
             il.Emit(OpCodes.Ret);
 
             Type type = typeBuilder.CreateType();
