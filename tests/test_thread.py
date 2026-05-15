@@ -326,21 +326,28 @@ def test_concurrent_gc_collect_on_clr_cycles():
     then calls gc.collect() while other workers do the same.  Hits the
     tp_clear/tp_dealloc race path on the per-object GCHandle slot.
 
-    Also covers MethodBinder.GetMethods lazy-init: concurrent first-call
-    surfaces as "No method matches given arguments for Cycle..ctor".
+    Also covers ClassDerivedObject.tp_dealloc's strong→weak slot demotion
+    and MethodBinder.GetMethods lazy-init: a torn slot or torn init both
+    surface as "No method matches given arguments for Cycle..ctor".
     """
     import gc
     import System
+    from System import GC
 
     class Cycle(System.Object):
         __namespace__ = "test_concurrent_gc_collect_on_clr_cycles"
 
     def churn(_):
-        for _ in range(100):
+        # CLR GC.Collect in the loop tightens the window where the wrapper is
+        # only weakly held during NewObjectToPython's strong→weak→strong dance,
+        # so the race surfaces in a single test invocation instead of relying
+        # on incidental GC pressure.
+        for _ in range(400):
             a, b = Cycle(), Cycle()
             a.peer = b
             b.peer = a
             del a, b
+            GC.Collect()
             gc.collect()
         return True
 

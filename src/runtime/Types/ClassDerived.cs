@@ -59,16 +59,21 @@ namespace Python.Runtime
 
         protected override NewReference NewObjectToPython(object obj, BorrowedReference tp)
         {
+            // Hold the wrapper across the XDecref/ToPython dance: between the
+            // tp_dealloc-induced strong→weak demotion and ToPython's re-upgrade,
+            // the only reference to the CLRObject is the weak handle in the
+            // slot, so a concurrent .NET GC can collect it and leave inst with
+            // a null managed object during tp_init.
             var self = base.NewObjectToPython(obj, tp);
-
             SetPyObj((IPythonDerivedType)obj, self.Borrow());
 
-            // Decrement the python object's reference count.
-            // This doesn't actually destroy the object, it just sets the reference to this object
-            // to be a weak reference and it will be destroyed when the C# object is destroyed.
+            var wrapper = GetManagedObject(self.Borrow());
+
             Runtime.XDecref(self.Steal());
 
-            return Converter.ToPython(obj, type.Value);
+            var result = Converter.ToPython(obj, type.Value);
+            GC.KeepAlive(wrapper);
+            return result;
         }
 
         protected override void SetTypeNewSlot(BorrowedReference pyType, SlotsHolder slotsHolder)
