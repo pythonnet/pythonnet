@@ -331,6 +331,11 @@ def test_concurrent_gc_collect_on_clr_cycles():
 
     class Cycle(System.Object):
         __namespace__ = "test_concurrent_gc_collect_on_clr_cycles"
+        def __init__(self): pass
+
+    # Warm the ctor binder; first-time overload resolution under contention
+    # has its own race that this test is not trying to exercise.
+    Cycle()
 
     def churn(_):
         for _ in range(100):
