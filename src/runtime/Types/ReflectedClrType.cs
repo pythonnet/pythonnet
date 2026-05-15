@@ -60,7 +60,7 @@ internal sealed class ReflectedClrType : PyType
             }
             finally
             {
-                ClassManager._inProgressCache.TryRemove(type, out _);
+                ClassManager._inProgressCache.Remove(type);
             }
 
             return pyType;
