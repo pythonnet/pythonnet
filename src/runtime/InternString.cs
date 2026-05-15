@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -9,8 +8,9 @@ namespace Python.Runtime
 {
     static partial class InternString
     {
-        private static readonly ConcurrentDictionary<string, PyString> _string2interns = new();
-        private static readonly ConcurrentDictionary<IntPtr, string> _intern2strings = new();
+        // Populated only by Initialize (single-threaded); immutable until Shutdown.
+        private static readonly Dictionary<string, PyString> _string2interns = new();
+        private static readonly Dictionary<IntPtr, string> _intern2strings = new();
         const BindingFlags PyIdentifierFieldFlags = BindingFlags.Static | BindingFlags.NonPublic;
 
         static InternString()
@@ -76,11 +76,8 @@ namespace Python.Runtime
 
         private static void SetIntern(string s, PyString op)
         {
-            // Initialize is single-threaded; TryAdd preserves the original
-            // single-write invariant via Debug.Assert without crashing release.
-            bool a = _string2interns.TryAdd(s, op);
-            bool b = _intern2strings.TryAdd(op.Reference.DangerousGetAddress(), s);
-            Debug.Assert(a && b);
+            _string2interns.Add(s, op);
+            _intern2strings.Add(op.Reference.DangerousGetAddress(), s);
         }
     }
 }

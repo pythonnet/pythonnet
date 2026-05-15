@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -15,8 +16,8 @@ namespace Python.Runtime
     /// </summary>
     internal class DelegateManager
     {
-        private readonly Dictionary<Type,Type> cache = new();
-        // Reflection.Emit is not thread-safe; serialise cache lookup + DefineType.
+        // Lock-free reads; Reflection.Emit (BuildDispatcher) is serialised.
+        private readonly ConcurrentDictionary<Type, Type> cache = new();
         private readonly object _emitLock = new();
         private readonly Type basetype = typeof(Dispatcher);
         private readonly Type arrayType = typeof(object[]);
@@ -39,9 +40,10 @@ namespace Python.Runtime
         /// </summary>
         private Type GetDispatcher(Type dtype)
         {
+            if (cache.TryGetValue(dtype, out Type item)) return item;
             lock (_emitLock)
             {
-                return cache.TryGetValue(dtype, out Type item) ? item : BuildDispatcher(dtype);
+                return cache.TryGetValue(dtype, out item) ? item : BuildDispatcher(dtype);
             }
         }
 
