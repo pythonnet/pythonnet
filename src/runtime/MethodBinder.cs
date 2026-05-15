@@ -195,11 +195,34 @@ namespace Python.Runtime
             lock (list)
             {
                 if (init) return methods!;
-                list.Sort(new MethodSorter());
-                methods = (from method in list where method.Valid select method.Value).ToArray();
+
+                // Filter invalid + precompute precedence (GetParameters allocates) in one
+                // pass so the comparator only does cheap int/type compares O(N log N) times.
+                var pairs = new List<KeyValuePair<MethodBase, int>>(list.Count);
+                foreach (var m in list)
+                {
+                    if (m.Valid) pairs.Add(new(m.Value, GetPrecedence(m.Value)));
+                }
+                if (pairs.Count > 1) pairs.Sort(CompareByDeclaringTypeThenPrecedence);
+
+                var arr = new MethodBase[pairs.Count];
+                for (int i = 0; i < pairs.Count; i++) arr[i] = pairs[i].Key;
+                methods = arr;
                 init = true;
                 return methods!;
             }
+        }
+
+        private static int CompareByDeclaringTypeThenPrecedence(
+            KeyValuePair<MethodBase, int> a, KeyValuePair<MethodBase, int> b)
+        {
+            Type ta = a.Key.DeclaringType, tb = b.Key.DeclaringType;
+            if (ta != tb)
+            {
+                if (ta.IsAssignableFrom(tb)) return 1;
+                if (tb.IsAssignableFrom(ta)) return -1;
+            }
+            return a.Value.CompareTo(b.Value);
         }
 
         /// <summary>
@@ -974,54 +997,6 @@ namespace Python.Runtime
             }
 
             return Converter.ToPython(result, returnType);
-        }
-    }
-
-
-    /// <summary>
-    /// Utility class to sort method info by parameter type precedence.
-    /// </summary>
-    internal class MethodSorter : IComparer<MaybeMethodBase>
-    {
-        int IComparer<MaybeMethodBase>.Compare(MaybeMethodBase m1, MaybeMethodBase m2)
-        {
-            MethodBase me1 = m1.UnsafeValue;
-            MethodBase me2 = m2.UnsafeValue;
-            if (me1 == null && me2 == null)
-            {
-                return 0;
-            }
-            else if (me1 == null)
-            {
-                return -1;
-            }
-            else if (me2 == null)
-            {
-                return 1;
-            }
-
-            if (me1.DeclaringType != me2.DeclaringType)
-            {
-                // m2's type derives from m1's type, favor m2
-                if (me1.DeclaringType.IsAssignableFrom(me2.DeclaringType))
-                    return 1;
-
-                // m1's type derives from m2's type, favor m1
-                if (me2.DeclaringType.IsAssignableFrom(me1.DeclaringType))
-                    return -1;
-            }
-
-            int p1 = MethodBinder.GetPrecedence(me1);
-            int p2 = MethodBinder.GetPrecedence(me2);
-            if (p1 < p2)
-            {
-                return -1;
-            }
-            if (p1 > p2)
-            {
-                return 1;
-            }
-            return 0;
         }
     }
 
