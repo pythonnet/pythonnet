@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
 using NUnit.Framework;
 using Python.Runtime;
 using Python.Runtime.Codecs;
@@ -127,6 +128,42 @@ namespace Python.EmbeddingTest {
                 Assert.That(buf.Strides, Is.EqualTo(strides.As<long[]>()));
                 Assert.That(buf.IsContiguous(BufferOrderStyle.C), Is.EqualTo(contiguous.As<bool>()));
             });
+        }
+
+        [Test]
+        public void ConcurrentDispose()
+        {
+            // Two threads racing on Dispose() must not double-release the view —
+            // Interlocked.Exchange on disposedValue gates PyBuffer_Release.
+            // Smoke test: no crash, exception, or buffer-protocol violation.
+            using var _ = Py.GIL();
+            using var arr = ByteArrayFromAsciiString("hello world! !$%&/()=?");
+
+            const int iterations = 200;
+            for (int i = 0; i < iterations; i++)
+            {
+                PyBuffer buf = arr.GetBuffer();
+
+                IntPtr ts = PythonEngine.BeginAllowThreads();
+                using var barrier = new Barrier(2);
+                Exception captured = null;
+                Action race = () =>
+                {
+                    try
+                    {
+                        barrier.SignalAndWait();
+                        using (Py.GIL()) buf.Dispose();
+                    }
+                    catch (Exception ex) { Interlocked.CompareExchange(ref captured, ex, null); }
+                };
+                var t1 = new Thread(() => race());
+                var t2 = new Thread(() => race());
+                t1.Start(); t2.Start();
+                t1.Join(); t2.Join();
+                PythonEngine.EndAllowThreads(ts);
+
+                if (captured != null) throw captured;
+            }
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
