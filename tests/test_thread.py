@@ -315,3 +315,30 @@ def test_concurrent_shutdown_handler_register():
         return True
 
     assert all(_run_in_threads(churn, n_threads=8))
+
+
+@pytest.mark.skipif(_gil_enabled(), reason="Only meaningful on free-threaded Python (Py_GIL_DISABLED).")
+def test_concurrent_gc_collect_on_clr_cycles():
+    """Concurrent gc.collect on cyclic CLR-derived objects — exercises
+    ClassBase.ClearVisited + ManagedType.TryFreeGCHandle atomic slot.
+
+    Each worker builds short cycles holding a Python subclass of System.Object,
+    then calls gc.collect() while other workers do the same.  Hits the
+    tp_clear/tp_dealloc race path on the per-object GCHandle slot.
+    """
+    import gc
+    import System
+
+    class Cycle(System.Object):
+        __namespace__ = "test_concurrent_gc_collect_on_clr_cycles"
+
+    def churn(_):
+        for _ in range(100):
+            a, b = Cycle(), Cycle()
+            a.peer = b
+            b.peer = a
+            del a, b
+            gc.collect()
+        return True
+
+    assert all(_run_in_threads(churn, n_threads=8))
