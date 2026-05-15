@@ -325,17 +325,15 @@ def test_concurrent_gc_collect_on_clr_cycles():
     Each worker builds short cycles holding a Python subclass of System.Object,
     then calls gc.collect() while other workers do the same.  Hits the
     tp_clear/tp_dealloc race path on the per-object GCHandle slot.
+
+    Also covers MethodBinder.GetMethods lazy-init: concurrent first-call
+    surfaces as "No method matches given arguments for Cycle..ctor".
     """
     import gc
     import System
 
     class Cycle(System.Object):
         __namespace__ = "test_concurrent_gc_collect_on_clr_cycles"
-        def __init__(self): pass
-
-    # Warm the ctor binder; first-time overload resolution under contention
-    # has its own race that this test is not trying to exercise.
-    Cycle()
 
     def churn(_):
         for _ in range(100):

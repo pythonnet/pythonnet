@@ -26,8 +26,10 @@ namespace Python.Runtime
         [NonSerialized]
         public MethodBase[]? methods;
 
+        // volatile + lock: first-time GetMethods() races would otherwise sort `list`
+        // concurrently and publish a partial methods array.
         [NonSerialized]
-        public bool init = false;
+        public volatile bool init = false;
 
         public const bool DefaultAllowThreads = true;
         public bool allow_threads = DefaultAllowThreads;
@@ -189,14 +191,15 @@ namespace Python.Runtime
         /// </summary>
         internal MethodBase[] GetMethods()
         {
-            if (!init)
+            if (init) return methods!;
+            lock (list)
             {
-                // I'm sure this could be made more efficient.
+                if (init) return methods!;
                 list.Sort(new MethodSorter());
                 methods = (from method in list where method.Valid select method.Value).ToArray();
                 init = true;
+                return methods!;
             }
-            return methods!;
         }
 
         /// <summary>
