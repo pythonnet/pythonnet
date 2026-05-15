@@ -299,7 +299,7 @@ namespace Python.Runtime
 
         static void LoadMixins(BorrowedReference targetModuleDict)
         {
-            foreach (string nested in new[] { "collections" })
+            foreach (string nested in new[] { "collections", "dlr" })
             {
                 LoadSubmodule(targetModuleDict,
                     fullName: "clr._extras." + nested,

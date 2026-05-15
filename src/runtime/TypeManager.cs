@@ -1,9 +1,12 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+
 using Python.Runtime.Native;
 using Python.Runtime.StateSerialization;
 
@@ -37,10 +40,190 @@ namespace Python.Runtime
             "tp_clear",
         };
 
+        static readonly DynamicObjectMemberAccessor dynamicMemberAccessor = new();
+
+        // tp_getattro_dlr_proxy / tp_setattro_dlr_proxy hit HasClrMember on every
+        // attribute access; cache the reflection result per (Type, name).
+        static readonly ConcurrentDictionary<(Type, string), bool> _hasClrMemberCache = new();
+
+        static bool HasClrMember(object instance, string memberName) =>
+            _hasClrMemberCache.GetOrAdd(
+                (instance.GetType(), memberName),
+                k => k.Item1.GetMember(k.Item2, BindingFlags.Public | BindingFlags.Instance).Length > 0);
+
+        static bool IsPythonSpecialAttributeName(string memberName) =>
+            memberName.Length > 4 && memberName.StartsWith("__") && memberName.EndsWith("__");
+
+        static bool TryGetDynamicInstance(BorrowedReference ob, out object instance, out IDynamicMetaObjectProvider dynamicObject)
+        {
+            if (ManagedType.GetManagedObject(ob) is CLRObject co && co.inst is IDynamicMetaObjectProvider coDynamic)
+            {
+                instance = co.inst;
+                dynamicObject = coDynamic;
+                return true;
+            }
+
+            if (Converter.ToManaged(ob, typeof(IDynamicMetaObjectProvider), out object? managedDynamic, false)
+                && managedDynamic is IDynamicMetaObjectProvider convertedDynamic)
+            {
+                instance = managedDynamic;
+                dynamicObject = convertedDynamic;
+                return true;
+            }
+
+            if (Converter.ToManaged(ob, typeof(object), out object? managedInstance, false)
+                && managedInstance is IDynamicMetaObjectProvider boxedDynamic)
+            {
+                instance = managedInstance;
+                dynamicObject = boxedDynamic;
+                return true;
+            }
+
+            instance = null!;
+            dynamicObject = null!;
+            return false;
+        }
+
+        public static NewReference tp_getattro_dlr_proxy(BorrowedReference ob, BorrowedReference key)
+        {
+            var isDynamic = TryGetDynamicInstance(ob, out object instance, out IDynamicMetaObjectProvider dynamicObject);
+
+            // The whole DLR machinery only makes sense with string keys and dynamic objects
+            if (!isDynamic || !Runtime.PyString_Check(key))
+            {
+                return Runtime.PyObject_GenericGetAttr(ob, key);
+            }
+
+            string memberName = Runtime.GetManagedString(key)!;
+
+            // Forward requests to GetDynamicMemberNames to the mixin implementation
+            if (memberName == nameof(DynamicObjectMemberAccessor.GetDynamicMemberNames)
+                && !HasClrMember(instance, memberName))
+            {
+                using var pyMemberNames = new Func<IReadOnlyCollection<string>>(
+                    () => dynamicMemberAccessor.GetDynamicMemberNames(dynamicObject)
+                ).ToPython();
+                return pyMemberNames.NewReferenceOrNull();
+            }
+
+            // Now, first try to access the Python attribute
+            var attr = Runtime.PyObject_GenericGetAttr(ob, key);
+            if (!attr.IsNull())
+                return attr;
+
+            // attr is null, so an exception must be set. If that exception is not an AttributeError,
+            // we return from this function immediately without clearing. All later returns until the
+            // very end will lead to the AttributeError getting raised.
+            if (Runtime.PyErr_ExceptionMatches(Exceptions.AttributeError) == 0)
+            {
+                return default;
+            }
+
+            if (HasClrMember(instance, memberName) || IsPythonSpecialAttributeName(memberName))
+            {
+                return default;
+            }
+
+            bool resolved = false;
+            object? value = null;
+            try
+            {
+                resolved = dynamicMemberAccessor.TryGetMember(dynamicObject, memberName, out value);
+            }
+            catch (Exception e)
+            {
+                // Avoid wrapping the CLR exception via Converter.ToPython here: that would trigger
+                // CLR type initialisation which can re-enter this slot on the same live object,
+                // causing infinite recursion. A plain RuntimeError with the message is safe.
+                Runtime.PyErr_Clear();
+                Exceptions.SetError(Exceptions.RuntimeError, e.Message);
+                return default;
+            }
+
+            if (!resolved)
+            {
+                return default;
+            }
+
+            Runtime.PyErr_Clear();
+
+            using var pyValue = value.ToPython();
+            return pyValue.NewReferenceOrNull();
+        }
+
+        public static int tp_setattro_dlr_proxy(BorrowedReference ob, BorrowedReference key, BorrowedReference val)
+        {
+            var isDynamic = TryGetDynamicInstance(ob, out object instance, out IDynamicMetaObjectProvider dynamicObject);
+
+            // The whole DLR machinery only makes sense with string keys and dynamic objects
+            if (!isDynamic || !Runtime.PyString_Check(key))
+            {
+                return Runtime.PyObject_GenericSetAttr(ob, key, val);
+            }
+
+            string memberName = Runtime.GetManagedString(key)!;
+
+            // For Python-derived types (IPythonDerivedType), the Python descriptor protocol
+            // (e.g. @property setters) takes priority over DLR member storage.
+            if (instance is IPythonDerivedType)
+            {
+                int pyResult = Runtime.PyObject_GenericSetAttr(ob, key, val);
+                if (pyResult == 0)
+                    return 0;
+
+                if (Runtime.PyErr_ExceptionMatches(Exceptions.AttributeError) == 0)
+                    return pyResult;
+
+                Runtime.PyErr_Clear();
+                // Fall through to DLR fallback below
+            }
+
+            if (!HasClrMember(instance, memberName) && !IsPythonSpecialAttributeName(memberName))
+            {
+                // Try DLR member storage first
+                bool handled;
+
+                try
+                {
+                    if (val.IsNull)
+                    {
+                        handled = dynamicMemberAccessor.TryDeleteMember(dynamicObject, memberName);
+                    }
+                    else
+                    {
+                        object? managedValue = null;
+                        if (val != Runtime.PyNone && !Converter.ToManaged(val, typeof(object), out managedValue, true))
+                            return -1;
+
+                        handled = dynamicMemberAccessor.TrySetMember(dynamicObject, memberName, managedValue);
+                        if (!handled)
+                        {
+                            Exceptions.SetError(Exceptions.AttributeError, $"'{instance.GetType().Name}' object has no attribute '{memberName}'");
+                            return -1;
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    // Same reasoning as the getter: avoid Converter.ToPython(e) to keep this
+                    // slot re-entry-safe on live dynamic objects.
+                    Exceptions.SetError(Exceptions.RuntimeError, e.Message);
+                    return -1;
+                }
+
+                if (handled)
+                    return 0;
+            }
+
+            // Fall back to Python attribute setting
+            return Runtime.PyObject_GenericSetAttr(ob, key, val);
+        }
+
         internal static void Initialize()
         {
             Debug.Assert(cache.Count == 0, "Cache should be empty",
                 "Some errors may occurred on last shutdown");
+            dynamicMemberAccessor.Clear();
             using (var plainType = SlotHelper.CreateObjectType())
             {
                 subtype_traverse = Util.ReadIntPtr(plainType.Borrow(), TypeOffset.tp_traverse);
@@ -63,6 +246,8 @@ namespace Python.Runtime
                     }
                 }
             }
+
+            dynamicMemberAccessor.Clear();
 
             foreach (var type in cache.Values)
             {
@@ -311,6 +496,13 @@ namespace Python.Runtime
             if (!type.IsReady && Runtime.PyType_Ready(type) != 0)
             {
                 throw PythonException.ThrowLastAsClrException();
+            }
+
+            if (typeof(IDynamicMetaObjectProvider).IsAssignableFrom(clrType))
+            {
+                InitializeSlot(type, TypeOffset.tp_getattro, new Interop.BB_N(tp_getattro_dlr_proxy), slotsHolder);
+                InitializeSlot(type, TypeOffset.tp_setattro, new Interop.BBB_I32(tp_setattro_dlr_proxy), slotsHolder);
+                Runtime.PyType_Modified(type.Reference);
             }
 
             var dict = Util.ReadRef(type, TypeOffset.tp_dict);
