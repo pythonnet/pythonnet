@@ -109,7 +109,12 @@ namespace Python.Runtime
                 if (oldRaw != IntPtr.Zero)
                     ((GCHandle)oldRaw).Free();
                 else
+                {
+                    // tp_clear already cleared the slot; put it back to zero before
+                    // freeing our weak so a later read can't see a dangling handle.
+                    System.Threading.Interlocked.Exchange(ref *slot, IntPtr.Zero);
                     weak.Free();
+                }
             }
         }
 
