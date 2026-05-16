@@ -47,6 +47,10 @@ namespace Python.Runtime
             }
         }
 
+        /// <summary>
+        /// Emits a new <see cref="Dispatcher"/> subclass for <paramref name="dtype"/>
+        /// and caches it.  Must be called under <c>_emitLock</c>.
+        /// </summary>
         private Type BuildDispatcher(Type dtype)
         {
             string name = $"__{dtype.FullName}Dispatcher";

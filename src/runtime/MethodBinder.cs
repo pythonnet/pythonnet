@@ -213,6 +213,10 @@ namespace Python.Runtime
             }
         }
 
+        /// <summary>
+        /// Sort key for <see cref="GetMethods"/>: derived-class methods come before
+        /// their base, otherwise by precomputed precedence (lower wins).
+        /// </summary>
         private static int CompareByDeclaringTypeThenPrecedence(
             KeyValuePair<MethodBase, int> a, KeyValuePair<MethodBase, int> b)
         {

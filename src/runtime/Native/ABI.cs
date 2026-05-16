@@ -43,6 +43,9 @@ namespace Python.Runtime.Native
             TypeOffset.Use(typeOffsets, nativeOffsetsClass == null ? ObjectHeadOffset : 0);
         }
 
+        /// <summary>
+        /// True when the running interpreter is a Py_GIL_DISABLED (free-threaded) build.
+        /// </summary>
         static bool DetectFreeThreaded()
         {
             // sys._is_gil_enabled() was added in Python 3.13; absent means GIL build.
@@ -56,6 +59,10 @@ namespace Python.Runtime.Native
             return Runtime.PyObject_IsTrue(result.Borrow()) == 0;
         }
 
+        /// <summary>
+        /// Locates the offset of <c>ob_refcnt</c> inside <c>PyObject</c> by allocating a
+        /// fresh list and scanning for its refcount value of 1.  GIL builds only.
+        /// </summary>
         static unsafe int ProbeRefCountOffset()
         {
             using var tempObject = Runtime.PyList_New(0);

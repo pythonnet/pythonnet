@@ -201,6 +201,10 @@ namespace Python.Runtime
             }
         }
 
+        /// <summary>
+        /// Emits the CLR type for a Python subclass.  Must be called under
+        /// <c>_buildersLock</c> since Reflection.Emit is not thread-safe.
+        /// </summary>
         private static Type CreateDerivedTypeImpl(string name,
             Type baseType,
             IList<Type> typeInterfaces,
