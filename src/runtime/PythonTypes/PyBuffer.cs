@@ -228,6 +228,10 @@ namespace Python.Runtime
         // 0/1; atomic so finalizer + Dispose cannot double-free the buffer.
         private int disposedValue;
 
+        /// <summary>
+        /// Throws <see cref="ObjectDisposedException"/> if <see cref="Dispose()"/> has
+        /// already released the buffer view.
+        /// </summary>
         private void ThrowIfDisposed()
         {
             if (Volatile.Read(ref disposedValue) != 0)
