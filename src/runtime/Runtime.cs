@@ -34,9 +34,10 @@ namespace Python.Runtime
 
         static string? _PythonDll => PythonEnvironment.LibPython;
 
-        private static bool _isInitialized = false;
+        // volatile: read from worker threads, written from Initialize/Shutdown.
+        private static volatile bool _isInitialized = false;
         internal static bool IsInitialized => _isInitialized;
-        private static bool _typesInitialized = false;
+        private static volatile bool _typesInitialized = false;
         internal static bool TypeManagerInitialized => _typesInitialized;
         internal static readonly bool Is32Bit = IntPtr.Size == 4;
 
@@ -53,7 +54,9 @@ namespace Python.Runtime
 
         public static int MainManagedThreadId { get; private set; }
 
-        private static readonly List<PyObject> _pyRefs = new ();
+        // Lock guards re-init from embedders racing on SetPyMember/ResetPyMembers.
+        private static readonly List<PyObject> _pyRefs = new();
+        private static readonly object _pyRefsLock = new();
 
         internal static Version PyVersion
         {
@@ -72,7 +75,7 @@ namespace Python.Runtime
 
         internal static int GetRun()
         {
-            int runNumber = run;
+            int runNumber = Volatile.Read(ref run);
             Debug.Assert(runNumber > 0, "This must only be called after Runtime is initialized at least once");
             return runNumber;
         }
@@ -188,8 +191,8 @@ namespace Python.Runtime
 
         static void NewRun()
         {
-            run++;
-            using var pyRun = PyLong_FromLongLong(run);
+            int newRun = Interlocked.Increment(ref run);
+            using var pyRun = PyLong_FromLongLong(newRun);
             PySys_SetObject(RunSysPropName, pyRun.BorrowOrThrow());
         }
 
@@ -278,7 +281,7 @@ namespace Python.Runtime
                                  obj: true, derived: false, buffer: false);
             CLRObject.creationBlocked = true;
 
-            NullGCHandles(ExtensionType.loadedExtensions);
+            NullGCHandles(ExtensionType.loadedExtensions.Keys);
             ClassManager.RemoveClasses();
             TypeManager.RemoveTypes();
             _typesInitialized = false;
@@ -351,7 +354,7 @@ namespace Python.Runtime
                 }
                 else if (forceBreakLoops)
                 {
-                    NullGCHandles(CLRObject.reflectedObjects);
+                    NullGCHandles(CLRObject.reflectedObjects.Keys);
                     CLRObject.reflectedObjects.Clear();
                 }
             }
@@ -387,14 +390,14 @@ namespace Python.Runtime
                 throw PythonException.ThrowLastAsClrException();
             }
             obj = new PyObject(value);
-            _pyRefs.Add(obj);
+            lock (_pyRefsLock) _pyRefs.Add(obj);
         }
 
         private static void SetPyMemberTypeOf(out PyType obj, PyObject value)
         {
             var type = PyObject_Type(value);
             obj = new PyType(type.StealOrThrow(), prevalidated: true);
-            _pyRefs.Add(obj);
+            lock (_pyRefsLock) _pyRefs.Add(obj);
         }
 
         private static void SetPyMemberTypeOf(out PyObject obj, StolenReference value)
@@ -411,9 +414,16 @@ namespace Python.Runtime
 
         private static void ResetPyMembers()
         {
-            foreach (var pyObj in _pyRefs)
+            // Snapshot under lock; Dispose() runs outside it so a callback that
+            // re-enters SetPyMember does not deadlock.
+            PyObject[] snapshot;
+            lock (_pyRefsLock)
+            {
+                snapshot = _pyRefs.ToArray();
+                _pyRefs.Clear();
+            }
+            foreach (var pyObj in snapshot)
                 pyObj.Dispose();
-            _pyRefs.Clear();
         }
 
         private static void ClearClrModules()
@@ -607,7 +617,8 @@ namespace Python.Runtime
         internal static unsafe void XDecref(StolenReference op)
         {
 #if DEBUG
-            Debug.Assert(op == null || Refcount(new BorrowedReference(op.Pointer)) > 0);
+            // Skip on FT: the split refcount can race here and trip the assert spuriously.
+            Debug.Assert(op == null || Native.ABI.IsFreeThreaded || Refcount(new BorrowedReference(op.Pointer)) > 0);
             Debug.Assert(_isInitialized || Py_IsInitialized() != 0 || _Py_IsFinalizing() != false);
 #endif
             if (op == null) return;
@@ -618,12 +629,10 @@ namespace Python.Runtime
         [Pure]
         internal static unsafe nint Refcount(BorrowedReference op)
         {
-            if (op == null)
-            {
-                return 0;
-            }
-            var p = (nint*)(op.DangerousGetAddress() + ABI.RefCountOffset);
-            return *p;
+            if (op == null) return 0;
+            // Py_REFCNT is a real symbol on 3.14+; older Pythons expose it as a macro.
+            if (Delegates.Py_REFCNT != null) return Delegates.Py_REFCNT(op);
+            return *(nint*)(op.DangerousGetAddress() + ABI.RefCountOffset);
         }
         [Pure]
         internal static int Refcount32(BorrowedReference op) => checked((int)Refcount(op));

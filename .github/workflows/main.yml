@@ -46,7 +46,7 @@ jobs:
             instance: macos-15
             suffix:   -macos-aarch64-none
 
-        python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        python: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.14t"]
 
         exclude:
           # Fails with initfs_encoding error
@@ -66,6 +66,17 @@ jobs:
               category: windows
               platform: x86
             python: '3.13'
+
+          # Free-threaded Python on Windows is not yet supported by pythonnet's
+          # native build chain; restrict 3.14t to Linux and macOS for now.
+          - os:
+              category: windows
+              platform: x86
+            python: '3.14t'
+          - os:
+              category: windows
+              platform: x64
+            python: '3.14t'
 
     env:
       NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
@@ -113,8 +124,20 @@ jobs:
         run: pytest --runtime coreclr
 
       - name: Python Tests (Mono)
-        if: always()
+        if: ${{ always() && matrix.os.category == 'windows' }}
         run: pytest --runtime mono
+
+      - name: Python Tests (Mono, with diagnostics)
+        # Bound the recurring x64-ubuntu Mono hang so partial logs are flushed
+        # before kill; local runs take ~40s, give ourselves 8x.
+        # Skipped on Windows where the default shell is pwsh.
+        if: ${{ always() && matrix.os.category != 'windows' }}
+        timeout-minutes: 6
+        run: |
+          set -x
+          echo "[mono-step] entering pytest" && date
+          python -u -m pytest -v --runtime mono
+          echo "[mono-step] pytest exited" && date
 
       - name: Python Tests (.NET Framework)
         if: ${{ matrix.os.category == 'windows' }}

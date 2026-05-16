@@ -178,7 +178,7 @@ namespace Python.Runtime
             var contexts = new Dictionary<PyObject, Dictionary<string, object?>>(PythonReferenceComparer.Instance);
             var extensionObjs = new Dictionary<PyObject, ExtensionType>(PythonReferenceComparer.Instance);
             // make a copy with strongly typed references to avoid concurrent modification
-            var extensions = ExtensionType.loadedExtensions
+            var extensions = ExtensionType.loadedExtensions.Keys
                                 .Select(addr => new PyObject(
                                     new BorrowedReference(addr),
                                     // if we don't skip collect, finalizer might modify loadedExtensions
@@ -199,7 +199,7 @@ namespace Python.Runtime
             var wrappers = new Dictionary<object, List<CLRObject>>();
             var userObjects = new CLRWrapperCollection();
             // make a copy with strongly typed references to avoid concurrent modification
-            var reflectedObjects = CLRObject.reflectedObjects
+            var reflectedObjects = CLRObject.reflectedObjects.Keys
                                     .Select(addr => new PyObject(
                                         new BorrowedReference(addr),
                                         // if we don't skip collect, finalizer might modify reflectedObjects

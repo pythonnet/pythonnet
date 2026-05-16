@@ -110,13 +110,21 @@ namespace Python.Runtime
                 CheckRun();
 #endif
 
-                Interlocked.Increment(ref Runtime._collected);
+                // Drop the reference if Python is tearing down; queued Py_DecRef would crash.
+                if (Runtime._Py_IsFinalizing() == true)
+                {
+                    rawPtr = IntPtr.Zero;
+                }
+                else
+                {
+                    Interlocked.Increment(ref Runtime._collected);
 
-                Finalizer.Instance.AddFinalizedObject(ref rawPtr, run
+                    Finalizer.Instance.AddFinalizedObject(ref rawPtr, run
 #if TRACE_ALLOC
-                    , Traceback
+                        , Traceback
 #endif
-                );
+                    );
+                }
             }
 
             Dispose(false);
