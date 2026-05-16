@@ -125,7 +125,14 @@ jobs:
 
       - name: Python Tests (Mono)
         if: always()
-        run: pytest --runtime mono
+        # Bound the recurring x64-ubuntu Mono hang so partial logs are flushed
+        # before kill; local runs take ~40s, give ourselves 8x.
+        timeout-minutes: 6
+        run: |
+          set -x
+          echo "[mono-step] entering pytest" && date
+          stdbuf -oL -eL python -u -m pytest -v --runtime mono
+          echo "[mono-step] pytest exited" && date
 
       - name: Python Tests (.NET Framework)
         if: ${{ matrix.os.category == 'windows' }}
