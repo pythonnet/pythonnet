@@ -20,9 +20,9 @@ namespace Python.Runtime
                      Scope = "type")]
 
     [StructLayout(LayoutKind.Sequential)]
-    internal class TypeOffset314 : GeneratedTypeOffsets, ITypeOffsets
+    internal class TypeOffset315 : GeneratedTypeOffsets, ITypeOffsets
     {
-        public TypeOffset314() { }
+        public TypeOffset315() { }
         // Auto-generated from PyHeapTypeObject in Python.h
         public int ob_refcnt_full  { get; private set; }
         public int ob_type  { get; private set; }
