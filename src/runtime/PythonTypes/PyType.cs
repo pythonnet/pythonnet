@@ -35,6 +35,12 @@ namespace Python.Runtime
                 throw new ArgumentException("object is not a type");
         }
 
+        /// <summary>
+        /// Create a new PyType instance of this object, bumping the reference
+        /// count.
+        /// </summary>
+        public new PyType NewReference() => new(this);
+
         protected PyType(SerializationInfo info, StreamingContext context) : base(info, context) { }
 
         internal new static PyType? FromNullableReference(BorrowedReference reference)

@@ -20,7 +20,9 @@ namespace Python.Runtime
         {
             try
             {
-                return new BinaryFormatter();
+                var res = new BinaryFormatter();
+                res.Serialize(new MemoryStream(), 1); // test if BinaryFormatter is usable
+                return res;
             }
             catch
             {

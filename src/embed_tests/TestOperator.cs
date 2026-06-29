@@ -14,14 +14,13 @@ namespace Python.EmbeddingTest
         [OneTimeSetUp]
         public void SetUp()
         {
-            PythonEngine.Initialize();
             OwnIntCodec.Setup();
         }
 
         [OneTimeTearDown]
         public void Dispose()
         {
-            PythonEngine.Shutdown();
+            PyObjectConversions.Reset();
         }
 
         // Mock Integer class to test math ops on non-native dotnet types

@@ -77,6 +77,8 @@ namespace Python.Runtime
         internal static int tp_setattro { get; private set; }
         internal static int tp_str { get; private set; }
         internal static int tp_traverse { get; private set; }
+        // Special case: Only available in Python 3.14 onwards, set to -1 by default
+        internal static int ht_token { get; private set; } = -1;
 
         internal static void Use(ITypeOffsets offsets, int extraHeadOffset)
         {
@@ -89,6 +91,19 @@ namespace Python.Runtime
                 slotNames.Add(offsetProperty.Name);
 
                 var sourceProperty = typeof(ITypeOffsets).GetProperty(offsetProperty.Name);
+                if (sourceProperty == null)
+                {
+                    if ((int)offsetProperty.GetValue(null) == -1)
+                    {
+                        // Skip, this is an optional offset value
+                        continue;
+                    }
+                    else
+                    {
+                        throw new Exception($"No offset defined for necessary slot {offsetProperty.Name}");
+                    }
+                }
+
                 int value = (int)sourceProperty.GetValue(offsets, null);
                 value += extraHeadOffset;
                 offsetProperty.SetValue(obj: null, value: value, index: null);

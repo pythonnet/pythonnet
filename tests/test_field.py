@@ -190,7 +190,6 @@ def test_field_descriptor_abuse():
 
 def test_boolean_field():
     """Test boolean fields."""
-    # change this to true / false later for Python 2.3?
     ob = FieldTest()
     assert ob.BooleanField is False
 

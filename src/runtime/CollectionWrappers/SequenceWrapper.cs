@@ -14,10 +14,14 @@ namespace Python.Runtime.CollectionWrappers
         {
             get
             {
-                var size = Runtime.PySequence_Size(pyObject.Reference);
-                if (size == -1)
+                nint size = -1;
                 {
-                    Runtime.CheckExceptionOccurred();
+                    using var _ = Py.GIL();
+                    size = Runtime.PySequence_Size(pyObject.Reference);
+                    if (size == -1)
+                    {
+                        Runtime.CheckExceptionOccurred();
+                    }
                 }
 
                 return checked((int)size);
@@ -38,6 +42,7 @@ namespace Python.Runtime.CollectionWrappers
         {
             if (IsReadOnly)
                 throw new NotImplementedException();
+            using var _ = Py.GIL();
             int result = Runtime.PySequence_DelSlice(pyObject, 0, Count);
             if (result == -1)
             {
@@ -77,12 +82,16 @@ namespace Python.Runtime.CollectionWrappers
             if (index >= Count || index < 0)
                 return false;
 
-            int result = Runtime.PySequence_DelItem(pyObject, index);
 
-            if (result == 0)
-                return true;
+            {
+                using var _ = Py.GIL();
+                int result = Runtime.PySequence_DelItem(pyObject, index);
 
-            Runtime.CheckExceptionOccurred();
+                if (result == 0)
+                    return true;
+
+                Runtime.CheckExceptionOccurred();
+            }
             return false;
         }
 

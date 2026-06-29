@@ -13,34 +13,33 @@ namespace Python.EmbeddingTest
         [OneTimeSetUp]
         public void SetUp()
         {
-            PythonEngine.Initialize();
             TupleCodec<ValueTuple>.Register();
         }
 
         [OneTimeTearDown]
         public void Dispose()
         {
-            PythonEngine.Shutdown();
+            PyObjectConversions.Reset();
         }
 
         [Test]
         public void TestReadme()
         {
-            Assert.AreEqual("1.0", np.cos(np.pi * 2).ToString());
+            Assert.That(np.cos(np.pi * 2).ToString(), Is.EqualTo("1.0"));
 
             dynamic sin = np.sin;
             StringAssert.StartsWith("-0.95892", sin(5).ToString());
 
             double c = (double)(np.cos(5) + sin(5));
-            Assert.AreEqual(-0.675262, c, 0.01);
+            Assert.That(c, Is.EqualTo(-0.675262).Within(0.01));
 
             dynamic a = np.array(new List<float> { 1, 2, 3 });
-            Assert.AreEqual("float64", a.dtype.ToString());
+            Assert.That(a.dtype.ToString(), Is.EqualTo("float64"));
 
             dynamic b = np.array(new List<float> { 6, 5, 4 }, Py.kw("dtype", np.int32));
-            Assert.AreEqual("int32", b.dtype.ToString());
+            Assert.That(b.dtype.ToString(), Is.EqualTo("int32"));
 
-            Assert.AreEqual("[ 6. 10. 12.]", (a * b).ToString().Replace("  ", " "));
+            Assert.That((a * b).ToString().Replace("  ", " "), Is.EqualTo("[ 6. 10. 12.]"));
         }
 
         [Test]
@@ -48,9 +47,9 @@ namespace Python.EmbeddingTest
         {
             var array = new[,] { { 1, 2 }, { 3, 4 } };
             var ndarray = np.InvokeMethod("asarray", array.ToPython());
-            Assert.AreEqual((2, 2), ndarray.GetAttr("shape").As<(int, int)>());
-            Assert.AreEqual(1, ndarray[(0, 0).ToPython()].InvokeMethod("__int__").As<int>());
-            Assert.AreEqual(array[1, 0], ndarray[(1, 0).ToPython()].InvokeMethod("__int__").As<int>());
+            Assert.That(ndarray.GetAttr("shape").As<(int, int)>(), Is.EqualTo((2, 2)));
+            Assert.That(ndarray[(0, 0).ToPython()].InvokeMethod("__int__").As<int>(), Is.EqualTo(1));
+            Assert.That(ndarray[(1, 0).ToPython()].InvokeMethod("__int__").As<int>(), Is.EqualTo(array[1, 0]));
         }
 
         [Test]
@@ -58,9 +57,9 @@ namespace Python.EmbeddingTest
         {
             var array = new long[,] { { 1, 2 }, { 3, 4 } };
             var ndarray = np.InvokeMethod("asarray", array.ToPython());
-            Assert.AreEqual((2, 2), ndarray.GetAttr("shape").As<(int, int)>());
-            Assert.AreEqual(1, ndarray[(0, 0).ToPython()].InvokeMethod("__int__").As<long>());
-            Assert.AreEqual(array[1, 0], ndarray[(1, 0).ToPython()].InvokeMethod("__int__").As<long>());
+            Assert.That(ndarray.GetAttr("shape").As<(int, int)>(), Is.EqualTo((2, 2)));
+            Assert.That(ndarray[(0, 0).ToPython()].InvokeMethod("__int__").As<long>(), Is.EqualTo(1));
+            Assert.That(ndarray[(1, 0).ToPython()].InvokeMethod("__int__").As<long>(), Is.EqualTo(array[1, 0]));
         }
 
         [Test]

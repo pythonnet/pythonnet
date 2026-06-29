@@ -8,18 +8,6 @@ namespace Python.EmbeddingTest
 {
     public class TestPyObject
     {
-        [OneTimeSetUp]
-        public void SetUp()
-        {
-            PythonEngine.Initialize();
-        }
-
-        [OneTimeTearDown]
-        public void Dispose()
-        {
-            PythonEngine.Shutdown();
-        }
-
         [Test]
         public void TestGetDynamicMemberNames()
         {
@@ -77,7 +65,7 @@ a = MemberNamesTest()
         {
             dynamic list = new PyList();
             var error = Assert.Throws<PythonException>(() => list = -list);
-            Assert.AreEqual("TypeError", error.Type.Name);
+            Assert.That(error.Type.Name, Is.EqualTo("TypeError"));
         }
 
         [Test]
@@ -92,7 +80,7 @@ a = MemberNamesTest()
             var typeErrResult = Assert.Throws<PythonException>(
                 () => ob.GetAttr(nameof(PyObjectTestMethods.RaisesTypeError), fallback)
             );
-            Assert.AreEqual(Exceptions.TypeError, typeErrResult.Type);
+            Assert.That(typeErrResult.Type, Is.EqualTo(Exceptions.TypeError));
         }
 
         // regression test from https://github.com/pythonnet/pythonnet/issues/1642

@@ -6,18 +6,6 @@ namespace Python.EmbeddingTest
 {
     public class TestNamedArguments
     {
-        [OneTimeSetUp]
-        public void SetUp()
-        {
-            PythonEngine.Initialize();
-        }
-
-        [OneTimeTearDown]
-        public void Dispose()
-        {
-            PythonEngine.Shutdown();
-        }
-
         /// <summary>
         /// Test named arguments support through Py.kw method
         /// </summary>
@@ -27,7 +15,7 @@ namespace Python.EmbeddingTest
             dynamic a = CreateTestClass();
             var result = (int)a.Test3(2, Py.kw("a4", 8));
 
-            Assert.AreEqual(12, result);
+            Assert.That(result, Is.EqualTo(12));
         }
 
 
@@ -40,7 +28,7 @@ namespace Python.EmbeddingTest
             dynamic a = CreateTestClass();
             var result = (int)a.Test3(2, a4: 8);
 
-            Assert.AreEqual(12, result);
+            Assert.That(result, Is.EqualTo(12));
         }
 
 

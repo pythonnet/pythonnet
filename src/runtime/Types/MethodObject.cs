@@ -197,7 +197,7 @@ namespace Python.Runtime
                 && self.type.Value.IsInstanceOfType(obj.inst))
             {
                 var basecls = ReflectedClrType.GetOrCreate(self.type.Value);
-                return new MethodBinding(self, new PyObject(ob), basecls).Alloc();
+                return new MethodBinding(self, new PyObject(ob), basecls.NewReference()).Alloc();
             }
 
             return new MethodBinding(self, target: new PyObject(ob), targetType: new PyType(tp)).Alloc();

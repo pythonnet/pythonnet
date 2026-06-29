@@ -10,18 +10,6 @@ namespace Python.EmbeddingTest;
 
 public class Events
 {
-    [OneTimeSetUp]
-    public void SetUp()
-    {
-        PythonEngine.Initialize();
-    }
-
-    [OneTimeTearDown]
-    public void Dispose()
-    {
-        PythonEngine.Shutdown();
-    }
-
     [Test]
     public void UsingDoesNotLeak()
     {
@@ -43,7 +31,7 @@ for _ in range(2000):
 gc.collect()
 ");
         Runtime.Runtime.TryCollectingGarbage(10);
-        Assert.AreEqual(0, ClassWithEventHandler.alive);
+        Assert.That(ClassWithEventHandler.alive, Is.EqualTo(0));
     }
 }
 
@@ -58,6 +46,12 @@ public class ClassWithEventHandler
     {
         Interlocked.Increment(ref alive);
         this.arr = new int[800];
+    }
+
+    // Reference LeakEvent to silence warning
+    protected virtual void OnLeakEvent(EventArgs e)
+    {
+        LeakEvent?.Invoke(this, e);
     }
 
     ~ClassWithEventHandler()

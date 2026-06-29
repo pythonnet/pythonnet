@@ -123,6 +123,11 @@ namespace Python.Runtime
 
         internal static AssemblyName? TryParseAssemblyName(string name)
         {
+            // workaround for https://github.com/dotnet/runtime/issues/123951
+            if (name.IndexOfAny(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }) >= 0)
+            {
+                return null;
+            }
             try
             {
                 return new AssemblyName(name);

@@ -6,24 +6,12 @@ namespace Python.EmbeddingTest
 {
     public class TestPyString
     {
-        [OneTimeSetUp]
-        public void SetUp()
-        {
-            PythonEngine.Initialize();
-        }
-
-        [OneTimeTearDown]
-        public void Dispose()
-        {
-            PythonEngine.Shutdown();
-        }
-
         [Test]
         public void TestStringCtor()
         {
             const string expected = "foo";
             var actual = new PyString(expected);
-            Assert.AreEqual(expected, actual.ToString());
+            Assert.That(actual.ToString(), Is.EqualTo(expected));
         }
 
         [Test]
@@ -31,11 +19,10 @@ namespace Python.EmbeddingTest
         {
             const string expected = "";
             var actual = new PyString(expected);
-            Assert.AreEqual(expected, actual.ToString());
+            Assert.That(actual.ToString(), Is.EqualTo(expected));
         }
 
         [Test]
-        [Ignore("Ambiguous behavior between PY2/PY3. Needs remapping")]
         public void TestPyObjectCtor()
         {
             const string expected = "Foo";
@@ -43,7 +30,7 @@ namespace Python.EmbeddingTest
             var t = new PyString(expected);
             var actual = new PyString(t);
 
-            Assert.AreEqual(expected, actual.ToString());
+            Assert.That(actual.ToString(), Is.EqualTo(expected));
         }
 
         [Test]
@@ -66,11 +53,10 @@ namespace Python.EmbeddingTest
             var t = new PyString(expected);
             var actual = new PyString(t.Reference);
 
-            Assert.AreEqual(expected, actual.ToString());
+            Assert.That(actual.ToString(), Is.EqualTo(expected));
         }
 
         [Test]
-        [Ignore("Ambiguous behavior between PY2/PY3. Needs remapping")]
         public void IsStringTrue()
         {
             var t = new PyString("foo");
@@ -91,7 +77,7 @@ namespace Python.EmbeddingTest
         {
             const string expected = "foo\u00e9";
             PyObject actual = new PyString(expected);
-            Assert.AreEqual(expected, actual.ToString());
+            Assert.That(actual.ToString(), Is.EqualTo(expected));
         }
 
         [Test]
@@ -99,8 +85,8 @@ namespace Python.EmbeddingTest
         {
             var expected = "foo\ud83d\udc3c";
             var actual = PythonEngine.Eval("'foo\ud83d\udc3c'");
-            Assert.AreEqual(4, actual.Length());
-            Assert.AreEqual(expected, actual.ToString());
+            Assert.That(actual.Length(), Is.EqualTo(4));
+            Assert.That(actual.ToString(), Is.EqualTo(expected));
         }
 
         [Test]
@@ -109,8 +95,8 @@ namespace Python.EmbeddingTest
             const string expected = "foo\ud83d\udc3c"; // "foo🐼"
             PyObject actual = new PyString(expected);
             // python treats "foo🐼" as 4 characters, dotnet as 5
-            Assert.AreEqual(4, actual.Length());
-            Assert.AreEqual(expected, actual.ToString());
+            Assert.That(actual.Length(), Is.EqualTo(4));
+            Assert.That(actual.ToString(), Is.EqualTo(expected));
         }
 
         [Test]
@@ -118,9 +104,9 @@ namespace Python.EmbeddingTest
         {
             var a = new PyString("foo");
 
-            Assert.AreEqual(0, a.CompareTo("foo"));
-            Assert.AreEqual("foo".CompareTo("bar"), a.CompareTo("bar"));
-            Assert.AreEqual("foo".CompareTo("foz"), a.CompareTo("foz"));
+            Assert.That(a.CompareTo("foo"), Is.EqualTo(0));
+            Assert.That(a.CompareTo("bar"), Is.EqualTo("foo".CompareTo("bar")));
+            Assert.That(a.CompareTo("foz"), Is.EqualTo("foo".CompareTo("foz")));
         }
 
         [Test]

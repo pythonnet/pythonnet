@@ -21,6 +21,7 @@ namespace Python.Runtime
         // set in Initialize
         private static PyType PyCLRMetaType;
         private static SlotsHolder _metaSlotsHodler;
+        private static int TypeDictOffset = -1;
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
         internal static readonly string[] CustomMethods = new string[]
@@ -35,6 +36,25 @@ namespace Python.Runtime
         public static PyType Initialize()
         {
             PyCLRMetaType = TypeManager.CreateMetaType(typeof(MetaType), out _metaSlotsHodler);
+
+            // Retrieve the offset of the type's dictionary from PyType_Type for
+            // use in the tp_setattro implementation.
+            using (NewReference dictOffset = Runtime.PyObject_GetAttr(Runtime.PyTypeType, PyIdentifier.__dictoffset__))
+            {
+                if (dictOffset.IsNull())
+                {
+                    throw new InvalidOperationException("Could not get __dictoffset__ from PyType_Type");
+                }
+
+                nint dictOffsetVal = Runtime.PyLong_AsSignedSize_t(dictOffset.Borrow());
+                if (dictOffsetVal <= 0)
+                {
+                    throw new InvalidOperationException("Could not get __dictoffset__ from PyType_Type");
+                }
+
+                TypeDictOffset = checked((int)dictOffsetVal);
+            }
+
             return PyCLRMetaType;
         }
 
@@ -44,6 +64,7 @@ namespace Python.Runtime
             {
                 _metaSlotsHodler.ResetSlots();
             }
+            TypeDictOffset = -1;
             PyCLRMetaType.Dispose();
         }
 
@@ -287,7 +308,28 @@ namespace Python.Runtime
                 }
             }
 
-            int res = Runtime.PyObject_GenericSetAttr(tp, name, value);
+            // Access the type's dictionary directly
+            //
+            // We can not use the PyObject_GenericSetAttr because since Python
+            // 3.14 as https://github.com/python/cpython/pull/118454 intrdoduced
+            // an assertion to prevent it from being called from metatypes.
+            //
+            // The direct dictionary access is equivalent to what Cython does
+            // to work around the same issue: https://github.com/cython/cython/pull/6325
+            BorrowedReference typeDict = new(Util.ReadIntPtr(tp, TypeDictOffset));
+            int res;
+            if (value.IsNull)
+            {
+                res = Runtime.PyDict_DelItem(typeDict, name);
+                if (res != 0)
+                {
+                    Exceptions.SetError(Exceptions.AttributeError, "attribute not found");
+                }
+            }
+            else
+            {
+                res = Runtime.PyDict_SetItem(typeDict, name, value);
+            }
             Runtime.PyType_Modified(tp);
 
             return res;

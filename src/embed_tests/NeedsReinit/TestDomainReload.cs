@@ -15,10 +15,13 @@ using PyRuntime = Python.Runtime.Runtime;
 // Unfortunately this means no continuous integration testing for this case.
 //
 #if NETFRAMEWORK
-namespace Python.EmbeddingTest
+namespace Python.EmbeddingTest.NeedsReinit
 {
-    class TestDomainReload
+    [Category("NeedsReinit")]
+    class TestDomainReload : StopAndRestartEngine
     {
+
+
         abstract class CrossCaller : MarshalByRefObject
         {
             public abstract ValueType Execute(ValueType arg);
@@ -143,8 +146,8 @@ obj.Field += 10
 ");
                             }
                             var clrObj = obj.As<Domain.MyClass>();
-                            Assert.AreEqual(clrObj.Property, 2);
-                            Assert.AreEqual(clrObj.Field, 20);
+                            Assert.That(2, Is.EqualTo(clrObj.Property));
+                            Assert.That(20, Is.EqualTo(clrObj.Field));
                         }
                     }
                 }

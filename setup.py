@@ -3,14 +3,24 @@
 import distutils
 from distutils.command.build import build as _build
 from setuptools.command.develop import develop as _develop
-from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
+from setuptools.command.bdist_wheel import bdist_wheel as _bdist_wheel
+from packaging.specifiers import SpecifierSet
+from packaging.version import Version
+from pyproject_parser import PyProject
 from setuptools import Distribution
 from setuptools import setup, Command
 
 import os
+import sys
 
 # Disable SourceLink during the build until it can read repo-format v1, #1613
 os.environ["EnableSourceControlManagerQueries"] = "false"
+
+NET46_SUPPORT_OPTION = "--net46-support"
+NET46_SUPPORT = NET46_SUPPORT_OPTION in sys.argv
+if NET46_SUPPORT:
+    sys.argv.remove(NET46_SUPPORT_OPTION)
+WINDOWS_PLATFORM_TAG = "win32.win_amd64"
 
 
 class DotnetLib:
@@ -107,11 +117,29 @@ class develop(_develop):
 
 
 class bdist_wheel(_bdist_wheel):
-    def finalize_options(self):
-        # Monkey patch bdist_wheel to think the package is pure even though we
-        # include DLLs
-        super().finalize_options()
-        self.root_is_pure = True
+    def get_tag(self):
+        if NET46_SUPPORT:
+            platform_tag = WINDOWS_PLATFORM_TAG
+        else:
+            platform_tag = "any"
+        abi_tag = "none"
+        python_tag = self._get_python_tag()
+        return python_tag, abi_tag, platform_tag
+
+    def _get_python_tag(self) -> str:
+        pyproject = PyProject.load("pyproject.toml")
+        project = pyproject.project or {}
+
+        requires_python = project.get("requires-python")
+        if not requires_python:
+            raise RuntimeError("project.requires-python is required")
+
+        specifiers = SpecifierSet(str(requires_python))
+        return ".".join(
+            f"cp3{minor}"
+            for minor in range(0, 100)
+            if specifiers.contains(Version(f"3.{minor}"), prereleases=True)
+        )
 
 
 # Monkey-patch Distribution s.t. it supports the dotnet_libs attribute
@@ -124,13 +152,13 @@ cmdclass = {
     "bdist_wheel": bdist_wheel,
 }
 
-dotnet_libs = [
-    DotnetLib(
-        "python-runtime",
-        "src/runtime/Python.Runtime.csproj",
-        output="pythonnet/runtime",
-    )
-]
+
+if NET46_SUPPORT:
+    csproj = "src/compat/Python.Runtime.Compat.csproj"
+else:
+    csproj = "src/runtime/Python.Runtime.csproj"
+
+dotnet_libs = [DotnetLib("python-runtime", csproj, output="pythonnet/runtime")]
 
 setup(
     cmdclass=cmdclass,

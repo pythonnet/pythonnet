@@ -9,7 +9,7 @@
 -   Barton Cline ([@BartonCline](https://github.com/BartonCline))
 -   Brian Lloyd ([@brianlloyd](https://github.com/brianlloyd))
 -   David Anthoff ([@davidanthoff](https://github.com/davidanthoff))
--   Denis Akhiyarov ([@denfromufa](https://github.com/denfromufa))
+-   Denis Akhiyarov ([@den-run-ai](https://github.com/den-run-ai))
 -   Tony Roberts ([@tonyroberts](https://github.com/tonyroberts))
 -   Victor Uriarte ([@vmuriart](https://github.com/vmuriart))
 
@@ -59,6 +59,7 @@
 -   Peter Kese ([@pkese](https://github.com/pkese))
 -   Raphael Nestler ([@rnestler](https://github.com/rnestler))
 -   Rickard Holmberg ([@rickardraysearch](https://github.com/rickardraysearch))
+-   Roberto Pastor Muela ([@RobPasMue](https://github.com/RobPasMue))
 -   Sam Winstanley ([@swinstanley](https://github.com/swinstanley))
 -   Sean Freitag ([@cowboygneox](https://github.com/cowboygneox))
 -   Serge Weinstock ([@sweinst](https://github.com/sweinst))
@@ -88,3 +89,4 @@
 -   Ehsan Iran-Nejad ([@eirannejad](https://github.com/eirannejad))
 -   ([@legomanww](https://github.com/legomanww))
 -   ([@gertdreyer](https://github.com/gertdreyer))
+-   Kerbiter ([@Metadorius](https://github.com/Metadorius))

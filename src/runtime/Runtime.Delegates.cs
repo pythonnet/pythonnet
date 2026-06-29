@@ -23,7 +23,17 @@ public unsafe partial class Runtime
             Py_EndInterpreter = (delegate* unmanaged[Cdecl]<PyThreadState*, void>)GetFunctionByName(nameof(Py_EndInterpreter), GetUnmanagedDll(_PythonDll));
             PyThreadState_New = (delegate* unmanaged[Cdecl]<PyInterpreterState*, PyThreadState*>)GetFunctionByName(nameof(PyThreadState_New), GetUnmanagedDll(_PythonDll));
             PyThreadState_Get = (delegate* unmanaged[Cdecl]<PyThreadState*>)GetFunctionByName(nameof(PyThreadState_Get), GetUnmanagedDll(_PythonDll));
-            _PyThreadState_UncheckedGet = (delegate* unmanaged[Cdecl]<PyThreadState*>)GetFunctionByName(nameof(_PyThreadState_UncheckedGet), GetUnmanagedDll(_PythonDll));
+            try
+            {
+                // Up until Python 3.13, this function was private and named
+                // slightly differently.
+                PyThreadState_GetUnchecked = (delegate* unmanaged[Cdecl]<PyThreadState*>)GetFunctionByName("_PyThreadState_UncheckedGet", GetUnmanagedDll(_PythonDll));
+            }
+            catch (MissingMethodException)
+            {
+
+                PyThreadState_GetUnchecked = (delegate* unmanaged[Cdecl]<PyThreadState*>)GetFunctionByName(nameof(PyThreadState_GetUnchecked), GetUnmanagedDll(_PythonDll));
+            }
             try
             {
                 PyGILState_Check = (delegate* unmanaged[Cdecl]<int>)GetFunctionByName(nameof(PyGILState_Check), GetUnmanagedDll(_PythonDll));
@@ -35,7 +45,6 @@ public unsafe partial class Runtime
             PyGILState_Ensure = (delegate* unmanaged[Cdecl]<PyGILState>)GetFunctionByName(nameof(PyGILState_Ensure), GetUnmanagedDll(_PythonDll));
             PyGILState_Release = (delegate* unmanaged[Cdecl]<PyGILState, void>)GetFunctionByName(nameof(PyGILState_Release), GetUnmanagedDll(_PythonDll));
             PyGILState_GetThisThreadState = (delegate* unmanaged[Cdecl]<PyThreadState*>)GetFunctionByName(nameof(PyGILState_GetThisThreadState), GetUnmanagedDll(_PythonDll));
-            Py_Main = (delegate* unmanaged[Cdecl]<int, IntPtr, int>)GetFunctionByName(nameof(Py_Main), GetUnmanagedDll(_PythonDll));
             PyEval_InitThreads = (delegate* unmanaged[Cdecl]<void>)GetFunctionByName(nameof(PyEval_InitThreads), GetUnmanagedDll(_PythonDll));
             PyEval_ThreadsInitialized = (delegate* unmanaged[Cdecl]<int>)GetFunctionByName(nameof(PyEval_ThreadsInitialized), GetUnmanagedDll(_PythonDll));
             PyEval_AcquireLock = (delegate* unmanaged[Cdecl]<void>)GetFunctionByName(nameof(PyEval_AcquireLock), GetUnmanagedDll(_PythonDll));
@@ -299,7 +308,8 @@ public unsafe partial class Runtime
             {
                 throw new BadPythonDllException(
                     "Runtime.PythonDLL was not set or does not point to a supported Python runtime DLL." +
-                    " See https://github.com/pythonnet/pythonnet#embedding-python-in-net",
+                    " See https://github.com/pythonnet/pythonnet#embedding-python-in-net." +
+                    $" Value of PythonDLL: {PythonDLL ?? "null"}",
                     e);
             }
         }
@@ -314,12 +324,11 @@ public unsafe partial class Runtime
         internal static delegate* unmanaged[Cdecl]<PyThreadState*, void> Py_EndInterpreter { get; }
         internal static delegate* unmanaged[Cdecl]<PyInterpreterState*, PyThreadState*> PyThreadState_New { get; }
         internal static delegate* unmanaged[Cdecl]<PyThreadState*> PyThreadState_Get { get; }
-        internal static delegate* unmanaged[Cdecl]<PyThreadState*> _PyThreadState_UncheckedGet { get; }
+        internal static delegate* unmanaged[Cdecl]<PyThreadState*> PyThreadState_GetUnchecked { get; }
         internal static delegate* unmanaged[Cdecl]<int> PyGILState_Check { get; }
         internal static delegate* unmanaged[Cdecl]<PyGILState> PyGILState_Ensure { get; }
         internal static delegate* unmanaged[Cdecl]<PyGILState, void> PyGILState_Release { get; }
         internal static delegate* unmanaged[Cdecl]<PyThreadState*> PyGILState_GetThisThreadState { get; }
-        internal static delegate* unmanaged[Cdecl]<int, IntPtr, int> Py_Main { get; }
         internal static delegate* unmanaged[Cdecl]<void> PyEval_InitThreads { get; }
         internal static delegate* unmanaged[Cdecl]<int> PyEval_ThreadsInitialized { get; }
         internal static delegate* unmanaged[Cdecl]<void> PyEval_AcquireLock { get; }

@@ -7,18 +7,6 @@ namespace Python.EmbeddingTest
 {
     public class TestInstanceWrapping
     {
-        [OneTimeSetUp]
-        public void SetUp()
-        {
-            PythonEngine.Initialize();
-        }
-
-        [OneTimeTearDown]
-        public void Dispose()
-        {
-            PythonEngine.Shutdown();
-        }
-
         // regression test for https://github.com/pythonnet/pythonnet/issues/811
         [Test]
         public void OverloadResolution_UnknownToObject()
@@ -30,7 +18,7 @@ namespace Python.EmbeddingTest
 
                 dynamic callWithSelf = PythonEngine.Eval("lambda o: o.ObjOrClass(object())");
                 callWithSelf(o);
-                Assert.AreEqual(Overloaded.Object, overloaded.Value);
+                Assert.That(overloaded.Value, Is.EqualTo(Overloaded.Object));
             }
         }
 
@@ -41,7 +29,7 @@ namespace Python.EmbeddingTest
             var ub = new UriBuilder().ToPython();
             using var weakref = makeref.Invoke(ub);
             ub.Dispose();
-            Assert.IsTrue(weakref.Invoke().IsNone());
+            Assert.That(weakref.Invoke().IsNone(), Is.True);
         }
 
         class Base {}

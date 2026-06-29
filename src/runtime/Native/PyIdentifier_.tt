@@ -7,12 +7,12 @@
         "__dict__",
         "__doc__",
         "__class__",
-        "__clear_reentry_guard__",
         "__module__",
         "__file__",
         "__slots__",
         "__self__",
         "__annotations__",
+        "__dictoffset__",
 
         "__init__",
         "__repr__",

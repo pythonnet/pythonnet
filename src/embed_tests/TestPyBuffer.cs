@@ -11,14 +11,13 @@ namespace Python.EmbeddingTest {
         [OneTimeSetUp]
         public void SetUp()
         {
-            PythonEngine.Initialize();
             TupleCodec<ValueTuple>.Register();
         }
 
         [OneTimeTearDown]
         public void Dispose()
         {
-            PythonEngine.Shutdown();
+            PyObjectConversions.Reset();
         }
 
         [Test]
@@ -38,7 +37,7 @@ namespace Python.EmbeddingTest {
             }
 
             string result = pythonArray.InvokeMethod("decode", "utf-8".ToPython()).As<string>();
-            Assert.IsTrue(result == bufferTestString2);
+            Assert.That(result == bufferTestString2, Is.True);
         }
 
         [Test]
@@ -58,7 +57,7 @@ namespace Python.EmbeddingTest {
             }
 
             string result = new UTF8Encoding().GetString(managedArray);
-            Assert.IsTrue(result == " " + bufferTestString.Substring(1));
+            Assert.That(result == " " + bufferTestString.Substring(1), Is.True);
         }
 
         [Test]
@@ -67,8 +66,8 @@ namespace Python.EmbeddingTest {
             var array = new[,] {{1, 2}, {3,4}};
             var memoryView = PythonEngine.Eval("memoryview");
             var mem = memoryView.Invoke(array.ToPython());
-            Assert.AreEqual(1, mem[(0, 0).ToPython()].As<int>());
-            Assert.AreEqual(array[1,0], mem[(1, 0).ToPython()].As<int>());
+            Assert.That(mem[(0, 0).ToPython()].As<int>(), Is.EqualTo(1));
+            Assert.That(mem[(1, 0).ToPython()].As<int>(), Is.EqualTo(array[1, 0]));
         }
 
         [Test]
@@ -77,14 +76,14 @@ namespace Python.EmbeddingTest {
             using var _ = Py.GIL();
             using var arr = ByteArrayFromAsciiString("hello world! !$%&/()=?");
 
-            Assert.AreEqual(1, arr.Refcount);
+            Assert.That(arr.Refcount, Is.EqualTo(1));
 
             using (PyBuffer buf = arr.GetBuffer())
             {
-                Assert.AreEqual(2, arr.Refcount);
+                Assert.That(arr.Refcount, Is.EqualTo(2));
             }
 
-            Assert.AreEqual(1, arr.Refcount);
+            Assert.That(arr.Refcount, Is.EqualTo(1));
         }
 
         [Test]
@@ -99,7 +98,7 @@ namespace Python.EmbeddingTest {
             using var _ = Py.GIL();
             using var arr = ByteArrayFromAsciiString("hello world! !$%&/()=?");
 
-            Assert.AreEqual(1, arr.Refcount);
+            Assert.That(arr.Refcount, Is.EqualTo(1));
 
             MakeBufAndLeak(arr);
 
@@ -107,7 +106,7 @@ namespace Python.EmbeddingTest {
             GC.WaitForPendingFinalizers();
             Finalizer.Instance.Collect();
 
-            Assert.AreEqual(1, arr.Refcount);
+            Assert.That(arr.Refcount, Is.EqualTo(1));
         }
 
         [Test]

@@ -93,6 +93,12 @@ namespace Python.Runtime
             Finalizer.Instance.ThrottledCollect();
         }
 
+        /// <summary>
+        /// Create a new PyObject instance of this object, bumping the reference
+        /// count.
+        /// </summary>
+        public PyObject NewReference() => new(this);
+
         // Ensure that encapsulated Python object is decref'ed appropriately
         // when the managed wrapper is garbage-collected.
         ~PyObject()

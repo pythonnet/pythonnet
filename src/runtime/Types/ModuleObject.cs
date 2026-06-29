@@ -19,6 +19,7 @@ namespace Python.Runtime
         internal PyDict dict;
         protected string _namespace;
         private readonly PyList __all__ = new ();
+        private readonly HashSet<string> allNames = new();
 
         // Attributes to be set on the module according to PEP302 and 451
         // by the import machinery.
@@ -178,22 +179,23 @@ namespace Python.Runtime
         {
             foreach (string name in AssemblyManager.GetNames(_namespace))
             {
-                cache.TryGetValue(name, out var m);
-                if (m != null)
+                bool hasValidAttribute = cache.TryGetValue(name, out var m);
+                if (!hasValidAttribute)
                 {
-                    continue;
-                }
-                BorrowedReference attr = Runtime.PyDict_GetItemString(dict, name);
-                // If __dict__ has already set a custom property, skip it.
-                if (!attr.IsNull)
-                {
-                    continue;
+                    BorrowedReference attr = Runtime.PyDict_GetItemString(dict, name);
+                    // If __dict__ has already set a custom property, skip it.
+                    if (!attr.IsNull)
+                    {
+                        continue;
+                    }
+
+                    using var attrVal = GetAttribute(name, true);
+                    hasValidAttribute = !attrVal.IsNull();
                 }
 
-                using var attrVal = GetAttribute(name, true);
-                if (!attrVal.IsNull())
+                if (hasValidAttribute && allNames.Add(name))
                 {
-                    // if it's a valid attribute, add it to __all__
+                    // if it's a valid attribute, add it to __all__ once.
                     using var pyname = Runtime.PyString_FromString(name);
                     if (Runtime.PyList_Append(__all__, pyname.Borrow()) != 0)
                     {

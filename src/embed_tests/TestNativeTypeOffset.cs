@@ -13,18 +13,6 @@ namespace Python.EmbeddingTest
 {
     public class TestNativeTypeOffset
     {
-        [OneTimeSetUp]
-        public void SetUp()
-        {
-            PythonEngine.Initialize();
-        }
-
-        [OneTimeTearDown]
-        public void Dispose()
-        {
-            PythonEngine.Shutdown();
-        }
-
         /// <summary>
         /// Tests that installation has generated code for NativeTypeOffset and that it can be loaded.
         /// </summary>        

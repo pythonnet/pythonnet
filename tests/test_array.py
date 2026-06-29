@@ -120,10 +120,9 @@ def test_array_contains():
     assert 3 in items
     assert 4 in items
 
-    assert not (5 in items)  # "H:\Python27\Lib\unittest\case.py", line 592, in deprecated_func,
-    assert not (-1 in items)  # TypeError: int() argument must be a string or a number, not 'NoneType'
-    assert not (None in items)  # which threw ^ here which is a little odd.
-    # But when run from runtests.py. Not when this module ran by itself.
+    assert not (5 in items)
+    assert not (-1 in items)
+    assert not (None in items)
 
 
 def test_boolean_array():
