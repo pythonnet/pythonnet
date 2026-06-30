@@ -4,5 +4,5 @@ prune src/runtime/bin
 graft src/compat
 include src/pythonnet.snk
 include Directory.Build.*
-include pythonnet.sln
+include pythonnet.slnx
 include version.txt
