@@ -16,6 +16,8 @@ At a very high level, to embed Python in your application one will need
 to:
 
 -  Reference ``Python.Runtime.dll`` (e.g. via a ``PackageReference``)
+-  Set the Python library the code should run with via the ``Runtime.PythonDLL``
+   property or the ``PYTHONNET_PYDLL`` environment variable
 -  Call ``PythonEngine.Initialize()`` to initialize Python
 -  Call ``var mod = PyModule.Import(name)`` to import a module as ``mod``
 
