@@ -71,7 +71,7 @@ jobs:
       NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # Use main until support for architecture lands
       - name: Setup .NET
