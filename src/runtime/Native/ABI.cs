@@ -10,7 +10,8 @@ namespace Python.Runtime.Native
         // GIL builds only. FT splits the refcount; Refcount uses Py_REFCNT.
         public static int RefCountOffset { get; private set; }
 
-        // Added to generated TypeOffsets. FT PyObject_HEAD is 16 bytes larger.
+        // Added to generated TypeOffsets. The FT header is 12 bytes larger on
+        // 32-bit and 16 bytes larger on 64-bit builds.
         public static int ObjectHeadOffset { get; private set; }
 
         public static bool IsFreeThreaded { get; private set; }
@@ -19,7 +20,9 @@ namespace Python.Runtime.Native
         {
             IsFreeThreaded = DetectFreeThreaded();
             RefCountOffset = IsFreeThreaded ? -1 : ProbeRefCountOffset();
-            ObjectHeadOffset = IsFreeThreaded ? 16 : RefCountOffset;
+            ObjectHeadOffset = IsFreeThreaded
+                ? (IntPtr.Size == 4 ? 12 : 16)
+                : RefCountOffset;
 
             string offsetsClassSuffix = string.Format(CultureInfo.InvariantCulture,
                                                       "{0}{1}", version.Major, version.Minor);
