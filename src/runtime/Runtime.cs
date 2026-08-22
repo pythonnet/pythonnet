@@ -5,10 +5,8 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Collections.Generic;
-using System.IO;
 using Python.Runtime.Native;
 using System.Linq;
-using static System.FormattableString;
 
 namespace Python.Runtime
 {
