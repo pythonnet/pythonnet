@@ -230,7 +230,7 @@ namespace Python.Runtime
         internal static bool TryFreeGCHandle(BorrowedReference reflectedClrObject)
             => TryFreeGCHandle(reflectedClrObject, Runtime.PyObject_TYPE(reflectedClrObject));
 
-        internal static bool TryFreeGCHandle(BorrowedReference reflectedClrObject, BorrowedReference type)
+        internal static unsafe bool TryFreeGCHandle(BorrowedReference reflectedClrObject, BorrowedReference type)
         {
             Debug.Assert(type != null);
             Debug.Assert(reflectedClrObject != null);
@@ -240,13 +240,12 @@ namespace Python.Runtime
             int offset = Util.ReadInt32(type, Offsets.tp_clr_inst_offset);
             Debug.Assert(offset > 0);
 
-            IntPtr raw = Util.ReadIntPtr(reflectedClrObject, offset);
+            // Atomic claim: tp_clear and tp_dealloc may race on the same slot.
+            IntPtr* slot = (IntPtr*)(reflectedClrObject.DangerousGetAddress() + offset);
+            IntPtr raw = System.Threading.Interlocked.Exchange(ref *slot, IntPtr.Zero);
             if (raw == IntPtr.Zero) return false;
 
-            var handle = (GCHandle)raw;
-            handle.Free();
-
-            Util.WriteIntPtr(reflectedClrObject, offset, IntPtr.Zero);
+            ((GCHandle)raw).Free();
             return true;
         }
 

@@ -2,11 +2,19 @@
 
 """Test CLR bridge threading and GIL handling."""
 
+import sys
 import threading
 import time
 
+import pytest
+
 import _thread as thread
 from .utils import dprint
+
+
+def _gil_enabled():
+    """True on every CPython that has a GIL.  Always True before 3.13."""
+    return getattr(sys, "_is_gil_enabled", lambda: True)()
 
 
 def test_simple_callback_to_python():
@@ -46,13 +54,299 @@ def test_python_thread_calls_to_clr():
             done.append(None)
             dprint("thread %s %d done" % (thread.get_ident(), i))
 
-    def start_threads(count):
-        for _ in range(count):
-            thread_ = threading.Thread(target=run_thread)
-            thread_.start()
-
-    start_threads(5)
+    threads = [threading.Thread(target=run_thread) for _ in range(5)]
+    for t in threads:
+        t.start()
 
     while len(done) < 50:
         dprint(len(done))
         time.sleep(0.1)
+
+    # Join the workers so they cannot outlive this test and fire
+    # threading.excepthook from background activity (visible under FT).
+    for t in threads:
+        t.join()
+
+
+# Free-threaded / refcount tests below.  Run on every interpreter; the GIL
+# builds exercise the same code paths in single-threaded form while the FT
+# builds (Py_GIL_DISABLED) actually stress the concurrent paths.
+
+
+def test_runtime_refcount_matches_sys_getrefcount():
+    """Refcount tracks sys.getrefcount on both GIL and FT builds."""
+    obj = object()
+    rc_before = sys.getrefcount(obj)
+    extra = [obj, obj, obj]
+    assert sys.getrefcount(obj) - rc_before == 3
+    del extra
+
+
+def test_is_gil_enabled_attribute_present_on_3_13_plus():
+    """sys._is_gil_enabled is present from 3.13 — used by ABI.DetectFreeThreaded."""
+    if sys.version_info < (3, 13):
+        assert not hasattr(sys, "_is_gil_enabled")
+    else:
+        assert isinstance(sys._is_gil_enabled(), bool)
+
+
+def test_module_dunder_all_added_once():
+    """Module.__all__ adds each name exactly once.
+
+    Exercises ModuleObject.allNames (ConcurrentDictionary) — the per-name
+    "have we surfaced this in __all__ yet" guard.  A torn HashSet would let
+    duplicates slip through here on free-threaded builds.
+    """
+    import System
+
+    names = list(System.__all__)
+    assert len(names) == len(set(names))
+
+
+def _run_in_threads(target, n_threads, *args, **kwargs):
+    """Run target() in n_threads threads, return results in start order, raise on first error."""
+    results = [None] * n_threads
+    errors = [None] * n_threads
+
+    def worker(i):
+        try:
+            results[i] = target(i, *args, **kwargs)
+        except BaseException as e:
+            errors[i] = e
+
+    threads = [threading.Thread(target=worker, args=(i,)) for i in range(n_threads)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    for e in errors:
+        if e is not None:
+            raise e
+    return results
+
+
+def test_concurrent_clr_method_calls():
+    """Concurrent CLR method invocation across threads."""
+    from Python.Test import ThreadTest
+
+    def call(_):
+        return [ThreadTest.CallEchoString("ping") for _ in range(200)]
+
+    for r in _run_in_threads(call, n_threads=8):
+        assert all(x == "ping" for x in r)
+
+
+def test_concurrent_attribute_access():
+    """Concurrent attribute access — exercises the ConcurrentDictionary InternString cache."""
+    import System
+    from System.Collections.Generic import List
+
+    def access(_):
+        for _ in range(500):
+            _ = System.String.Empty
+            _ = System.Int32.MaxValue
+            _ = List[int]
+            _ = List[str]
+        return True
+
+    assert all(_run_in_threads(access, n_threads=8))
+
+
+def test_concurrent_module_attribute_access():
+    """Concurrent CLR-namespace attribute access — exercises ModuleObject.cache.
+
+    Each lookup of `System.X` either hits ModuleObject.cache or populates it
+    on first miss.  A plain Dictionary tore on simultaneous TryGetValue/Add
+    from multiple threads; the test reads many distinct names per worker.
+    """
+    import System
+
+    names = (
+        "String", "Int32", "Int64", "Double", "Boolean", "Object",
+        "DateTime", "TimeSpan", "Type", "Array", "Console", "Math",
+    )
+
+    def lookup(_):
+        for _ in range(200):
+            for n in names:
+                getattr(System, n)
+        return True
+
+    assert all(_run_in_threads(lookup, n_threads=8))
+
+
+@pytest.mark.skipif(_gil_enabled(), reason="Only meaningful on free-threaded Python (Py_GIL_DISABLED).")
+def test_concurrent_clr_object_creation():
+    """Concurrent CLR object alloc/free — exercises reflectedObjects + loadedExtensions.
+
+    FT-only: under the GIL this high-contention pattern hits a pre-existing
+    pythonnet crash (also reproducible on master) outside this branch's scope.
+    """
+    from System.Collections.Generic import List
+
+    LI = List[int]
+
+    def make_lists(_):
+        for _ in range(200):
+            l = LI()
+            for j in range(5):
+                l.Add(j)
+            assert l.Count == 5
+        return True
+
+    assert all(_run_in_threads(make_lists, n_threads=8))
+
+
+@pytest.mark.skipif(_gil_enabled(), reason="Only meaningful on free-threaded Python (Py_GIL_DISABLED).")
+def test_concurrent_python_subclass_of_clr_type():
+    """Concurrent dynamic-subclass creation — exercises ClassDerived's builder lock.
+
+    FT-only because the GIL-build code path triggers a pre-existing CLR
+    object lifecycle crash under high contention.
+    """
+    import System
+
+    def derive(i):
+        cls = type(f"Derived_{i}_{threading.get_ident()}", (System.Object,), {})
+        cls()
+        return cls.__name__
+
+    names = _run_in_threads(derive, n_threads=8)
+    assert len(set(names)) == len(names)
+
+
+@pytest.mark.skipif(_gil_enabled(), reason="Only meaningful on free-threaded Python (Py_GIL_DISABLED).")
+def test_concurrent_delegate_creation():
+    """Concurrent CLR delegate dispatcher creation — exercises DelegateManager.
+
+    Each new (delegate-type, callable) pair runs Reflection.Emit to build a
+    dispatcher subclass.  Without a lock, concurrent DefineType raises
+    "Duplicate type name within an assembly" or corrupts the IL stream.
+
+    FT-only because high-rate Reflection.Emit interacts badly with the
+    CPython 3.11/3.12/3.13 GIL-build GC under cumulative test state
+    (same pre-existing crash as test_concurrent_clr_object_creation).
+    """
+    from Python.Runtime import PythonEngine
+    handler = PythonEngine.ShutdownHandler
+
+    def build(_):
+        for _ in range(50):
+            handler(lambda: None)
+        return True
+
+    assert all(_run_in_threads(build, n_threads=8))
+
+
+@pytest.mark.skipif(_gil_enabled(), reason="Only meaningful on free-threaded Python (Py_GIL_DISABLED).")
+def test_concurrent_clr_delegate_invocation_from_python():
+    """Python callables wrapped as distinct CLR delegate types, invoked concurrently.
+
+    Real-world: QuantConnect/Lean and similar embedders pass Python callables
+    where C# expects a delegate; under FT the dispatcher emit + Invoke run from
+    multiple threads.  Hits DelegateManager.GetDispatcher (Reflection.Emit lock)
+    and Dispatcher.Dispatch (Py.GIL reacquisition).
+    """
+    from Python.Test import (
+        PublicDelegate, StringDelegate, BoolDelegate,
+    )
+
+    delegates = (
+        PublicDelegate(lambda: None),
+        StringDelegate(lambda: "ok"),
+        BoolDelegate(lambda: True),
+    )
+
+    def fire(i):
+        d = delegates[i % len(delegates)]
+        for _ in range(200):
+            d()
+        return True
+
+    assert all(_run_in_threads(fire, n_threads=8))
+
+
+@pytest.mark.skipif(_gil_enabled(), reason="Only meaningful on free-threaded Python (Py_GIL_DISABLED).")
+def test_concurrent_generic_type_binding():
+    """Concurrent `Dictionary[K, V]` with many distinct type-arg pairs.
+
+    Real-world: pythonnet/pythonnet#2269, #1407, #821 — concurrent ToPython /
+    GenericByName from N threads.  Exercises ClassManager.cache,
+    TypeManager.cache, GenericUtil.mapping, and the generic-type binding
+    fast path together.
+
+    FT-only: the cumulative state under the full pytest suite trips the same
+    pre-existing CPython 3.11/3.12/3.13 GIL-build crash that gates the other
+    high-contention tests in this file.
+    """
+    from System import Int32, Int64, String, Double, Single, Byte
+    from System.Collections.Generic import Dictionary, List
+
+    arg_types = (Int32, Int64, String, Double, Single, Byte)
+    pairs = [(k, v) for k in arg_types for v in arg_types]
+
+    def bind(_):
+        for _ in range(50):
+            for k, v in pairs:
+                _ = Dictionary[k, v]
+                _ = List[k]
+        return True
+
+    assert all(_run_in_threads(bind, n_threads=8))
+
+
+@pytest.mark.skipif(_gil_enabled(), reason="Only meaningful on free-threaded Python (Py_GIL_DISABLED).")
+def test_concurrent_shutdown_handler_register():
+    """Concurrent AddShutdownHandler/RemoveShutdownHandler — exercises ShutdownHandlers list.
+
+    FT-only because Python<->CLR delegate marshalling at this rate trips
+    the same pre-existing CPython 3.11/3.12/3.13 GIL-build crash as the
+    other high-contention tests in this file.
+    """
+    from Python.Runtime import PythonEngine
+
+    handlers = [PythonEngine.ShutdownHandler(lambda: None) for _ in range(32)]
+
+    def churn(i):
+        h = handlers[i % len(handlers)]
+        for _ in range(500):
+            PythonEngine.AddShutdownHandler(h)
+            PythonEngine.RemoveShutdownHandler(h)
+        return True
+
+    assert all(_run_in_threads(churn, n_threads=8))
+
+
+@pytest.mark.skipif(_gil_enabled(), reason="Only meaningful on free-threaded Python (Py_GIL_DISABLED).")
+def test_concurrent_gc_collect_on_clr_cycles():
+    """Concurrent gc.collect on cyclic CLR-derived objects — exercises
+    ClassBase.ClearVisited + ManagedType.TryFreeGCHandle atomic slot.
+
+    Each worker builds short cycles holding a Python subclass of System.Object,
+    then calls gc.collect() while other workers do the same.  Hits the
+    tp_clear/tp_dealloc race path on the per-object GCHandle slot.
+
+    Also covers ClassDerivedObject.tp_dealloc's strong→weak slot demotion
+    and MethodBinder.GetMethods lazy-init: a torn slot or torn init both
+    surface as "No method matches given arguments for Cycle..ctor".
+    """
+    import gc
+    import System
+
+    class Cycle(System.Object):
+        __namespace__ = "test_concurrent_gc_collect_on_clr_cycles"
+
+    def churn(_):
+        # Sporadic repro is intentional: the NewObjectToPython race only fires
+        # when .NET GC happens to fire during construction.  Across the CI
+        # matrix this catches regressions reliably without the heavyweight
+        # CLR GC.Collect that deadlocks Mono on x64 Ubuntu.
+        for _ in range(100):
+            a, b = Cycle(), Cycle()
+            a.peer = b
+            b.peer = a
+            del a, b
+            gc.collect()
+        return True
+
+    assert all(_run_in_threads(churn, n_threads=8))

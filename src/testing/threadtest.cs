@@ -9,6 +9,7 @@ namespace Python.Test
     public class ThreadTest
     {
         private static PyObject module;
+        private static readonly object _moduleLock = new();
 
         private static string testmod =
             "import clr\n" +
@@ -31,9 +32,10 @@ namespace Python.Test
         {
             using (Py.GIL())
             {
-                if (module == null)
+                lock (_moduleLock)
                 {
-                    module = PyModule.FromString("tt", testmod);
+                    if (module == null)
+                        module = PyModule.FromString("tt", testmod);
                 }
                 PyObject func = module.GetAttr("echostring");
                 var parg = new PyString(arg);
@@ -50,9 +52,10 @@ namespace Python.Test
         {
             using (Py.GIL())
             {
-                if (module == null)
+                lock (_moduleLock)
                 {
-                    module = PyModule.FromString("tt", testmod);
+                    if (module == null)
+                        module = PyModule.FromString("tt", testmod);
                 }
 
                 PyObject func = module.GetAttr("echostring2");

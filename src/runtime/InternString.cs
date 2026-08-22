@@ -8,6 +8,7 @@ namespace Python.Runtime
 {
     static partial class InternString
     {
+        // Populated only by Initialize (single-threaded); immutable until Shutdown.
         private static readonly Dictionary<string, PyString> _string2interns = new();
         private static readonly Dictionary<IntPtr, string> _intern2strings = new();
         const BindingFlags PyIdentifierFieldFlags = BindingFlags.Static | BindingFlags.NonPublic;

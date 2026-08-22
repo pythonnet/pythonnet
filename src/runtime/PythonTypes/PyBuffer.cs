@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace Python.Runtime
 {
@@ -100,8 +101,7 @@ namespace Python.Runtime
         /// <param name="order">C-style (order is 'C') or Fortran-style (order is 'F') contiguous or either one (order is 'A')</param>
         public bool IsContiguous(BufferOrderStyle order)
         {
-            if (disposedValue)
-                throw new ObjectDisposedException(nameof(PyBuffer));
+            ThrowIfDisposed();
             return Convert.ToBoolean(Runtime.PyBuffer_IsContiguous(ref _view, OrderStyleToChar(order, true)));
         }
 
@@ -111,8 +111,7 @@ namespace Python.Runtime
         public IntPtr GetPointer(long[] indices)
         {
             if (indices is null) throw new ArgumentNullException(nameof(indices));
-            if (disposedValue)
-                throw new ObjectDisposedException(nameof(PyBuffer));
+            ThrowIfDisposed();
             if (Runtime.PyVersion < new Version(3, 7))
                 throw new NotSupportedException("GetPointer requires at least Python 3.7");
             return Runtime.PyBuffer_GetPointer(ref _view, indices.Select(x => checked((nint)x)).ToArray());
@@ -123,8 +122,7 @@ namespace Python.Runtime
         /// </summary>
         public void FromContiguous(IntPtr buf, long len, BufferOrderStyle fort)
         {
-            if (disposedValue)
-                throw new ObjectDisposedException(nameof(PyBuffer));
+            ThrowIfDisposed();
             if (Runtime.PyVersion < new Version(3, 7))
                 throw new NotSupportedException("FromContiguous requires at least Python 3.7");
 
@@ -139,8 +137,7 @@ namespace Python.Runtime
         /// <param name="buf">Buffer to copy to</param>
         public void ToContiguous(IntPtr buf, BufferOrderStyle order)
         {
-            if (disposedValue)
-                throw new ObjectDisposedException(nameof(PyBuffer));
+            ThrowIfDisposed();
 
             if (Runtime.PyBuffer_ToContiguous(buf, ref _view, _view.len, OrderStyleToChar(order, true)) < 0)
                 throw PythonException.ThrowLastAsClrException();
@@ -166,8 +163,7 @@ namespace Python.Runtime
         /// <returns>On success, set view->obj to a new reference to exporter and return 0. Otherwise, raise PyExc_BufferError, set view->obj to NULL and return -1;</returns>
         internal void FillInfo(BorrowedReference exporter, IntPtr buf, long len, bool _readonly, int flags)
         {
-            if (disposedValue)
-                throw new ObjectDisposedException(nameof(PyBuffer));
+            ThrowIfDisposed();
             if (Runtime.PyBuffer_FillInfo(ref _view, exporter, buf, (IntPtr)len, Convert.ToInt32(_readonly), flags) < 0)
                 throw PythonException.ThrowLastAsClrException();
         }
@@ -177,8 +173,7 @@ namespace Python.Runtime
         /// </summary>
         public void Write(byte[] buffer, int sourceOffset, int count, nint destinationOffset)
         {
-            if (disposedValue)
-                throw new ObjectDisposedException(nameof(PyBuffer));
+            ThrowIfDisposed();
             if (_view.ndim != 1)
                 throw new NotImplementedException("Multidimensional arrays, scalars and objects without a buffer are not supported.");
             if (!this.IsContiguous(BufferOrderStyle.C))
@@ -207,8 +202,7 @@ namespace Python.Runtime
         /// Reads the buffer of a python object into a managed byte array. This can be used to pass data like images from python to managed.
         /// </summary>
         public void Read(byte[] buffer, int destinationOffset, int count, nint sourceOffset) {
-            if (disposedValue)
-                throw new ObjectDisposedException(nameof(PyBuffer));
+            ThrowIfDisposed();
             if (_view.ndim != 1)
                 throw new NotImplementedException("Multidimensional arrays, scalars and objects without a buffer are not supported.");
             if (!this.IsContiguous(BufferOrderStyle.C))
@@ -231,31 +225,36 @@ namespace Python.Runtime
             Marshal.Copy(_view.buf + sourceOffset, buffer, destinationOffset, count);
         }
 
-        private bool disposedValue = false; // To detect redundant calls
+        // 0/1; atomic so finalizer + Dispose cannot double-free the buffer.
+        private int disposedValue;
+
+        /// <summary>
+        /// Throws <see cref="ObjectDisposedException"/> if <see cref="Dispose()"/> has
+        /// already released the buffer view.
+        /// </summary>
+        private void ThrowIfDisposed()
+        {
+            if (Volatile.Read(ref disposedValue) != 0)
+                throw new ObjectDisposedException(nameof(PyBuffer));
+        }
 
         private void Dispose(bool disposing)
         {
-            if (!disposedValue)
-            {
-                if (Runtime.Py_IsInitialized() == 0)
-                    throw new InvalidOperationException("Python runtime must be initialized");
+            if (Interlocked.Exchange(ref disposedValue, 1) != 0) return;
+            if (Runtime.Py_IsInitialized() == 0)
+                throw new InvalidOperationException("Python runtime must be initialized");
 
-                // this also decrements ref count for _view->obj
-                Runtime.PyBuffer_Release(ref _view);
+            // this also decrements ref count for _view->obj
+            Runtime.PyBuffer_Release(ref _view);
 
-                _exporter = null!;
-                Shape = null;
-                Strides = null;
-                SubOffsets = null;
-
-                disposedValue = true;
-            }
+            _exporter = null!;
+            Shape = null;
+            Strides = null;
+            SubOffsets = null;
         }
 
         ~PyBuffer()
         {
-            Debug.Assert(!disposedValue);
-
             if (_view.obj != IntPtr.Zero)
             {
                 Finalizer.Instance.AddFinalizedBuffer(ref _view);

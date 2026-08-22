@@ -20,9 +20,10 @@ namespace Python.EmbeddingTest
         public void LoadNativeTypeOffsetClass()
         {
             PyObject sys = Py.Import("sys");
-            // We can safely ignore the "m" abi flag
+            // "m" is benign; "t" (free-threaded) is handled via ABI.ObjectHeadOffset
+            // rather than the install-time-generated NativeTypeOffset class.
             var abiflags = sys.HasAttr("abiflags") ? sys.GetAttr("abiflags").ToString() : "";
-            abiflags = abiflags.Replace("m", "");
+            abiflags = abiflags.Replace("m", "").Replace("t", "");
             if (!string.IsNullOrEmpty(abiflags))
             {
                 string typeName = "Python.Runtime.NativeTypeOffset, Python.Runtime";
