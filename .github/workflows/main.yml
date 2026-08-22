@@ -55,17 +55,6 @@ jobs:
               platform: x86
             python: '3.13'
 
-          # Free-threaded Python on Windows is not yet supported by pythonnet's
-          # native build chain; restrict 3.14t to Linux and macOS for now.
-          - os:
-              category: windows
-              platform: x86
-            python: ['3.14t', '3.15t']
-          - os:
-              category: windows
-              platform: x64
-            python: ['3.14t', '3.15t']
-
     env:
       NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
     steps:
