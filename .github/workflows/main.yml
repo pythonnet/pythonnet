@@ -46,7 +46,7 @@ jobs:
             instance: macos-15
             suffix:   -macos-aarch64-none
 
-        python: ["3.11", "3.12", "3.13", "3.14", "3.15"]
+        python: ["3.11", "3.12", "3.13", "3.14", "3.14t", "3.15", "3.15t"]
 
         exclude:
           # fails to call mono methods

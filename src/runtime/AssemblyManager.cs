@@ -37,7 +37,9 @@ namespace Python.Runtime
 
         // modified from event handlers below, potentially triggered from different .NET threads
         private static readonly ConcurrentQueue<Assembly> assemblies = new();
-        internal static readonly List<string> pypath = new (capacity: 16);
+        // Snapshot; UpdatePath swaps under lock, readers iterate the captured ref.
+        internal static volatile IReadOnlyList<string> pypath = Array.Empty<string>();
+        private static readonly object _pypathLock = new();
         private AssemblyManager()
         {
         }
@@ -49,7 +51,7 @@ namespace Python.Runtime
         /// </summary>
         internal static void Initialize()
         {
-            pypath.Clear();
+            pypath = Array.Empty<string>();
 
             AppDomain domain = AppDomain.CurrentDomain;
 
@@ -154,19 +156,20 @@ namespace Python.Runtime
         {
             BorrowedReference list = Runtime.PySys_GetObject("path");
             var count = Runtime.PyList_Size(list);
-            if (count != pypath.Count)
+            if (count == pypath.Count) return;
+
+            lock (_pypathLock)
             {
-                pypath.Clear();
+                if (count == pypath.Count) return;
+                var fresh = new List<string>(checked((int)count));
                 probed.Clear();
                 for (var i = 0; i < count; i++)
                 {
                     BorrowedReference item = Runtime.PyList_GetItem(list, i);
                     string? path = Runtime.GetManagedString(item);
-                    if (path != null)
-                    {
-                        pypath.Add(path);
-                    }
+                    if (path != null) fresh.Add(path);
                 }
+                pypath = fresh;
             }
         }
 
@@ -196,7 +199,8 @@ namespace Python.Runtime
 
         static IEnumerable<string> FindAssemblyCandidates(string name)
         {
-            foreach (string head in pypath)
+            var paths = pypath;
+            foreach (string head in paths)
             {
                 string path;
                 if (head == null || head.Length == 0)

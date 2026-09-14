@@ -45,6 +45,7 @@ page. Use the `Python.NET issue tracker`_ to report issues.
     python
     dotnet
     codecs
+    threading
     pyreference
     reference
 

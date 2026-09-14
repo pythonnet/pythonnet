@@ -338,6 +338,34 @@ def test_virtual_generic_method():
     obj = OverloadingSubclass2()
     assert obj.VirtMethod[int](5) == 5
 
+
+def test_nested_namespaced_subclass_finalize_no_double_queue():
+    """A Python subclass derived from a Python subclass with __namespace__ on
+    both must not double-queue PyFinalize when GC'd.
+
+    Each level emits a CLR type with a Finalize() that called PyFinalize(this)
+    and chained to the base's Finalize().  Chaining through another emitted
+    base ran PyFinalize twice for the same __pyobj__, so PythonDerivedType.Finalize
+    saw the same handle twice in the queue and called PyObject_GC_Del on freed
+    memory.  Reliably reproduced under Mono in CI during #2721 development
+    CoreCLR happened to mask it via GC timing.
+    """
+    from System import Object
+    class Base(Object):
+        __namespace__ = "test_nested_namespaced_subclass_finalize"
+    class Derived(Base):
+        __namespace__ = "test_nested_namespaced_subclass_finalize"
+
+    Derived()  # only the deepest level triggers the double-queue
+
+    import gc
+    gc.collect()
+
+    # Touch CLR namespace state — would crash inside PyType_GenericAlloc /
+    # PyObject_GC_Del if the previous finalize double-freed.
+    import System
+    list(System.__all__)
+
 def test_implement_interface_and_class():
     class DualSubClass0(ISayHello1, SimpleClass):
         __namespace__ = "Test"
