@@ -9,9 +9,24 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ### Added
 
+- Support for Python 3.15 (#2729)
+- Support for free-threaded Python 3.14 (`Py_GIL_DISABLED`) (#2721)
+- Threading documentation covering GIL ownership, managed threads, and
+  free-threaded Python (#2721)
+
 ### Changed
 
+- Raise the minimum supported Python version from 3.10 to 3.11 (#2729)
+- Make runtime caches and CLR type binding safe for concurrent access (#2721)
+- Migrate the Visual Studio solution to the `.slnx` format (#2733)
+- Update GitHub Actions dependencies (#2739)
+
 ### Fixed
+
+- Fix races in finalization, buffer disposal, assembly path updates, and
+  Python subclass creation (#2721)
+- Fix method binding initialization when methods are first accessed (#2721)
+- Fix wheel and NuGet preview package builds
 
 ## 3.1.0 - 2026-05-23
 

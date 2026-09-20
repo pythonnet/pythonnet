@@ -23,8 +23,9 @@ speeds for Python code. If you are interested in a pure managed-code
 implementation of the Python language, you should check out the
 `IronPython`_ project.
 
-Python.NET is currently compatible and tested with Python releases from 3.7
-onwards.
+Python.NET is currently compatible and tested with Python releases 3.11
+through 3.15. Free-threaded CPython is supported starting with Python 3.14;
+see :doc:`threading` for the threading and GIL guidance.
 
 Current releases are available on `PyPi <https://pypi.org/project/pythonnet/>`_
 and `Nuget.org <https://nuget.org/packages/pythonnet>`_.

@@ -3,8 +3,10 @@ Threading
 
 This page explains how Python.NET interacts with the Python Global Interpreter
 Lock (GIL) and with managed threads, and what guarantees the runtime makes
-when your code is multi-threaded.  It covers both classic CPython builds and
-the free-threaded build introduced in CPython 3.13 (``Py_GIL_DISABLED``).
+when your code is multi-threaded. It covers classic CPython builds for Python
+3.11 through 3.15 and the free-threaded builds introduced in CPython 3.13
+(``Py_GIL_DISABLED``). Python.NET supports free-threaded CPython starting with
+Python 3.14.
 
 The model in one paragraph
 --------------------------
@@ -180,17 +182,18 @@ If you start a managed thread while holding the GIL and the thread needs to
 call back into Python, release the GIL first so the new thread can acquire
 it::
 
+    IntPtr threadState;
     using (Py.GIL())
     {
         var pyCallback = scope.Get("on_done");
-        PythonEngine.BeginAllowThreads();   // let workers acquire the GIL
+        threadState = PythonEngine.BeginAllowThreads(); // let workers acquire the GIL
         try
         {
             // spawn workers, wait for them...
         }
         finally
         {
-            PythonEngine.EndAllowThreads(...);
+            PythonEngine.EndAllowThreads(threadState);
         }
     }
 
