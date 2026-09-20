@@ -37,14 +37,9 @@ jobs:
             suffix:   ""
 
           - category: macos
-            platform: x64
-            instance: macos-15
-            suffix:   -macos-x86_64-none
-
-          - category: macos
             platform: arm64
             instance: macos-15
-            suffix:   -macos-aarch64-none
+            suffix:   ""
 
         python: ["3.11", "3.12", "3.13", "3.14", "3.14t", "3.15", "3.15t"]
 
