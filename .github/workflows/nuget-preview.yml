@@ -10,7 +10,7 @@ jobs:
     name: Release Preview
     runs-on: ubuntu-latest
     environment: NuGet
-    timeout-minutes: 10
+    timeout-minutes: 30
 
     env:
       PYTHONNET_SHUTDOWN_MODE: Normal
@@ -26,25 +26,20 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: '6.0.x'
+          dotnet-version: '10.0.x'
 
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v7
+      - name: Set up Python 3.11
+        uses: astral-sh/setup-uv@v7
         with:
-          python-version: 3.8
-          architecture: x64
+          python-version: cpython-3.11
+          cache-python: true
+          activate-environment: true
+          enable-cache: true
 
       - name: Install dependencies
-        run: |
-          pip install --upgrade -r requirements.txt
-          pip install numpy # for tests
+        run: uv sync --managed-python
 
-      - name: Build and Install
-        run: |
-          pip install -v .
-
-      - name: Set Python DLL path (non Windows)
-        if: ${{ matrix.os != 'windows' }}
+      - name: Set Python DLL path
         run: |
           echo PYTHONNET_PYDLL=$(python -m find_libpython) >> $GITHUB_ENV
 
