@@ -106,13 +106,24 @@ namespace Python.Runtime
             }
 
             string? name = Runtime.GetManagedString(key);
-            if (name == "__implementation__")
+
+            // Both expose the concrete object, whose type an IClrTypeFilter may
+            // refuse - that must become a Python exception, not unwind through it
+            try
             {
-                return Converter.ToPython(clrObj.inst);
+                if (name == "__implementation__")
+                {
+                    return Converter.ToPython(clrObj.inst);
+                }
+                else if (name == "__raw_implementation__")
+                {
+                    return CLRObject.GetReference(clrObj.inst);
+                }
             }
-            else if (name == "__raw_implementation__")
+            catch (Exception e)
             {
-                return CLRObject.GetReference(clrObj.inst);
+                Exceptions.SetError(e);
+                return default;
             }
 
             return Runtime.PyObject_GenericGetAttr(ob, key);
