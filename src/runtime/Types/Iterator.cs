@@ -42,8 +42,18 @@ namespace Python.Runtime
                 Exceptions.SetError(e);
                 return default;
             }
-            object item = self.iter.Current;
-            return Converter.ToPython(item, self.elemType);
+            // Current and the conversion can both throw - the latter for a type
+            // refused by an IClrTypeFilter - and must not unwind through Python
+            try
+            {
+                object item = self.iter.Current;
+                return Converter.ToPython(item, self.elemType);
+            }
+            catch (Exception e)
+            {
+                Exceptions.SetError(e);
+                return default;
+            }
         }
 
         public static NewReference tp_iter(BorrowedReference ob) => new (ob);

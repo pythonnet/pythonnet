@@ -964,43 +964,54 @@ namespace Python.Runtime
 
             var returnType = binding.info.IsConstructor ? typeof(void) : ((MethodInfo)binding.info).ReturnType;
 
-            if (binding.outs > 0)
+            // Converting the results can fail too - a type refused by an
+            // IClrTypeFilter, for one - and that must become a Python exception
+            // rather than a CLR exception unwinding through the interpreter
+            try
             {
-                ParameterInfo[] pi = binding.info.GetParameters();
-                int c = pi.Length;
-                var n = 0;
-
-                bool isVoid = returnType == typeof(void);
-                int tupleSize = binding.outs + (isVoid ? 0 : 1);
-                using var t = Runtime.PyTuple_New(tupleSize);
-                if (!isVoid)
+                if (binding.outs > 0)
                 {
-                    using var v = Converter.ToPython(result, returnType);
-                    Runtime.PyTuple_SetItem(t.Borrow(), n, v.Steal());
-                    n++;
-                }
+                    ParameterInfo[] pi = binding.info.GetParameters();
+                    int c = pi.Length;
+                    var n = 0;
 
-                for (var i = 0; i < c; i++)
-                {
-                    Type pt = pi[i].ParameterType;
-                    if (pt.IsByRef)
+                    bool isVoid = returnType == typeof(void);
+                    int tupleSize = binding.outs + (isVoid ? 0 : 1);
+                    using var t = Runtime.PyTuple_New(tupleSize);
+                    if (!isVoid)
                     {
-                        using var v = Converter.ToPython(binding.args[i], pt.GetElementType());
+                        using var v = Converter.ToPython(result, returnType);
                         Runtime.PyTuple_SetItem(t.Borrow(), n, v.Steal());
                         n++;
                     }
+
+                    for (var i = 0; i < c; i++)
+                    {
+                        Type pt = pi[i].ParameterType;
+                        if (pt.IsByRef)
+                        {
+                            using var v = Converter.ToPython(binding.args[i], pt.GetElementType());
+                            Runtime.PyTuple_SetItem(t.Borrow(), n, v.Steal());
+                            n++;
+                        }
+                    }
+
+                    if (binding.outs == 1 && returnType == typeof(void))
+                    {
+                        BorrowedReference item = Runtime.PyTuple_GetItem(t.Borrow(), 0);
+                        return new NewReference(item);
+                    }
+
+                    return new NewReference(t.Borrow());
                 }
 
-                if (binding.outs == 1 && returnType == typeof(void))
-                {
-                    BorrowedReference item = Runtime.PyTuple_GetItem(t.Borrow(), 0);
-                    return new NewReference(item);
-                }
-
-                return new NewReference(t.Borrow());
+                return Converter.ToPython(result, returnType);
             }
-
-            return Converter.ToPython(result, returnType);
+            catch (Exception e)
+            {
+                Exceptions.SetError(e);
+                return default;
+            }
         }
     }
 
