@@ -27,6 +27,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
   Python subclass creation (#2721)
 - Fix method binding initialization when methods are first accessed (#2721)
 - Fix wheel and NuGet preview package builds
+- Python exception raised on conversion failure (#2741)
 
 ## 3.1.0 - 2026-05-23
 
