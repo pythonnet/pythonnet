@@ -67,12 +67,12 @@ namespace Python.EmbeddingTest
         {
             dynamic zX = np.array(new[,] { { 1, 2, 3 }, { 4, 5, 6 }, { 8, 9, 0 } });
             dynamic grad = np.gradient(zX, 4.0, 5.0);
-            dynamic grad2 = np.InvokeMethod("gradient", new PyObject[] {zX, new PyFloat(4.0), new PyFloat(5.0)});
+            dynamic grad2 = np.InvokeMethod("gradient", new PyObject[] { zX, new PyFloat(4.0), new PyFloat(5.0) });
 
-            Assert.AreEqual(4.125, grad[0].sum().__float__().As<double>(), 0.001);
-            Assert.AreEqual(-1.2, grad[1].sum().__float__().As<double>(), 0.001);
-            Assert.AreEqual(4.125, grad2[0].sum().__float__().As<double>(), 0.001);
-            Assert.AreEqual(-1.2, grad2[1].sum().__float__().As<double>(), 0.001);
+            Assert.That(grad[0].sum().__float__().As<double>(), Is.EqualTo(4.125).Within(0.001));
+            Assert.That(grad[1].sum().__float__().As<double>(), Is.EqualTo(-1.2).Within(0.001));
+            Assert.That(grad2[0].sum().__float__().As<double>(), Is.EqualTo(4.125).Within(0.001));
+            Assert.That(grad2[1].sum().__float__().As<double>(), Is.EqualTo(-1.2).Within(0.001));
         }
 
 #pragma warning disable IDE1006

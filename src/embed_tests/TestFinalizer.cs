@@ -67,7 +67,8 @@ namespace Python.EmbeddingTest
 
             Warn.If(shortWeak.IsAlive,
                 "shortWeak is alive after FullGCCollect; runtime hasn't reclaimed the wrapper yet",
-                shortWeak);
+                shortWeak.ToString()
+            );
             // longWeak.IsAlive at this point is .NET-GC-implementation-defined
             // (Framework reclaims post-finalize objects more eagerly than Core);
             // intentionally not asserted.

@@ -35,10 +35,10 @@ namespace Python.EmbeddingTest
         {
             dynamic sys = Py.Import("sys");
             sys.testattr = new StringBuilder();
-            Assert.IsNotNull(sys.testattr);
+            Assert.That(sys.testattr, Is.Not.Null);
 
             sys.testattr = null;
-            Assert.IsNull(sys.testattr);
+            Assert.That(sys.testattr, Is.Null);
         }
 
         /// <summary>
@@ -80,7 +80,7 @@ namespace Python.EmbeddingTest
             Assert.That(sys.testattr3.ToString(), Is.EqualTo("True"));
 
             // Compare in .NET
-            Assert.IsTrue(sys.testattr1.Equals(sys.testattr2));
+            Assert.That(sys.testattr1, Is.EqualTo(sys.testattr2));
         }
 
         /// <summary>
@@ -103,7 +103,7 @@ namespace Python.EmbeddingTest
             Assert.That(sys.testattr3.ToString(), Is.EqualTo("True"));
 
             // Compare in .NET
-            Assert.IsTrue(sys.testattr1.Equals(sys.testattr2));
+            Assert.That(sys.testattr1, Is.EqualTo(sys.testattr2));
         }
 
         // regression test for https://github.com/pythonnet/pythonnet/issues/1848
@@ -119,13 +119,13 @@ class MyEnum(enum.IntEnum):
     ERROR = 2
 
 def get_status():
-    return MyEnum.OK 
+    return MyEnum.OK
 "
 );
 
             dynamic MyEnum = scope.Get("MyEnum");
             dynamic status = scope.Get("get_status").Invoke();
-            Assert.IsTrue(status == MyEnum.OK);
+            Assert.That(status, Is.EqualTo(MyEnum.OK));
         }
 
         // regression test for https://github.com/pythonnet/pythonnet/issues/1680
