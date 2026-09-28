@@ -58,7 +58,22 @@ namespace Python.EmbeddingTest {
             }
 
             string result = new UTF8Encoding().GetString(managedArray);
-            Assert.That(result == " " + bufferTestString.Substring(1), Is.True);
+            Assert.That(result, Is.EqualTo($" {bufferTestString.Substring(1)}"));
+        }
+
+        [Test]
+        public void GetPointer()
+        {
+            // create 3D NumPy array
+            int[] shape = [10, 10, 10];
+            using PyObject ndArray = np.zeros(shape);
+
+            using PyBuffer buf = ndArray.GetBuffer(PyBUF.STRIDES);
+
+            // this throws System.ExecutionEngineException
+            var ptr = buf.GetPointer([0, 0, 0]);
+
+            Assert.That(ptr, Is.Not.EqualTo(IntPtr.Zero));
         }
 
         [Test]
