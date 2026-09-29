@@ -93,6 +93,20 @@ Forgetting this is the most common pythonnet threading bug.  Symptoms range
 from immediate segfaults to subtle refcount corruption that crashes much
 later.
 
+Mono thread suspension
+----------------------
+
+On Linux and macOS, Mono's cooperative/hybrid thread suspension can hang
+when Python and managed threads interact. If affected, set
+``MONO_THREADS_SUSPEND=preemptive`` before starting the process, as described
+in `mono/mono#21466 <https://github.com/mono/mono/issues/21466>`_.
+CI uses this workaround for both embedding and Python-hosted tests.
+
+To run the Mono Python tests with per-test output and a Python thread
+stack dump if a test takes longer than 60 seconds::
+
+    MONO_THREADS_SUSPEND=preemptive uv run pytest --runtime mono -v -o faulthandler_timeout=60
+
 Reference counting and finalizers
 ---------------------------------
 
