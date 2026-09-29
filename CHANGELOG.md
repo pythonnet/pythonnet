@@ -5,7 +5,7 @@ project adheres to [Semantic Versioning][].
 
 This document follows the conventions laid out in [Keep a CHANGELOG][].
 
-## Unreleased
+## 3.2.0 - 2026-09-29
 
 ### Added
 
@@ -28,6 +28,8 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 - Fix method binding initialization when methods are first accessed (#2721)
 - Fix wheel and NuGet preview package builds
 - Python exception raised on conversion failure (#2741)
+- Introduce additional pre-checks in `PyBuffer_GetPointer` to prevent memory
+  corruption (#2745)
 
 ## 3.1.0 - 2026-05-23
 
