@@ -35,6 +35,12 @@ namespace Python.Runtime
                 throw new ArgumentException("object is not a type");
         }
 
+        /// <summary>
+        /// Create a new PyType instance of this object, bumping the reference
+        /// count.
+        /// </summary>
+        public new PyType NewReference() => new(this);
+
         protected PyType(SerializationInfo info, StreamingContext context) : base(info, context) { }
 
         internal new static PyType? FromNullableReference(BorrowedReference reference)
@@ -53,7 +59,7 @@ namespace Python.Runtime
                 {
                     RawPointer = Util.ReadIntPtr(this, TypeOffset.tp_name),
                 };
-                return namePtr.ToString(System.Text.Encoding.UTF8)!;
+                return namePtr.ToString(Encodings.UTF8)!;
             }
         }
 

@@ -10,25 +10,14 @@ namespace Python.EmbeddingTest
 {
     public class TestPyType
     {
-        [OneTimeSetUp]
-        public void SetUp()
-        {
-            PythonEngine.Initialize();
-        }
-
-        [OneTimeTearDown]
-        public void Dispose()
-        {
-            PythonEngine.Shutdown();
-        }
-
         [Test]
         public void CanCreateHeapType()
         {
             const string name = "nÁmæ";
             const string docStr = "dÁcæ";
 
-            using var doc = new StrPtr(docStr, Encoding.UTF8);
+            using var doc = new StrPtr(docStr);
+
             var spec = new TypeSpec(
                 name: name,
                 basicSize: Util.ReadInt32(Runtime.Runtime.PyBaseObjectType, TypeOffset.tp_basicsize),
@@ -39,9 +28,9 @@ namespace Python.EmbeddingTest
             );
 
             using var type = new PyType(spec);
-            Assert.AreEqual(name, type.GetAttr("__name__").As<string>());
-            Assert.AreEqual(name, type.Name);
-            Assert.AreEqual(docStr, type.GetAttr("__doc__").As<string>());
+            Assert.That(type.GetAttr("__name__").As<string>(), Is.EqualTo(name));
+            Assert.That(type.Name, Is.EqualTo(name));
+            Assert.That(type.GetAttr("__doc__").As<string>(), Is.EqualTo(docStr));
         }
     }
 }

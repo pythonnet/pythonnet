@@ -88,3 +88,6 @@ def test_nested_type():
 
 def test_import_after_reload():
     _run_test("import_after_reload")
+
+def test_import_after_reload():
+    _run_test("test_serialize_unserializable_object")

@@ -53,4 +53,11 @@ static class ReflectionUtil
         flags |= accessor.IsPublic ? BindingFlags.Public : BindingFlags.NonPublic;
         return flags;
     }
+
+    public static Type? TryGetGenericDefinition(this Type type)
+    {
+        if (type is null) throw new ArgumentNullException(nameof(type));
+
+        return type.IsConstructedGenericType ? type.GetGenericTypeDefinition() : null;
+    }
 }

@@ -20,7 +20,7 @@ namespace Python.EmbeddingTest
             };
 
             var got = group.GetEncoders(typeof(Uri)).ToArray();
-            CollectionAssert.AreEqual(new[]{encoder1, encoder2}, got);
+            Assert.That(got, Is.EqualTo(new[] { encoder1, encoder2 }).AsCollection);
         }
 
         [Test]
@@ -31,9 +31,13 @@ namespace Python.EmbeddingTest
                 new ObjectToEncoderInstanceEncoder<Uri>(),
             };
 
-            Assert.IsTrue(group.CanEncode(typeof(Tuple<int>)));
-            Assert.IsTrue(group.CanEncode(typeof(Uri)));
-            Assert.IsFalse(group.CanEncode(typeof(string)));
+            Assert.Multiple(() =>
+            {
+                Assert.That(group.CanEncode(typeof(Tuple<int>)), Is.True);
+                Assert.That(group.CanEncode(typeof(Uri)), Is.True);
+                Assert.That(group.CanEncode(typeof(string)), Is.False);
+            });
+
         }
 
         [Test]
@@ -50,12 +54,12 @@ namespace Python.EmbeddingTest
 
             var uri = group.TryEncode(new Uri("data:"));
             var clrObject = (CLRObject)ManagedType.GetManagedObject(uri);
-            Assert.AreSame(encoder1, clrObject.inst);
-            Assert.AreNotSame(encoder2, clrObject.inst);
+            Assert.That(clrObject.inst, Is.SameAs(encoder1));
+            Assert.That(clrObject.inst, Is.Not.SameAs(encoder2));
 
             var tuple = group.TryEncode(Tuple.Create(1));
             clrObject = (CLRObject)ManagedType.GetManagedObject(tuple);
-            Assert.AreSame(encoder0, clrObject.inst);
+            Assert.That(clrObject.inst, Is.SameAs(encoder0));
         }
 
         [Test]
@@ -72,11 +76,11 @@ namespace Python.EmbeddingTest
             };
 
             var decoder = group.GetDecoder(pyfloat, typeof(string));
-            Assert.AreSame(decoder2, decoder);
+            Assert.That(decoder, Is.SameAs(decoder2));
             decoder = group.GetDecoder(pystr, typeof(string));
-            Assert.IsNull(decoder);
+            Assert.That(decoder, Is.Null);
             decoder = group.GetDecoder(pyint, typeof(long));
-            Assert.AreSame(decoder1, decoder);
+            Assert.That(decoder, Is.SameAs(decoder1));
         }
         [Test]
         public void CanDecode()
@@ -91,10 +95,14 @@ namespace Python.EmbeddingTest
                 decoder2,
             };
 
-            Assert.IsTrue(group.CanDecode(pyint, typeof(long)));
-            Assert.IsFalse(group.CanDecode(pyint, typeof(int)));
-            Assert.IsTrue(group.CanDecode(pyfloat, typeof(string)));
-            Assert.IsFalse(group.CanDecode(pystr, typeof(string)));
+            Assert.Multiple(() =>
+            {
+                Assert.That(group.CanDecode(pyint, typeof(long)));
+                Assert.That(group.CanDecode(pyint, typeof(int)), Is.False);
+                Assert.That(group.CanDecode(pyfloat, typeof(string)));
+                Assert.That(group.CanDecode(pystr, typeof(string)), Is.False);
+            });
+
         }
 
         [Test]
@@ -109,24 +117,14 @@ namespace Python.EmbeddingTest
                 decoder2,
             };
 
-            Assert.IsTrue(group.TryDecode(new PyInt(10), out long longResult));
-            Assert.AreEqual(42, longResult);
-            Assert.IsTrue(group.TryDecode(new PyFloat(10), out string strResult));
-            Assert.AreSame("atad:", strResult);
-
-            Assert.IsFalse(group.TryDecode(new PyInt(10), out int _));
-        }
-
-        [SetUp]
-        public void SetUp()
-        {
-            PythonEngine.Initialize();
-        }
-
-        [TearDown]
-        public void Dispose()
-        {
-            PythonEngine.Shutdown();
+            Assert.Multiple(() =>
+            {
+                Assert.That(group.TryDecode(new PyInt(10), out long longResult));
+                Assert.That(longResult, Is.EqualTo(42));
+                Assert.That(group.TryDecode(new PyFloat(10), out string strResult));
+                Assert.That(strResult, Is.SameAs("atad:"));
+                Assert.That(group.TryDecode(new PyInt(10), out int _), Is.False);
+            });
         }
     }
 }

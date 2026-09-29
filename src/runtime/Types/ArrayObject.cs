@@ -191,7 +191,7 @@ namespace Python.Runtime
 
                 value = items.GetValue(index);
 
-                return Converter.ToPython(value, itemType);
+                return ItemToPython(value, itemType);
             }
 
             // Multi-dimensional arrays can be indexed a la: list[1, 2, 3].
@@ -238,7 +238,22 @@ namespace Python.Runtime
 
             value = items.GetValue(indices);
 
-            return Converter.ToPython(value, itemType);
+            return ItemToPython(value, itemType);
+        }
+
+        // The conversion can throw - for a type refused by an IClrTypeFilter, say -
+        // and that must become a Python exception rather than unwinding through it
+        static NewReference ItemToPython(object? value, Type itemType)
+        {
+            try
+            {
+                return Converter.ToPython(value, itemType);
+            }
+            catch (Exception e)
+            {
+                Exceptions.SetError(e);
+                return default;
+            }
         }
 
 
@@ -247,6 +262,12 @@ namespace Python.Runtime
         /// </summary>
         public static int mp_ass_subscript(BorrowedReference ob, BorrowedReference idx, BorrowedReference v)
         {
+            if (v.IsNull)
+            {
+                Exceptions.RaiseTypeError("'System.Array' object does not support item deletion");
+                return -1;
+            }
+
             var obj = (CLRObject)GetManagedObject(ob)!;
             var items = (Array)obj.inst;
             Type itemType = obj.inst.GetType().GetElementType();

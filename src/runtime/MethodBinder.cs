@@ -26,8 +26,10 @@ namespace Python.Runtime
         [NonSerialized]
         public MethodBase[]? methods;
 
+        // volatile + lock: first-time GetMethods() races would otherwise sort `list`
+        // concurrently and publish a partial methods array.
         [NonSerialized]
-        public bool init = false;
+        public volatile bool init = false;
 
         public const bool DefaultAllowThreads = true;
         public bool allow_threads = DefaultAllowThreads;
@@ -52,6 +54,11 @@ namespace Python.Runtime
         internal void AddMethod(MethodBase m)
         {
             list.Add(m);
+        }
+
+        internal void AddRange(IEnumerable<MethodBase> methods)
+        {
+            list.AddRange(methods.Select(m => new MaybeMethodBase(m)));
         }
 
         /// <summary>
@@ -184,14 +191,42 @@ namespace Python.Runtime
         /// </summary>
         internal MethodBase[] GetMethods()
         {
-            if (!init)
+            if (init) return methods!;
+            lock (list)
             {
-                // I'm sure this could be made more efficient.
-                list.Sort(new MethodSorter());
-                methods = (from method in list where method.Valid select method.Value).ToArray();
+                if (init) return methods!;
+
+                // Filter invalid + precompute precedence (GetParameters allocates) in one
+                // pass so the comparator only does cheap int/type compares O(N log N) times.
+                var pairs = new List<KeyValuePair<MethodBase, int>>(list.Count);
+                foreach (var m in list)
+                {
+                    if (m.Valid) pairs.Add(new(m.Value, GetPrecedence(m.Value)));
+                }
+                if (pairs.Count > 1) pairs.Sort(CompareByDeclaringTypeThenPrecedence);
+
+                var arr = new MethodBase[pairs.Count];
+                for (int i = 0; i < pairs.Count; i++) arr[i] = pairs[i].Key;
+                methods = arr;
                 init = true;
+                return methods!;
             }
-            return methods!;
+        }
+
+        /// <summary>
+        /// Sort key for <see cref="GetMethods"/>: derived-class methods come before
+        /// their base, otherwise by precomputed precedence (lower wins).
+        /// </summary>
+        private static int CompareByDeclaringTypeThenPrecedence(
+            KeyValuePair<MethodBase, int> a, KeyValuePair<MethodBase, int> b)
+        {
+            Type ta = a.Key.DeclaringType, tb = b.Key.DeclaringType;
+            if (ta != tb)
+            {
+                if (ta.IsAssignableFrom(tb)) return 1;
+                if (tb.IsAssignableFrom(ta)) return -1;
+            }
+            return a.Value.CompareTo(b.Value);
         }
 
         /// <summary>
@@ -929,91 +964,54 @@ namespace Python.Runtime
 
             var returnType = binding.info.IsConstructor ? typeof(void) : ((MethodInfo)binding.info).ReturnType;
 
-            if (binding.outs > 0)
+            // Converting the results can fail too - a type refused by an
+            // IClrTypeFilter, for one - and that must become a Python exception
+            // rather than a CLR exception unwinding through the interpreter
+            try
             {
-                ParameterInfo[] pi = binding.info.GetParameters();
-                int c = pi.Length;
-                var n = 0;
-
-                bool isVoid = returnType == typeof(void);
-                int tupleSize = binding.outs + (isVoid ? 0 : 1);
-                using var t = Runtime.PyTuple_New(tupleSize);
-                if (!isVoid)
+                if (binding.outs > 0)
                 {
-                    using var v = Converter.ToPython(result, returnType);
-                    Runtime.PyTuple_SetItem(t.Borrow(), n, v.Steal());
-                    n++;
-                }
+                    ParameterInfo[] pi = binding.info.GetParameters();
+                    int c = pi.Length;
+                    var n = 0;
 
-                for (var i = 0; i < c; i++)
-                {
-                    Type pt = pi[i].ParameterType;
-                    if (pt.IsByRef)
+                    bool isVoid = returnType == typeof(void);
+                    int tupleSize = binding.outs + (isVoid ? 0 : 1);
+                    using var t = Runtime.PyTuple_New(tupleSize);
+                    if (!isVoid)
                     {
-                        using var v = Converter.ToPython(binding.args[i], pt.GetElementType());
+                        using var v = Converter.ToPython(result, returnType);
                         Runtime.PyTuple_SetItem(t.Borrow(), n, v.Steal());
                         n++;
                     }
+
+                    for (var i = 0; i < c; i++)
+                    {
+                        Type pt = pi[i].ParameterType;
+                        if (pt.IsByRef)
+                        {
+                            using var v = Converter.ToPython(binding.args[i], pt.GetElementType());
+                            Runtime.PyTuple_SetItem(t.Borrow(), n, v.Steal());
+                            n++;
+                        }
+                    }
+
+                    if (binding.outs == 1 && returnType == typeof(void))
+                    {
+                        BorrowedReference item = Runtime.PyTuple_GetItem(t.Borrow(), 0);
+                        return new NewReference(item);
+                    }
+
+                    return new NewReference(t.Borrow());
                 }
 
-                if (binding.outs == 1 && returnType == typeof(void))
-                {
-                    BorrowedReference item = Runtime.PyTuple_GetItem(t.Borrow(), 0);
-                    return new NewReference(item);
-                }
-
-                return new NewReference(t.Borrow());
+                return Converter.ToPython(result, returnType);
             }
-
-            return Converter.ToPython(result, returnType);
-        }
-    }
-
-
-    /// <summary>
-    /// Utility class to sort method info by parameter type precedence.
-    /// </summary>
-    internal class MethodSorter : IComparer<MaybeMethodBase>
-    {
-        int IComparer<MaybeMethodBase>.Compare(MaybeMethodBase m1, MaybeMethodBase m2)
-        {
-            MethodBase me1 = m1.UnsafeValue;
-            MethodBase me2 = m2.UnsafeValue;
-            if (me1 == null && me2 == null)
+            catch (Exception e)
             {
-                return 0;
+                Exceptions.SetError(e);
+                return default;
             }
-            else if (me1 == null)
-            {
-                return -1;
-            }
-            else if (me2 == null)
-            {
-                return 1;
-            }
-
-            if (me1.DeclaringType != me2.DeclaringType)
-            {
-                // m2's type derives from m1's type, favor m2
-                if (me1.DeclaringType.IsAssignableFrom(me2.DeclaringType))
-                    return 1;
-
-                // m1's type derives from m2's type, favor m1
-                if (me2.DeclaringType.IsAssignableFrom(me1.DeclaringType))
-                    return -1;
-            }
-
-            int p1 = MethodBinder.GetPrecedence(me1);
-            int p2 = MethodBinder.GetPrecedence(me2);
-            if (p1 < p2)
-            {
-                return -1;
-            }
-            if (p1 > p2)
-            {
-                return 1;
-            }
-            return 0;
         }
     }
 

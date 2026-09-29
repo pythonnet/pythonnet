@@ -1,24 +1,27 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
+
 using NUnit.Framework;
+
 using Python.Runtime;
 using Python.Runtime.Codecs;
 
-namespace Python.EmbeddingTest {
+namespace Python.EmbeddingTest
+{
     class TestPyBuffer
     {
         [OneTimeSetUp]
         public void SetUp()
         {
-            PythonEngine.Initialize();
             TupleCodec<ValueTuple>.Register();
         }
 
         [OneTimeTearDown]
         public void Dispose()
         {
-            PythonEngine.Shutdown();
+            PyObjectConversions.Reset();
         }
 
         [Test]
@@ -38,7 +41,7 @@ namespace Python.EmbeddingTest {
             }
 
             string result = pythonArray.InvokeMethod("decode", "utf-8".ToPython()).As<string>();
-            Assert.IsTrue(result == bufferTestString2);
+            Assert.That(result == bufferTestString2, Is.True);
         }
 
         [Test]
@@ -58,17 +61,53 @@ namespace Python.EmbeddingTest {
             }
 
             string result = new UTF8Encoding().GetString(managedArray);
-            Assert.IsTrue(result == " " + bufferTestString.Substring(1));
+            Assert.That(result, Is.EqualTo($" {bufferTestString.Substring(1)}"));
+        }
+
+        [Test]
+        public void GetPointer()
+        {
+            // create 3D NumPy array
+            int[] shape = [10, 10, 10];
+            using PyObject ndArray = np.zeros(shape);
+
+            using PyBuffer buf = ndArray.GetBuffer(PyBUF.STRIDES);
+
+            var ptr = buf.GetPointer([0, 0, 0]);
+
+            Assert.That(ptr, Is.Not.EqualTo(IntPtr.Zero));
+
+            var ptrEnd = buf.GetPointer([9, 9, 9]);
+            Assert.That(ptrEnd, Is.Not.EqualTo(IntPtr.Zero));
+
+            Assert.Throws<ArgumentNullException>(() => buf.GetPointer(null!));
+
+            Assert.Throws<ArgumentOutOfRangeException>(() => buf.GetPointer([0, 0]));
+            Assert.Throws<ArgumentOutOfRangeException>(() => buf.GetPointer([0, 0, 0, 0]));
+
+            Assert.Throws<ArgumentOutOfRangeException>(() => buf.GetPointer([-1, 0, 0]));
+            Assert.Throws<ArgumentOutOfRangeException>(() => buf.GetPointer([0, -1, 0]));
+            Assert.Throws<ArgumentOutOfRangeException>(() => buf.GetPointer([0, 0, -1]));
+
+            Assert.Throws<ArgumentOutOfRangeException>(() => buf.GetPointer([10, 0, 0]));
+            Assert.Throws<ArgumentOutOfRangeException>(() => buf.GetPointer([0, 10, 0]));
+            Assert.Throws<ArgumentOutOfRangeException>(() => buf.GetPointer([0, 0, 10]));
+
+            using PyBuffer buf2 = ndArray.GetBuffer(PyBUF.ND);
+
+            Assert.Throws<InvalidOperationException>(
+                () => buf2.GetPointer([0, 0, 0])
+            );
         }
 
         [Test]
         public void ArrayHasBuffer()
         {
-            var array = new[,] {{1, 2}, {3,4}};
+            var array = new[,] { { 1, 2 }, { 3, 4 } };
             var memoryView = PythonEngine.Eval("memoryview");
             var mem = memoryView.Invoke(array.ToPython());
-            Assert.AreEqual(1, mem[(0, 0).ToPython()].As<int>());
-            Assert.AreEqual(array[1,0], mem[(1, 0).ToPython()].As<int>());
+            Assert.That(mem[(0, 0).ToPython()].As<int>(), Is.EqualTo(1));
+            Assert.That(mem[(1, 0).ToPython()].As<int>(), Is.EqualTo(array[1, 0]));
         }
 
         [Test]
@@ -77,14 +116,14 @@ namespace Python.EmbeddingTest {
             using var _ = Py.GIL();
             using var arr = ByteArrayFromAsciiString("hello world! !$%&/()=?");
 
-            Assert.AreEqual(1, arr.Refcount);
+            Assert.That(arr.Refcount, Is.EqualTo(1));
 
             using (PyBuffer buf = arr.GetBuffer())
             {
-                Assert.AreEqual(2, arr.Refcount);
+                Assert.That(arr.Refcount, Is.EqualTo(2));
             }
 
-            Assert.AreEqual(1, arr.Refcount);
+            Assert.That(arr.Refcount, Is.EqualTo(1));
         }
 
         [Test]
@@ -99,7 +138,7 @@ namespace Python.EmbeddingTest {
             using var _ = Py.GIL();
             using var arr = ByteArrayFromAsciiString("hello world! !$%&/()=?");
 
-            Assert.AreEqual(1, arr.Refcount);
+            Assert.That(arr.Refcount, Is.EqualTo(1));
 
             MakeBufAndLeak(arr);
 
@@ -107,13 +146,13 @@ namespace Python.EmbeddingTest {
             GC.WaitForPendingFinalizers();
             Finalizer.Instance.Collect();
 
-            Assert.AreEqual(1, arr.Refcount);
+            Assert.That(arr.Refcount, Is.EqualTo(1));
         }
 
         [Test]
         public void MultidimensionalNumPyArray()
         {
-            var ndarray = np.arange(24).reshape(1,2,3,4).T;
+            var ndarray = np.arange(24).reshape(1, 2, 3, 4).T;
             PyObject ndim = ndarray.ndim;
             PyObject shape = ndarray.shape;
             PyObject strides = ndarray.strides;
@@ -128,6 +167,42 @@ namespace Python.EmbeddingTest {
                 Assert.That(buf.Strides, Is.EqualTo(strides.As<long[]>()));
                 Assert.That(buf.IsContiguous(BufferOrderStyle.C), Is.EqualTo(contiguous.As<bool>()));
             });
+        }
+
+        [Test]
+        public void ConcurrentDispose()
+        {
+            // Two threads racing on Dispose() must not double-release the view —
+            // Interlocked.Exchange on disposedValue gates PyBuffer_Release.
+            // Smoke test: no crash, exception, or buffer-protocol violation.
+            using var _ = Py.GIL();
+            using var arr = ByteArrayFromAsciiString("hello world! !$%&/()=?");
+
+            const int iterations = 200;
+            for (int i = 0; i < iterations; i++)
+            {
+                PyBuffer buf = arr.GetBuffer();
+
+                IntPtr ts = PythonEngine.BeginAllowThreads();
+                using var barrier = new Barrier(2);
+                Exception captured = null;
+                Action race = () =>
+                {
+                    try
+                    {
+                        barrier.SignalAndWait();
+                        using (Py.GIL()) buf.Dispose();
+                    }
+                    catch (Exception ex) { Interlocked.CompareExchange(ref captured, ex, null); }
+                };
+                var t1 = new Thread(() => race());
+                var t2 = new Thread(() => race());
+                t1.Start(); t2.Start();
+                t1.Join(); t2.Join();
+                PythonEngine.EndAllowThreads(ts);
+
+                if (captured != null) throw captured;
+            }
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]

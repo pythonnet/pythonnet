@@ -9,88 +9,99 @@ on:
 jobs:
   build-test:
     name: Build and Test
-    runs-on: ${{ matrix.os }}-latest
-    timeout-minutes: 15
+    runs-on: ${{ matrix.os.instance }}
+    timeout-minutes: 30
 
     strategy:
       fail-fast: false
       matrix:
-        os: [windows, ubuntu, macos]
-        python: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
-        platform: [x64, x86]
+        os:
+          - category: windows
+            platform: x86
+            instance: windows-latest
+            suffix:   -windows-x86-none
+
+          - category: windows
+            platform: x64
+            instance: windows-latest
+            suffix:   -windows-x86_64-none
+
+          - category: ubuntu
+            platform: x64
+            instance: ubuntu-22.04
+            suffix:   ""
+
+          - category: ubuntu
+            platform: arm64
+            instance: ubuntu-22.04-arm
+            suffix:   ""
+
+          - category: macos
+            platform: arm64
+            instance: macos-15
+            suffix:   ""
+
+        python: ["3.11", "3.12", "3.13", "3.14", "3.14t", "3.15", "3.15t"]
+
         exclude:
-          - os: ubuntu
-            platform: x86
-          - os: macos
-            platform: x86
+          # fails to call mono methods
+          - os:
+              category: windows
+              platform: x86
+            python: '3.13'
 
+    env:
+      NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
+      # Apply to every Mono host, including pytest and the .NET Python test runner.
+      MONO_THREADS_SUSPEND: preemptive # https://github.com/mono/mono/issues/21466
     steps:
-      - name: Set Environment on macOS
-        uses: maxim-lobanov/setup-xamarin@v1
-        if: ${{ matrix.os == 'macos' }}
-        with:
-          mono-version: latest
-
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v7
 
+      # Use main until support for architecture lands
       - name: Setup .NET
-        uses: actions/setup-dotnet@v1
+        uses: actions/setup-dotnet@main
         with:
-          dotnet-version: '6.0.x'
+          dotnet-version: '10.0'
+          architecture: ${{ matrix.os.platform }}
+
+      - run: dotnet restore
+
+      - name: Install Mono
+        uses: pythonnet/clr-loader/.github/actions/install-mono@main
+        with:
+          arch: ${{ matrix.os.platform }}
 
       - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@v2
+        uses: astral-sh/setup-uv@v7
         with:
-          python-version: ${{ matrix.python }}
-          architecture: ${{ matrix.platform }}
+          python-version: cpython-${{ matrix.python }}${{ matrix.os.suffix }}
+          cache-python: true
+          activate-environment: true
+          enable-cache: true
 
-      - name: Install dependencies
-        run: |
-          pip install --upgrade -r requirements.txt
-          pip install numpy # for tests
+      - name: Synchronize the virtual environment
+        run: uv sync --managed-python
 
-      - name: Build and Install
-        run: |
-          pip install -v .
+      - name: Embedding tests (Mono/.NET Framework)
+        if: always()
+        run: dotnet test --runtime any-${{ matrix.os.platform }} --framework net472 --logger "console;verbosity=detailed" src/embed_tests/
 
-      - name: Set Python DLL path and PYTHONHOME (non Windows)
-        if: ${{ matrix.os != 'windows' }}
-        run: |
-          echo PYTHONNET_PYDLL=$(python -m find_libpython) >> $GITHUB_ENV
-          echo PYTHONHOME=$(python -c 'import sys; print(sys.prefix)') >> $GITHUB_ENV
+      - name: Embedding tests (.NET Core)
+        if: always()
+        run: dotnet test --runtime any-${{ matrix.os.platform }} --framework net10.0 --logger "console;verbosity=detailed" src/embed_tests/
 
-      - name: Set Python DLL path and PYTHONHOME (Windows)
-        if: ${{ matrix.os == 'windows' }}
-        run: |
-          Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append -InputObject "PYTHONNET_PYDLL=$(python -m find_libpython)"
-          Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append -InputObject "PYTHONHOME=$(python -c 'import sys; print(sys.prefix)')"
-
-      - name: Embedding tests
-        run: dotnet test --runtime any-${{ matrix.platform }} --logger "console;verbosity=detailed" src/embed_tests/
-        env:
-          MONO_THREADS_SUSPEND: preemptive # https://github.com/mono/mono/issues/21466
-
-      - name: Python Tests (Mono)
-        if: ${{ matrix.os != 'windows' }}
-        run: pytest --runtime mono
-
-      # TODO: Run these tests on Windows x86
       - name: Python Tests (.NET Core)
-        if: ${{ matrix.platform == 'x64' }}
+        if: always()
         run: pytest --runtime coreclr
 
+      - name: Python Tests (Mono)
+        if: always()
+        run: uv run pytest --runtime mono -v -o faulthandler_timeout=60
+
       - name: Python Tests (.NET Framework)
-        if: ${{ matrix.os == 'windows' }}
+        if: ${{ matrix.os.category == 'windows' }}
         run: pytest --runtime netfx
 
       - name: Python tests run from .NET
-        run: dotnet test --runtime any-${{ matrix.platform }} src/python_tests_runner/
-
-      - name: Perf tests
-        if: ${{ (matrix.python == '3.8') && (matrix.platform == 'x64') }}
-        run: |
-          pip install --force --no-deps --target src/perf_tests/baseline/ pythonnet==2.5.2
-          dotnet test --configuration Release --runtime any-${{ matrix.platform }} --logger "console;verbosity=detailed" src/perf_tests/
-
-      # TODO: Run mono tests on Windows?
+        run: dotnet test --runtime any-${{ matrix.os.platform }} src/python_tests_runner/

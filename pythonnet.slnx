@@ -1,0 +1,49 @@
+<Solution>
+  <Configurations>
+    <BuildType Name="Debug" />
+    <BuildType Name="Release" />
+    <BuildType Name="TraceAlloc" />
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/Build/">
+    <File Path="Directory.Build.props" />
+  </Folder>
+  <Folder Name="/CI/">
+    <File Path=".github/workflows/ARM.yml" />
+    <File Path=".github/workflows/main.yml" />
+    <File Path=".github/workflows/nuget-preview.yml" />
+  </Folder>
+  <Folder Name="/Repo/">
+    <File Path=".editorconfig" />
+    <File Path=".gitignore" />
+    <File Path="CHANGELOG.md" />
+    <File Path="LICENSE" />
+    <File Path="README.rst" />
+    <File Path="shell.nix" />
+    <File Path="version.txt" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path="setup.py" />
+  </Folder>
+  <Folder Name="/Tools/">
+    <File Path="tools/geninterop/geninterop.py" />
+  </Folder>
+  <Project Path="src/embed_tests/Python.EmbeddingTest.csproj">
+    <BuildType Solution="TraceAlloc|*" Project="Debug" />
+  </Project>
+  <Project Path="src/python_tests_runner/Python.PythonTestsRunner.csproj">
+    <BuildType Solution="TraceAlloc|*" Project="Debug" />
+  </Project>
+  <Project Path="src/runtime/Python.Runtime.csproj">
+    <BuildType Solution="TraceAlloc|x64" Project="Debug" />
+    <BuildType Solution="TraceAlloc|x86" Project="Debug" />
+  </Project>
+  <Project Path="src/testing/Python.Test.csproj">
+    <BuildType Solution="TraceAlloc|*" Project="Debug" />
+  </Project>
+  <Project Path="tests/domain_tests/Python.DomainReloadTests.csproj">
+    <BuildType Solution="TraceAlloc|*" Project="Debug" />
+  </Project>
+</Solution>

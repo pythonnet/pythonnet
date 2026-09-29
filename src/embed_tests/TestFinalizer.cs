@@ -17,7 +17,6 @@ namespace Python.EmbeddingTest
         public void SetUp()
         {
             _oldThreshold = Finalizer.Instance.Threshold;
-            PythonEngine.Initialize();
             Exceptions.Clear();
         }
 
@@ -25,20 +24,20 @@ namespace Python.EmbeddingTest
         public void TearDown()
         {
             Finalizer.Instance.Threshold = _oldThreshold;
-            PythonEngine.Shutdown();
         }
 
         private static void FullGCCollect()
         {
             GC.Collect();
             GC.WaitForPendingFinalizers();
+            GC.Collect(); // reclaim objects whose finalizers just ran
         }
 
         [Test]
         [Obsolete("GC tests are not guaranteed")]
         public void CollectBasicObject()
         {
-            Assert.IsTrue(Finalizer.Instance.Enable);
+            Assert.That(Finalizer.Instance.Enable, Is.True);
 
             Finalizer.Instance.Threshold = 1;
             bool called = false;
@@ -49,32 +48,33 @@ namespace Python.EmbeddingTest
                 called = true;
             };
 
-            Assert.IsFalse(called, "The event handler was called before it was installed");
+            Assert.That(called, Is.False, "The event handler was called before it was installed");
             Finalizer.Instance.BeforeCollect += handler;
 
             IntPtr pyObj = MakeAGarbage(out var shortWeak, out var longWeak);
-            FullGCCollect();
-            // The object has been resurrected
-            Warn.If(
-                shortWeak.IsAlive,
-                "The referenced object is alive although it should have been collected",
-                shortWeak
-            );
-            Assert.IsTrue(
-                longWeak.IsAlive,
-                "The reference object is not alive although it should still be",
-                longWeak
-            );
 
+            // The real contract: after the wrapper is GC'd, the underlying
+            // Python pointer must end up in Finalizer's queue.  Poll because
+            // .NET Framework / .NET Core differ in how many GC cycles it takes.
+            List<IntPtr> garbage = null;
+            for (int attempt = 0; attempt < 10; attempt++)
             {
-                var garbage = Finalizer.Instance.GetCollectedObjects();
-                Assert.NotZero(garbage.Count, "There should still be garbage around");
-                Warn.Unless(
-                    garbage.Contains(pyObj),
-                    $"The {nameof(longWeak)} reference doesn't show up in the garbage list",
-                    garbage
-                );
+                FullGCCollect();
+                garbage = Finalizer.Instance.GetCollectedObjects();
+                if (garbage.Contains(pyObj)) break;
+                Thread.Sleep(20);
             }
+
+            Warn.If(shortWeak.IsAlive,
+                "shortWeak is alive after FullGCCollect; runtime hasn't reclaimed the wrapper yet",
+                shortWeak.ToString()
+            );
+            // longWeak.IsAlive at this point is .NET-GC-implementation-defined
+            // (Framework reclaims post-finalize objects more eagerly than Core);
+            // intentionally not asserted.
+
+            Assert.That(garbage, Has.Member(pyObj),
+                "PyObject did not reach Finalizer.Instance.GetCollectedObjects()");
             try
             {
                 Finalizer.Instance.Collect();
@@ -83,20 +83,22 @@ namespace Python.EmbeddingTest
             {
                 Finalizer.Instance.BeforeCollect -= handler;
             }
-            Assert.IsTrue(called, "The event handler was not called during finalization");
+            Assert.That(called, Is.True, "The event handler was not called during finalization");
             Assert.GreaterOrEqual(objectCount, 1);
         }
 
         [Test]
+        [Ignore("Requires explicit shutdown")]
         [Obsolete("GC tests are not guaranteed")]
         public void CollectOnShutdown()
         {
             IntPtr op = MakeAGarbage(out var shortWeak, out var longWeak);
             FullGCCollect();
-            Assert.IsFalse(shortWeak.IsAlive);
+            Assert.That(shortWeak.IsAlive, Is.False);
             List<IntPtr> garbage = Finalizer.Instance.GetCollectedObjects();
             Assert.IsNotEmpty(garbage, "The garbage object should be collected");
-            Assert.IsTrue(garbage.Contains(op),
+            Assert.That(garbage.Contains(op),
+                Is.True,
                 "Garbage should contains the collected object");
 
             PythonEngine.Shutdown();
@@ -133,7 +135,7 @@ namespace Python.EmbeddingTest
                 handle = obj.Handle;
             });
             garbageGen.Start();
-            Assert.IsTrue(garbageGen.Join(TimeSpan.FromSeconds(5)), "Garbage creation timed out");
+            Assert.That(garbageGen.Join(TimeSpan.FromSeconds(5)), Is.True, "Garbage creation timed out");
             shortWeak = @short;
             longWeak = @long;
             return handle;
@@ -209,8 +211,8 @@ namespace Python.EmbeddingTest
             Finalizer.IncorrectRefCntHandler handler = (s, e) =>
             {
                 called = true;
-                Assert.AreEqual(ptr, e.Handle);
-                Assert.AreEqual(2, e.ImpactedObjects.Count);
+                Assert.That(e.Handle, Is.EqualTo(ptr));
+                Assert.That(e.ImpactedObjects.Count, Is.EqualTo(2));
                 // Fix for this test, don't do this on general environment
 #pragma warning disable CS0618 // Type or member is obsolete
                 Runtime.Runtime.XIncref(e.Reference);
@@ -223,7 +225,7 @@ namespace Python.EmbeddingTest
                 ptr = CreateStringGarbage();
                 FullGCCollect();
                 Assert.Throws<Finalizer.IncorrectRefCountException>(() => Finalizer.Instance.Collect());
-                Assert.IsTrue(called);
+                Assert.That(called, Is.True);
             }
             finally
             {

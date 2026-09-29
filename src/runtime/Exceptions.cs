@@ -270,7 +270,7 @@ namespace Python.Runtime
             }
 
             using var warn = Runtime.PyObject_GetAttrString(warnings_module.obj, "warn");
-            Exceptions.ErrorCheck(warn.Borrow());
+            warn.BorrowOrThrow();
 
             using var argsTemp = Runtime.PyTuple_New(3);
             BorrowedReference args = argsTemp.BorrowOrThrow();
@@ -283,7 +283,7 @@ namespace Python.Runtime
             Runtime.PyTuple_SetItem(args, 2, level.StealOrThrow());
 
             using var result = Runtime.PyObject_CallObject(warn.Borrow(), args);
-            Exceptions.ErrorCheck(result.Borrow());
+            result.BorrowOrThrow();
         }
 
         public static void warn(string message, BorrowedReference exception)

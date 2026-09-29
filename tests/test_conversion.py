@@ -510,6 +510,9 @@ def test_string_conversion():
     ob.StringField = System.String(u'\uffff\uffff')
     assert ob.StringField == u'\uffff\uffff'
 
+    ob.StringField = System.String("\ufeffbom")
+    assert ob.StringField == "\ufeffbom"
+
     ob.StringField = None
     assert ob.StringField is None
 

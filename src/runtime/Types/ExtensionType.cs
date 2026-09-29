@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -42,14 +43,13 @@ namespace Python.Runtime
 
         public PyObject AllocObject() => new(Alloc().Steal());
 
-        // "borrowed" references
-        internal static readonly HashSet<IntPtr> loadedExtensions = new();
+        internal static readonly ConcurrentDictionary<IntPtr, byte> loadedExtensions = new();
         void SetupGc (BorrowedReference ob, BorrowedReference tp)
         {
             GCHandle gc = GCHandle.Alloc(this);
             InitGCHandle(ob, tp, gc);
 
-            bool isNew = loadedExtensions.Add(ob.DangerousGetAddress());
+            bool isNew = loadedExtensions.TryAdd(ob.DangerousGetAddress(), 0);
             Debug.Assert(isNew);
 
             // We have to support gc because the type machinery makes it very
@@ -84,8 +84,18 @@ namespace Python.Runtime
             DecrefTypeAndFree(lastRef.Steal());
         }
 
+        /// <summary>
+        /// Called during tp_clear before the GCHandle is released.
+        /// Override to eagerly dispose Python object references (PyObject fields)
+        /// held by the subclass, preventing the multi-hop .NET finalizer chain
+        /// from delaying Python-side refcount decrements.
+        /// </summary>
+        protected virtual void OnClear() { }
+
         public static int tp_clear(BorrowedReference ob)
         {
+            (GetManagedObject(ob) as ExtensionType)?.OnClear();
+
             var weakrefs = Runtime.PyObject_GetWeakRefList(ob);
             if (weakrefs != null)
             {
@@ -94,7 +104,7 @@ namespace Python.Runtime
 
             if (TryFreeGCHandle(ob))
             {
-                bool deleted = loadedExtensions.Remove(ob.DangerousGetAddress());
+                bool deleted = loadedExtensions.TryRemove(ob.DangerousGetAddress(), out _);
                 Debug.Assert(deleted);
             }
 

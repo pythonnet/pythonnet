@@ -16,23 +16,27 @@ public class MethodSerialization
         var maybeMethod = new MaybeMethodBase<MethodBase>(method);
         var restored = SerializationRoundtrip(maybeMethod);
         Assert.IsTrue(restored.Valid);
-        Assert.AreEqual(method, restored.Value);
+        Assert.That(restored.Value, Is.EqualTo(method));
     }
 
     [Test]
-    public void ConstrctorRoundtrip()
+    public void ConstructorRoundtrip()
     {
         var ctor = typeof(MethodTestHost).GetConstructor(new[] { typeof(int) });
         var maybeConstructor = new MaybeMethodBase<MethodBase>(ctor);
         var restored = SerializationRoundtrip(maybeConstructor);
         Assert.IsTrue(restored.Valid);
-        Assert.AreEqual(ctor, restored.Value);
+        Assert.That(restored.Value, Is.EqualTo(ctor));
     }
 
     static T SerializationRoundtrip<T>(T item)
     {
         using var buf = new MemoryStream();
         var formatter = RuntimeData.CreateFormatter();
+        if (typeof(NoopFormatter).IsAssignableFrom(formatter.GetType()))
+        {
+            Assert.Inconclusive("NoopFormatter in use, cannot perform serialization test.");
+        }
         formatter.Serialize(buf, item);
         buf.Position = 0;
         return (T)formatter.Deserialize(buf);

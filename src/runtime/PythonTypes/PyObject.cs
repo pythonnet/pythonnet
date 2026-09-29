@@ -93,6 +93,12 @@ namespace Python.Runtime
             Finalizer.Instance.ThrottledCollect();
         }
 
+        /// <summary>
+        /// Create a new PyObject instance of this object, bumping the reference
+        /// count.
+        /// </summary>
+        public PyObject NewReference() => new(this);
+
         // Ensure that encapsulated Python object is decref'ed appropriately
         // when the managed wrapper is garbage-collected.
         ~PyObject()
@@ -104,13 +110,21 @@ namespace Python.Runtime
                 CheckRun();
 #endif
 
-                Interlocked.Increment(ref Runtime._collected);
+                // Drop the reference if Python is tearing down; queued Py_DecRef would crash.
+                if (Runtime._Py_IsFinalizing() == true)
+                {
+                    rawPtr = IntPtr.Zero;
+                }
+                else
+                {
+                    Interlocked.Increment(ref Runtime._collected);
 
-                Finalizer.Instance.AddFinalizedObject(ref rawPtr, run
+                    Finalizer.Instance.AddFinalizedObject(ref rawPtr, run
 #if TRACE_ALLOC
-                    , Traceback
+                        , Traceback
 #endif
-                );
+                    );
+                }
             }
 
             Dispose(false);

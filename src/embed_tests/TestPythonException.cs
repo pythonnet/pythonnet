@@ -6,18 +6,6 @@ namespace Python.EmbeddingTest
 {
     public class TestPythonException
     {
-        [OneTimeSetUp]
-        public void SetUp()
-        {
-            PythonEngine.Initialize();
-        }
-
-        [OneTimeTearDown]
-        public void Dispose()
-        {
-            PythonEngine.Shutdown();
-        }
-
         [Test]
         public void TestMessage()
         {
@@ -26,7 +14,7 @@ namespace Python.EmbeddingTest
 
             var ex = Assert.Throws<PythonException>(() => foo = list[0]);
 
-            Assert.AreEqual("list index out of range", ex.Message);
+            Assert.That(ex.Message, Is.EqualTo("list index out of range"));
             Assert.IsNull(foo);
         }
 
@@ -38,7 +26,7 @@ namespace Python.EmbeddingTest
 
             var ex = Assert.Throws<PythonException>(() => foo = list[0]);
 
-            Assert.AreEqual("IndexError", ex.Type.Name);
+            Assert.That(ex.Type.Name, Is.EqualTo("IndexError"));
             Assert.IsNull(foo);
         }
 
@@ -120,7 +108,7 @@ except Exception as ex:
             catch (PythonException ex)
             {
                 // ImportError/ModuleNotFoundError do not have a traceback when not running in a script
-                Assert.AreEqual(ex.StackTrace, ex.Format());
+                Assert.That(ex.Format(), Is.EqualTo(ex.StackTrace));
             }
         }
 
@@ -163,7 +151,7 @@ class TestException(NameError):
                 // exception was raised by initializing the exception
                 Assert.IsFalse(PythonReferenceComparer.Instance.Equals(type, typeObj));
                 // the message should now be the string from the throw exception during normalization
-                Assert.AreEqual("invalid literal for int() with base 10: 'dummy string'", strObj.ToString());
+                Assert.That(strObj.ToString(), Is.EqualTo("invalid literal for int() with base 10: 'dummy string'"));
             }
         }
 
