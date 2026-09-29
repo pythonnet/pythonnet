@@ -5,6 +5,22 @@ https://docs.python.org/3/library/collections.abc.html
 
 import collections.abc as col
 
+class ContextManagerMixin:
+    """Implements Python's context manager protocol for .NET IDisposable types"""
+    def __enter__(self):
+        """Return self for use in the with block"""
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Call Dispose() when exiting the with block"""
+        if hasattr(self, 'Dispose'):
+            self.Dispose()
+        else:
+            from System import IDisposable
+            IDisposable(self).Dispose()
+        # Return False to indicate that exceptions should propagate
+        return False
+
 class IteratorMixin(col.Iterator):
     def close(self):
         if hasattr(self, 'Dispose'):

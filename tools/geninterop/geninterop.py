@@ -1,6 +1,7 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
+#!/usr/bin/env uv run
+# /// script
+# dependencies = ["pycparser"]
+# ///
 """
 TypeOffset is a C# class that mirrors the in-memory layout of heap
 allocated Python objects.

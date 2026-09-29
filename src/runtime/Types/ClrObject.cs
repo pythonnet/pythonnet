@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -11,10 +12,15 @@ namespace Python.Runtime
     {
         internal readonly object inst;
 
-        // "borrowed" references
-        internal static readonly HashSet<IntPtr> reflectedObjects = new();
+        internal static bool creationBlocked = false;
+
+        // "borrowed" references; thread-safe (see ExtensionType.loadedExtensions).
+        internal static readonly ConcurrentDictionary<IntPtr, byte> reflectedObjects = new();
         static NewReference Create(object ob, BorrowedReference tp)
         {
+            if (creationBlocked)
+                throw new InvalidOperationException("Reflected objects should not be created anymore.");
+
             Debug.Assert(tp != null);
             var py = Runtime.PyType_GenericAlloc(tp, 0);
 
@@ -23,7 +29,7 @@ namespace Python.Runtime
             GCHandle gc = GCHandle.Alloc(self);
             InitGCHandle(py.Borrow(), type: tp, gc);
 
-            bool isNew = reflectedObjects.Add(py.DangerousGetAddress());
+            bool isNew = reflectedObjects.TryAdd(py.DangerousGetAddress(), 0);
             Debug.Assert(isNew);
 
             // Fix the BaseException args (and __cause__ in case of Python 3)
@@ -61,11 +67,14 @@ namespace Python.Runtime
 
         protected override void OnLoad(BorrowedReference ob, Dictionary<string, object?>? context)
         {
+            if (creationBlocked)
+                throw new InvalidOperationException("Reflected objects should not be loaded anymore.");
+
             base.OnLoad(ob, context);
             GCHandle gc = GCHandle.Alloc(this);
             SetGCHandle(ob, gc);
 
-            bool isNew = reflectedObjects.Add(ob.DangerousGetAddress());
+            bool isNew = reflectedObjects.TryAdd(ob.DangerousGetAddress(), 0);
             Debug.Assert(isNew);
         }
     }

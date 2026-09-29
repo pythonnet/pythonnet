@@ -668,3 +668,39 @@ def test_public_inherited_overloaded_indexer():
 
     with pytest.raises(TypeError):
         ob[[]]
+
+def test_del_indexer_dict():
+    """Test deleting indexers (__delitem__)."""
+    from System.Collections.Generic import Dictionary, KeyNotFoundException
+    d = Dictionary[str, str]()
+    d["delme"] = "1"
+    with pytest.raises(KeyError):
+        del d["nonexistent"]
+    del d["delme"]
+    with pytest.raises(KeyError):
+        del d["delme"]
+
+def test_del_indexer_list():
+    """Test deleting indexers (__delitem__)."""
+    from System import ArgumentOutOfRangeException
+    from System.Collections.Generic import List
+    l = List[str]()
+    l.Add("1")
+    with pytest.raises(ArgumentOutOfRangeException):
+        del l[3]
+    del l[0]
+    assert len(l) == 0
+
+def test_del_indexer_array():
+    """Test deleting indexers (__delitem__)."""
+    from System import Array
+    l = Array[str](0)
+    with pytest.raises(TypeError):
+        del l[0]
+
+def test_del_indexer_absent():
+    """Test deleting indexers (__delitem__)."""
+    from System import Uri
+    l = Uri("http://www.example.com")
+    with pytest.raises(TypeError):
+        del l[0]

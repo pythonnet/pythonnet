@@ -50,9 +50,9 @@ namespace Python.Runtime
         }
 
 
-        internal void SetItem(BorrowedReference inst, BorrowedReference args)
+        internal NewReference SetItem(BorrowedReference inst, BorrowedReference args)
         {
-            SetterBinder.Invoke(inst, args, null);
+            return SetterBinder.Invoke(inst, args, null);
         }
 
         internal bool NeedsDefaultArgs(BorrowedReference args)

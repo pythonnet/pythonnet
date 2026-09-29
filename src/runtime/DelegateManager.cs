@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -15,7 +16,9 @@ namespace Python.Runtime
     /// </summary>
     internal class DelegateManager
     {
-        private readonly Dictionary<Type,Type> cache = new();
+        // Lock-free reads; Reflection.Emit (BuildDispatcher) is serialised.
+        private readonly ConcurrentDictionary<Type, Type> cache = new();
+        private readonly object _emitLock = new();
         private readonly Type basetype = typeof(Dispatcher);
         private readonly Type arrayType = typeof(object[]);
         private readonly Type voidtype = typeof(void);
@@ -37,18 +40,19 @@ namespace Python.Runtime
         /// </summary>
         private Type GetDispatcher(Type dtype)
         {
-            // If a dispatcher type for the given delegate type has already
-            // been generated, get it from the cache. The cache maps delegate
-            // types to generated dispatcher types. A possible optimization
-            // for the future would be to generate dispatcher types based on
-            // unique signatures rather than delegate types, since multiple
-            // delegate types with the same sig could use the same dispatcher.
-
-            if (cache.TryGetValue(dtype, out Type item))
+            if (cache.TryGetValue(dtype, out Type item)) return item;
+            lock (_emitLock)
             {
-                return item;
+                return cache.TryGetValue(dtype, out item) ? item : BuildDispatcher(dtype);
             }
+        }
 
+        /// <summary>
+        /// Emits a new <see cref="Dispatcher"/> subclass for <paramref name="dtype"/>
+        /// and caches it.  Must be called under <c>_emitLock</c>.
+        /// </summary>
+        private Type BuildDispatcher(Type dtype)
+        {
             string name = $"__{dtype.FullName}Dispatcher";
             name = name.Replace('.', '_');
             name = name.Replace('+', '_');

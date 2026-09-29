@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-# TODO: move tests one out of src to project root.
-# TODO: travis has numpy on their workers. Maybe add tests?
 
 """Helpers for testing."""
 

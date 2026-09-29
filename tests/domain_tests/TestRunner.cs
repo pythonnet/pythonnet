@@ -1132,6 +1132,66 @@ def after_reload():
     
                     ",
             },
+            new TestCase
+            {
+                Name = "test_serialize_unserializable_object",
+                DotNetBefore = @"    
+                namespace TestNamespace
+                {
+                    public class NotSerializableTextWriter :  System.IO.TextWriter
+                    {
+                        override public System.Text.Encoding Encoding { get { return System.Text.Encoding.ASCII;} }
+                    }
+                    [System.Serializable]
+                    public static class SerializableWriter
+                    {
+                        private static System.IO.TextWriter _writer = null;
+                        public static System.IO.TextWriter Writer {get { return _writer; }}
+                        public static void CreateInternalWriter()
+                        {
+                            _writer = System.IO.TextWriter.Synchronized(new NotSerializableTextWriter());
+                        }
+                    }
+                }
+",
+                DotNetAfter = @"
+                namespace TestNamespace
+                {
+                    public class NotSerializableTextWriter :  System.IO.TextWriter
+                    {
+                        override public System.Text.Encoding Encoding { get { return System.Text.Encoding.ASCII;} }
+                    }
+                    [System.Serializable]
+                    public static class SerializableWriter
+                    {
+                        private static System.IO.TextWriter _writer = null;
+                        public static System.IO.TextWriter Writer {get { return _writer; }}
+                        public static void CreateInternalWriter()
+                        {
+                            _writer = System.IO.TextWriter.Synchronized(new NotSerializableTextWriter());
+                        }
+                    }
+                }
+                ",
+                PythonCode = @"
+import sys
+
+def before_reload():
+    import clr
+    import System
+    clr.AddReference('DomainTests')
+    import TestNamespace
+    TestNamespace.SerializableWriter.CreateInternalWriter();
+    sys.__obj = TestNamespace.SerializableWriter.Writer
+    sys.__obj.WriteLine('test')
+
+def after_reload():
+    import clr
+    import System
+    sys.__obj.WriteLine('test')
+    
+                    ",
+            }
         };
 
         /// <summary>
@@ -1142,7 +1202,59 @@ def after_reload():
         const string CaseRunnerTemplate = @"
 using System;
 using System.IO;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 using Python.Runtime;
+
+namespace Serialization
+{{
+    // Classes in this namespace is mostly useful for test_serialize_unserializable_object
+    class NotSerializableSerializer : ISerializationSurrogate
+    {{
+        public NotSerializableSerializer()
+        {{
+        }}
+        public void GetObjectData(object obj, SerializationInfo info, StreamingContext context)
+        {{
+            info.AddValue(""notSerialized_tp"", obj.GetType());
+        }}
+        public object SetObjectData(object obj, SerializationInfo info, StreamingContext context, ISurrogateSelector selector)
+        {{
+            if (info == null)
+            {{
+                return null;
+            }}
+            Type typeObj = info.GetValue(""notSerialized_tp"", typeof(Type)) as Type;
+            if (typeObj == null)
+            {{
+                return null;
+            }}
+            
+            obj = Activator.CreateInstance(typeObj);
+            return obj;
+        }}
+    }}
+    class NonSerializableSelector : SurrogateSelector
+    {{
+        public override ISerializationSurrogate GetSurrogate(Type type, StreamingContext context, out ISurrogateSelector selector)
+        {{
+            if (type == null)
+            {{
+                throw new ArgumentNullException();
+            }}
+            selector = (ISurrogateSelector)this;
+            if (type.IsSerializable)
+            {{
+                return null; // use whichever default
+            }}
+            else
+            {{
+                return (ISerializationSurrogate)(new NotSerializableSerializer());
+            }}
+        }}
+    }}
+}}
+
 namespace CaseRunner
 {{
     class CaseRunner
@@ -1151,6 +1263,11 @@ namespace CaseRunner
         {{
             try
             {{
+                RuntimeData.FormatterFactory = () => 
+                {{ 
+                    return new BinaryFormatter(){{SurrogateSelector = new Serialization.NonSerializableSelector()}};
+                }};
+
                 PythonEngine.Initialize();
                 using (Py.GIL())
                 {{

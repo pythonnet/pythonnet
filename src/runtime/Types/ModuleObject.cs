@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -13,12 +14,13 @@ namespace Python.Runtime
     [Serializable]
     internal class ModuleObject : ExtensionType
     {
-        private readonly Dictionary<string, PyObject> cache = new();
+        private readonly ConcurrentDictionary<string, PyObject> cache = new();
 
         internal string moduleName;
         internal PyDict dict;
         protected string _namespace;
         private readonly PyList __all__ = new ();
+        private readonly ConcurrentDictionary<string, byte> allNames = new();
 
         // Attributes to be set on the module according to PEP302 and 451
         // by the import machinery.
@@ -178,22 +180,23 @@ namespace Python.Runtime
         {
             foreach (string name in AssemblyManager.GetNames(_namespace))
             {
-                cache.TryGetValue(name, out var m);
-                if (m != null)
+                bool hasValidAttribute = cache.TryGetValue(name, out var m);
+                if (!hasValidAttribute)
                 {
-                    continue;
-                }
-                BorrowedReference attr = Runtime.PyDict_GetItemString(dict, name);
-                // If __dict__ has already set a custom property, skip it.
-                if (!attr.IsNull)
-                {
-                    continue;
+                    BorrowedReference attr = Runtime.PyDict_GetItemString(dict, name);
+                    // If __dict__ has already set a custom property, skip it.
+                    if (!attr.IsNull)
+                    {
+                        continue;
+                    }
+
+                    using var attrVal = GetAttribute(name, true);
+                    hasValidAttribute = !attrVal.IsNull();
                 }
 
-                using var attrVal = GetAttribute(name, true);
-                if (!attrVal.IsNull())
+                if (hasValidAttribute && allNames.TryAdd(name, 0))
                 {
-                    // if it's a valid attribute, add it to __all__
+                    // if it's a valid attribute, add it to __all__ once.
                     using var pyname = Runtime.PyString_FromString(name);
                     if (Runtime.PyList_Append(__all__, pyname.Borrow()) != 0)
                     {
@@ -265,7 +268,7 @@ namespace Python.Runtime
                     }
                     Runtime.PyErr_Clear();
                 }
-                cache.Remove(memberName);
+                cache.TryRemove(memberName, out _);
             }
         }
 

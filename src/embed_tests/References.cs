@@ -5,18 +5,6 @@ namespace Python.EmbeddingTest
 
     public class References
     {
-        [OneTimeSetUp]
-        public void SetUp()
-        {
-            PythonEngine.Initialize();
-        }
-
-        [OneTimeTearDown]
-        public void Dispose()
-        {
-            PythonEngine.Shutdown();
-        }
-
         [Test]
         public void MoveToPyObject_SetsNull()
         {
@@ -24,10 +12,10 @@ namespace Python.EmbeddingTest
             NewReference reference = Runtime.PyDict_Items(dict.Reference);
             try
             {
-                Assert.IsFalse(reference.IsNull());
+                Assert.That(reference.IsNull(), Is.False);
 
                 using (reference.MoveToPyObject())
-                    Assert.IsTrue(reference.IsNull());
+                    Assert.That(reference.IsNull(), Is.True);
             }
             finally
             {

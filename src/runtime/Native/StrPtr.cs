@@ -10,6 +10,8 @@ namespace Python.Runtime.Native
         public IntPtr RawPointer { get; set; }
         unsafe byte* Bytes => (byte*)this.RawPointer;
 
+        public unsafe StrPtr(string value) : this(value, Encodings.UTF8) {}
+
         public unsafe StrPtr(string value, Encoding encoding)
         {
             if (value is null) throw new ArgumentNullException(nameof(value));

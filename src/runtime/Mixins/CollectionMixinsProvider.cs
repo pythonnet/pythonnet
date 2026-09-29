@@ -63,6 +63,12 @@ namespace Python.Runtime.Mixins
                 newBases.Add(new PyType(this.Mixins.GetAttr("IteratorMixin")));
             }
 
+            // context managers (for IDisposable)
+            if (interfaces.Contains(typeof(IDisposable)))
+            {
+                newBases.Add(new PyType(this.Mixins.GetAttr("ContextManagerMixin")));
+            }
+
             if (newBases.Count == existingBases.Count)
             {
                 return existingBases;

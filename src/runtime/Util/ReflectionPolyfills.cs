@@ -14,7 +14,7 @@ namespace Python.Runtime
 
         public static Type CreateType(this TypeBuilder typeBuilder)
         {
-            return typeBuilder.CreateTypeInfo();
+            return typeBuilder.CreateTypeInfo()!;
         }
 
         public static T GetCustomAttribute<T>(this Type type) where T: Attribute

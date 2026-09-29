@@ -9,34 +9,37 @@ namespace Python.EmbeddingTest
 {
     public class CallableObject
     {
+        IPythonBaseTypeProvider BaseTypeProvider;
+
         [OneTimeSetUp]
         public void SetUp()
         {
-            PythonEngine.Initialize();
             using var locals = new PyDict();
             PythonEngine.Exec(CallViaInheritance.BaseClassSource, locals: locals);
-            CustomBaseTypeProvider.BaseClass = new PyType(locals[CallViaInheritance.BaseClassName]);
-            PythonEngine.InteropConfiguration.PythonBaseTypeProviders.Add(new CustomBaseTypeProvider());
+            BaseTypeProvider = new CustomBaseTypeProvider(new PyType(locals[CallViaInheritance.BaseClassName]));
+            PythonEngine.InteropConfiguration.PythonBaseTypeProviders.Add(BaseTypeProvider);
         }
 
         [OneTimeTearDown]
         public void Dispose()
         {
-            PythonEngine.Shutdown();
+            PythonEngine.InteropConfiguration.PythonBaseTypeProviders.Remove(BaseTypeProvider);
         }
+
         [Test]
         public void CallMethodMakesObjectCallable()
         {
             var doubler = new DerivedDoubler();
             dynamic applyObjectTo21 = PythonEngine.Eval("lambda o: o(21)");
-            Assert.AreEqual(doubler.__call__(21), (int)applyObjectTo21(doubler.ToPython()));
+            Assert.That((int)applyObjectTo21(doubler.ToPython()), Is.EqualTo(doubler.__call__(21)));
         }
+
         [Test]
         public void CallMethodCanBeInheritedFromPython()
         {
             var callViaInheritance = new CallViaInheritance();
             dynamic applyObjectTo14 = PythonEngine.Eval("lambda o: o(14)");
-            Assert.AreEqual(callViaInheritance.Call(14), (int)applyObjectTo14(callViaInheritance.ToPython()));
+            Assert.That((int)applyObjectTo14(callViaInheritance.ToPython()), Is.EqualTo(callViaInheritance.Call(14)));
         }
 
         [Test]
@@ -48,7 +51,7 @@ namespace Python.EmbeddingTest
             scope.Exec("orig_call = o.Call");
             scope.Exec("o.Call = lambda a: orig_call(a*7)");
             int result = scope.Eval<int>("o.Call(5)");
-            Assert.AreEqual(105, result);
+            Assert.That(result, Is.EqualTo(105));
         }
 
         class Doubler
@@ -71,16 +74,14 @@ class {BaseClassName}(MyCallableBase): pass
             public int Call(int arg) => 3 * arg;
         }
 
-        class CustomBaseTypeProvider : IPythonBaseTypeProvider
+        class CustomBaseTypeProvider(PyType BaseClass) : IPythonBaseTypeProvider
         {
-            internal static PyType BaseClass;
-
             public IEnumerable<PyType> GetBaseTypes(Type type, IList<PyType> existingBases)
             {
-                Assert.Greater(BaseClass.Refcount, 0);
+                Assert.That(BaseClass.Refcount, Is.GreaterThan(0));
                 return type != typeof(CallViaInheritance)
                     ? existingBases
-                    : new[] { BaseClass };
+                    : [BaseClass];
             }
         }
     }
