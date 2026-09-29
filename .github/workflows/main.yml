@@ -52,6 +52,8 @@ jobs:
 
     env:
       NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
+      # Apply to every Mono host, including pytest and the .NET Python test runner.
+      MONO_THREADS_SUSPEND: preemptive # https://github.com/mono/mono/issues/21466
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -84,8 +86,6 @@ jobs:
       - name: Embedding tests (Mono/.NET Framework)
         if: always()
         run: dotnet test --runtime any-${{ matrix.os.platform }} --framework net472 --logger "console;verbosity=detailed" src/embed_tests/
-        env:
-          MONO_THREADS_SUSPEND: preemptive # https://github.com/mono/mono/issues/21466
 
       - name: Embedding tests (.NET Core)
         if: always()
@@ -97,7 +97,7 @@ jobs:
 
       - name: Python Tests (Mono)
         if: always()
-        run: pytest --runtime mono
+        run: uv run pytest --runtime mono -v -o faulthandler_timeout=60
 
       - name: Python Tests (.NET Framework)
         if: ${{ matrix.os.category == 'windows' }}
