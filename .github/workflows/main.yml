@@ -58,6 +58,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
 
+      - name: Setup just
+        uses: extractions/setup-just@v4
+
       # Use main until support for architecture lands
       - name: Setup .NET
         uses: actions/setup-dotnet@main
@@ -85,23 +88,23 @@ jobs:
 
       - name: Embedding tests (Mono/.NET Framework)
         if: always()
-        run: dotnet test --runtime any-${{ matrix.os.platform }} --framework net472 --logger "console;verbosity=detailed" src/embed_tests/
+        run: just test-embed-mono ${{ matrix.os.platform }}
 
       - name: Embedding tests (.NET Core)
         if: always()
-        run: dotnet test --runtime any-${{ matrix.os.platform }} --framework net10.0 --logger "console;verbosity=detailed" src/embed_tests/
+        run: just test-embed-core ${{ matrix.os.platform }}
 
       - name: Python Tests (.NET Core)
         if: always()
-        run: pytest --runtime coreclr
+        run: just test-python-coreclr
 
       - name: Python Tests (Mono)
         if: always()
-        run: uv run pytest --runtime mono -v -o faulthandler_timeout=60
+        run: just test-python-mono
 
       - name: Python Tests (.NET Framework)
         if: ${{ matrix.os.category == 'windows' }}
-        run: pytest --runtime netfx
+        run: just test-python-netfx
 
       - name: Python tests run from .NET
-        run: dotnet test --runtime any-${{ matrix.os.platform }} src/python_tests_runner/
+        run: just test-python-from-dotnet ${{ matrix.os.platform }}
