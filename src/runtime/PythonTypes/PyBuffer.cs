@@ -110,10 +110,37 @@ namespace Python.Runtime
         /// </summary>
         public IntPtr GetPointer(long[] indices)
         {
-            if (indices is null) throw new ArgumentNullException(nameof(indices));
+            if (indices is null)
+                throw new ArgumentNullException(nameof(indices));
+
+            if (Strides is null)
+                throw new InvalidOperationException($"{nameof(GetPointer)} requires {nameof(Strides)} to be filled");
+
+            if (indices.Length != Dimensions)
+                throw new ArgumentOutOfRangeException($"{nameof(indices)} must be exactly {Dimensions} long");
+
+            if (Dimensions == 0 && Shape is null)
+                throw new InvalidOperationException($"{nameof(GetPointer)} requires {nameof(Shape)} to be filled for dimensional buffers");
+
             ThrowIfDisposed();
+
             if (Runtime.PyVersion < new Version(3, 7))
                 throw new NotSupportedException("GetPointer requires at least Python 3.7");
+
+            var indicesArr = new nint[Dimensions];
+
+            for (var i = 0; i < Dimensions; i++)
+            {
+                indicesArr[i] = checked((nint)indices[i]);
+
+                if (indicesArr[i] < 0 || indicesArr[i] >= Shape![i])
+                {
+                    throw new ArgumentOutOfRangeException(
+                        $"Index {i} has a value of {indicesArr[i]} not in [0, {Shape![i]})"
+                    );
+                }
+            }
+
             return Runtime.PyBuffer_GetPointer(ref _view, indices.Select(x => checked((nint)x)).ToArray());
         }
 

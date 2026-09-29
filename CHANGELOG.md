@@ -9,6 +9,15 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ### Added
 
+### Changed
+
+### Fixed
+
+
+## 3.2.0 - 2026-09-29
+
+### Added
+
 - Support for Python 3.15 (#2729)
 - Support for free-threaded Python 3.14 (`Py_GIL_DISABLED`) (#2721)
 - Threading documentation covering GIL ownership, managed threads, and
@@ -28,6 +37,8 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 - Fix method binding initialization when methods are first accessed (#2721)
 - Fix wheel and NuGet preview package builds
 - Python exception raised on conversion failure (#2741)
+- Introduce additional pre-checks in `PyBuffer_GetPointer` to prevent memory
+  corruption (#2745)
 
 ## 3.1.0 - 2026-05-23
 

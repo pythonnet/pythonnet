@@ -2,11 +2,14 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
+
 using NUnit.Framework;
+
 using Python.Runtime;
 using Python.Runtime.Codecs;
 
-namespace Python.EmbeddingTest {
+namespace Python.EmbeddingTest
+{
     class TestPyBuffer
     {
         [OneTimeSetUp]
@@ -58,13 +61,49 @@ namespace Python.EmbeddingTest {
             }
 
             string result = new UTF8Encoding().GetString(managedArray);
-            Assert.That(result == " " + bufferTestString.Substring(1), Is.True);
+            Assert.That(result, Is.EqualTo($" {bufferTestString.Substring(1)}"));
+        }
+
+        [Test]
+        public void GetPointer()
+        {
+            // create 3D NumPy array
+            int[] shape = [10, 10, 10];
+            using PyObject ndArray = np.zeros(shape);
+
+            using PyBuffer buf = ndArray.GetBuffer(PyBUF.STRIDES);
+
+            var ptr = buf.GetPointer([0, 0, 0]);
+
+            Assert.That(ptr, Is.Not.EqualTo(IntPtr.Zero));
+
+            var ptrEnd = buf.GetPointer([9, 9, 9]);
+            Assert.That(ptrEnd, Is.Not.EqualTo(IntPtr.Zero));
+
+            Assert.Throws<ArgumentNullException>(() => buf.GetPointer(null!));
+
+            Assert.Throws<ArgumentOutOfRangeException>(() => buf.GetPointer([0, 0]));
+            Assert.Throws<ArgumentOutOfRangeException>(() => buf.GetPointer([0, 0, 0, 0]));
+
+            Assert.Throws<ArgumentOutOfRangeException>(() => buf.GetPointer([-1, 0, 0]));
+            Assert.Throws<ArgumentOutOfRangeException>(() => buf.GetPointer([0, -1, 0]));
+            Assert.Throws<ArgumentOutOfRangeException>(() => buf.GetPointer([0, 0, -1]));
+
+            Assert.Throws<ArgumentOutOfRangeException>(() => buf.GetPointer([10, 0, 0]));
+            Assert.Throws<ArgumentOutOfRangeException>(() => buf.GetPointer([0, 10, 0]));
+            Assert.Throws<ArgumentOutOfRangeException>(() => buf.GetPointer([0, 0, 10]));
+
+            using PyBuffer buf2 = ndArray.GetBuffer(PyBUF.ND);
+
+            Assert.Throws<InvalidOperationException>(
+                () => buf2.GetPointer([0, 0, 0])
+            );
         }
 
         [Test]
         public void ArrayHasBuffer()
         {
-            var array = new[,] {{1, 2}, {3,4}};
+            var array = new[,] { { 1, 2 }, { 3, 4 } };
             var memoryView = PythonEngine.Eval("memoryview");
             var mem = memoryView.Invoke(array.ToPython());
             Assert.That(mem[(0, 0).ToPython()].As<int>(), Is.EqualTo(1));
@@ -113,7 +152,7 @@ namespace Python.EmbeddingTest {
         [Test]
         public void MultidimensionalNumPyArray()
         {
-            var ndarray = np.arange(24).reshape(1,2,3,4).T;
+            var ndarray = np.arange(24).reshape(1, 2, 3, 4).T;
             PyObject ndim = ndarray.ndim;
             PyObject shape = ndarray.shape;
             PyObject strides = ndarray.strides;
