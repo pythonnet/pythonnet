@@ -6,6 +6,9 @@ on:
       - 'v*'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Build and Test
@@ -73,6 +76,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       id-token: write
     steps:
       - name: Download PyPI artifacts
@@ -104,6 +108,10 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Deploy to NuGet
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+          NUGET_MONTHLY: ${{ secrets.NUGET_MONTHLY }}
         run: |
-          dotnet nuget push --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY || secrets.NUGET_MONTHLY }} --skip-duplicate nuget-dist/*.nupkg
-          dotnet nuget push --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY || secrets.NUGET_MONTHLY }} --skip-duplicate nuget-dist/*.snupkg
+          API_KEY="${NUGET_API_KEY:-$NUGET_MONTHLY}"
+          dotnet nuget push --source https://api.nuget.org/v3/index.json --api-key "$API_KEY" --skip-duplicate nuget-dist/*.nupkg
+          dotnet nuget push --source https://api.nuget.org/v3/index.json --api-key "$API_KEY" --skip-duplicate nuget-dist/*.snupkg
