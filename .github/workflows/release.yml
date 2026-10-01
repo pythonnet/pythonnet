@@ -1,0 +1,109 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      PYTHONNET_SHUTDOWN_MODE: Normal
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Set up Python
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: cpython-3.11
+          cache-python: true
+          activate-environment: true
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --managed-python
+
+      - name: Set Python DLL path
+        run: |
+          echo PYTHONNET_PYDLL=$(python -m find_libpython) >> $GITHUB_ENV
+
+      - name: Python Tests
+        run: pytest
+
+      - name: Embedding tests
+        run: dotnet test --runtime any-ubuntu src/embed_tests/
+
+      - name: Build wheels and sdist
+        run: |
+          uv build
+          uv build --wheel -C="--global-option=--net46-support"
+
+      - name: Build NuGet package
+        run: |
+          dotnet pack --configuration Release --output nuget-dist
+
+      - name: Upload PyPI artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: pypi-artifacts
+          path: dist/
+          if-no-files-found: error
+
+      - name: Upload NuGet artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: nuget-artifacts
+          path: nuget-dist/
+          if-no-files-found: error
+
+  publish-pypi:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - name: Download PyPI artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: pypi-artifacts
+          path: dist/
+
+      - name: Deploy to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+
+  publish-nuget:
+    name: Publish to NuGet
+    needs: build
+    runs-on: ubuntu-latest
+    environment: NuGet
+    steps:
+      - name: Download NuGet artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: nuget-artifacts
+          path: nuget-dist/
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Deploy to NuGet
+        run: |
+          dotnet nuget push --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY || secrets.NUGET_MONTHLY }} --skip-duplicate nuget-dist/*.nupkg
+          dotnet nuget push --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY || secrets.NUGET_MONTHLY }} --skip-duplicate nuget-dist/*.snupkg
