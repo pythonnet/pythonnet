@@ -19,6 +19,11 @@
     <Compile Remove="NeedsReinit/*.cs" />
   </ItemGroup>
 
+  <!-- net472 still stashes with BinaryFormatter. This test covers the Noop path. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <Compile Remove="StateSerialization/ShutdownStash.cs" />
+  </ItemGroup>
+
   <PropertyGroup>
     <DefineConstants>$(DefineConstants);$(ConfiguredConstants)</DefineConstants>
   </PropertyGroup>

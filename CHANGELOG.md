@@ -13,6 +13,8 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ### Fixed
 
+- When `BinaryFormatter` is unavailable, skip publishing `sys.clr_data` during
+  `Shutdown` so the next `Initialize` does not deserialize an empty capsule (#2282)
 
 ## 3.2.0 - 2026-09-29
 

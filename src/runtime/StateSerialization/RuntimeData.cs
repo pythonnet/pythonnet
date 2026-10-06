@@ -84,6 +84,19 @@ namespace Python.Runtime
 
         internal static void Stash()
         {
+            IFormatter formatter = CreateFormatter();
+            // NoopFormatter.Serialize writes nothing. An empty sys.clr_data capsule
+            // makes the next Initialize call Deserialize and throw (#2282).
+            if (formatter is NoopFormatter)
+            {
+                if (HasStashData())
+                {
+                    ClearCLRData();
+                    ClearStash();
+                }
+                return;
+            }
+
             var runtimeStorage = new PythonNetState
             {
                 Metatype = MetaType.SaveRuntimeData(),
@@ -93,7 +106,6 @@ namespace Python.Runtime
                 SharedObjects = SaveRuntimeDataObjects(),
             };
 
-            IFormatter formatter = CreateFormatter();
             var ms = new MemoryStream();
             formatter.Serialize(ms, runtimeStorage);
 
