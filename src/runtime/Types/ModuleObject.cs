@@ -14,13 +14,15 @@ namespace Python.Runtime
     [Serializable]
     internal class ModuleObject : ExtensionType
     {
-        private readonly ConcurrentDictionary<string, PyObject> cache = new();
+        [NonSerialized]
+        private ConcurrentDictionary<string, PyObject> cache = new();
 
         internal string moduleName;
         internal PyDict dict;
         protected string _namespace;
         private readonly PyList __all__ = new ();
-        private readonly ConcurrentDictionary<string, byte> allNames = new();
+        [NonSerialized]
+        private ConcurrentDictionary<string, byte> allNames = new();
 
         // Attributes to be set on the module according to PEP302 and 451
         // by the import machinery.
@@ -378,7 +380,8 @@ namespace Python.Runtime
 
         protected override Dictionary<string, object?>? OnSave(BorrowedReference ob)
         {
-            var context = base.OnSave(ob);
+            var context = base.OnSave(ob) ?? new();
+            context[nameof(allNames)] = allNames.Keys.ToArray();
             System.Diagnostics.Debug.Assert(dict == GetObjectDict(ob));
             // destroy the cache(s)
             foreach (var pair in cache)
@@ -402,6 +405,9 @@ namespace Python.Runtime
 
         protected override void OnLoad(BorrowedReference ob, Dictionary<string, object?>? context)
         {
+            cache = new();
+            allNames = new(((string[])context![nameof(allNames)]!)
+                .Select(name => new KeyValuePair<string, byte>(name, 0)));
             base.OnLoad(ob, context);
             SetObjectDict(ob, new NewReference(dict).Steal());
         }

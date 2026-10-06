@@ -13,6 +13,8 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ### Fixed
 
+- Fix shutdown serialization of CLR namespace modules on .NET 8 while preserving
+  namespace name tracking across runtime restarts.
 
 ## 3.2.0 - 2026-09-29
 
