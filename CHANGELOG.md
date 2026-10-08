@@ -5,16 +5,12 @@ project adheres to [Semantic Versioning][].
 
 This document follows the conventions laid out in [Keep a CHANGELOG][].
 
-## Unreleased
-
-### Added
-
-### Changed
+## 3.2.1 - 2026-10-08
 
 ### Fixed
 
 - Fix shutdown serialization of CLR namespace modules on .NET 8 while preserving
-  namespace name tracking across runtime restarts.
+  namespace name tracking across runtime restarts (#2750)
 
 ## 3.2.0 - 2026-09-29
 
