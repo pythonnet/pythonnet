@@ -23,6 +23,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
 
+      - name: Setup just
+        uses: extractions/setup-just@v4
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v6
         with:
@@ -44,10 +47,10 @@ jobs:
           echo PYTHONNET_PYDLL=$(python -m find_libpython) >> $GITHUB_ENV
 
       - name: Python Tests
-        run: pytest
+        run: just test-python
 
       - name: Embedding tests
-        run: dotnet test --runtime any-ubuntu src/embed_tests/
+        run: just test-embed any-ubuntu
 
       - name: Pack
         run: dotnet pack --configuration Release --version-suffix preview${{env.DATE_VER}} --output "Release-Preview"
