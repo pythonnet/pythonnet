@@ -202,6 +202,14 @@ namespace Python.Runtime
                 return true;
             }
 
+            // Raised as a plain TypeError: wrapping the CLR exception would mean
+            // reflecting its type into Python, which the same filters may refuse
+            if (e is ClrTypeFilteredException)
+            {
+                SetError(TypeError, e.Message);
+                return true;
+            }
+
             using var instance = Converter.ToPython(e);
             if (instance.IsNull()) return false;
 

@@ -29,6 +29,12 @@ internal sealed class ReflectedClrType : PyType
         if (ClassManager.cache.TryGetValue(type, out var pyType))
             return pyType;
 
+        // Every CLR type reaching Python passes through here, so consulting the
+        // filters once, on the cache miss, covers every route a type can take:
+        // GetType(), an API returning System.Type, a field, a return value
+        if (!PythonEngine.InteropConfiguration.clrTypeFilters.ShouldReflect(type))
+            throw new ClrTypeFilteredException(type);
+
         // Shared with ClassManager.cache + TypeManager._slotsHolders writes
         // so the multi-step type build below is atomic.
         lock (ClassManager._cacheCreateLock)
